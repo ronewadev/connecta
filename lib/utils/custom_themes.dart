@@ -1,0 +1,58 @@
+import 'package:connecta/models/theme_model.dart';
+import 'package:flutter/material.dart';
+
+final List<AppTheme> appThemes = [
+  AppTheme(
+    id: 'ocean',
+    name: 'Ocean Blue',
+    description: 'Calming blue tones like the deep sea',
+    primaryColor: const Color(0xFF1565C0),
+    secondaryColor: const Color(0xFF4FC3F7),
+    backgroundColor: const Color(0xFFE1F5FE),
+    textColor: Colors.black87,
+    cost: 50,
+  ),
+  AppTheme(
+    id: 'midnight',
+    name: 'Midnight',
+    description: 'Dark theme for night owls',
+    primaryColor: const Color(0xFF0D47A1),
+    secondaryColor: const Color(0xFF1A237E),
+    backgroundColor: const Color(0xFF121212),
+    textColor: Colors.white70,
+    cost: 100,
+    changesAppIcon: true,
+  ),
+  AppTheme(
+    id: 'sunset',
+    name: 'Sunset',
+    description: 'Warm colors of a summer sunset',
+    primaryColor: const Color(0xFFFF7043),
+    secondaryColor: const Color(0xFFFFA000),
+    backgroundColor: const Color(0xFFFFF3E0),
+    textColor: Colors.black87,
+    cost: 75,
+  ),
+  AppTheme(
+    id: 'forest',
+    name: 'Forest',
+    description: 'Fresh green tones like a forest',
+    primaryColor: const Color(0xFF2E7D32),
+    secondaryColor: const Color(0xFF66BB6A),
+    backgroundColor: const Color(0xFFE8F5E9),
+    textColor: Colors.black87,
+    cost: 60,
+  ),
+  AppTheme(
+    id: 'neon',
+    name: 'Neon Dreams',
+    description: 'Vibrant neon colors',
+    primaryColor: const Color(0xFF9C27B0),
+    secondaryColor: const Color(0xFFE91E63),
+    backgroundColor: Colors.black,
+    textColor: Colors.white,
+    cost: 150,
+    changesAppIcon: true,
+    isPremium: true,
+  ),
+];
