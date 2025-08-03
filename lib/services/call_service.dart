@@ -1,36 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:connecta/models/user.dart';
-import 'package:connecta/models/call_session.dart';
+
+import 'package:flutter/material.dart';
+import '../models/user_model.dart';
+
+class Call {
+  final String id;
+  final User caller;
+  DateTime startTime;
+  DateTime? endTime;
+  int? duration;
+  bool isMuted;
+  bool isFrontCamera;
+
+  Call({
+    required this.id,
+    required this.caller,
+    required this.startTime,
+    this.endTime,
+    this.duration,
+    this.isMuted = false,
+    this.isFrontCamera = true,
+  });
+}
 
 class CallService with ChangeNotifier {
-  CallSession? _currentCall;
+  Call? _currentCall;
   bool _isInCall = false;
 
-  CallSession? get currentCall => _currentCall;
+  Call? get currentCall => _currentCall;
   bool get isInCall => _isInCall;
 
   Future<void> startCall(User otherUser) async {
-    _currentCall = CallSession(
+    _currentCall = Call(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       caller: otherUser,
       startTime: DateTime.now(),
     );
     _isInCall = true;
     notifyListeners();
-
-    // Implement actual call initiation logic
-    // This would integrate with WebRTC or a service like Agora
+    // Demo only: no actual call logic
   }
 
   Future<void> endCall() async {
     if (_currentCall != null) {
       _currentCall!.endTime = DateTime.now();
-      _currentCall!.duration = _currentCall!.endTime!
-          .difference(_currentCall!.startTime)
-          .inSeconds;
-      
-      // Save call history or analytics here
-      
+      _currentCall!.duration = _currentCall!.endTime!.difference(_currentCall!.startTime).inSeconds;
       _currentCall = null;
       _isInCall = false;
       notifyListeners();

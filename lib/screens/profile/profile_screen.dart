@@ -71,6 +71,8 @@ class ProfileScreen extends StatelessWidget {
                 title: 'Linked Accounts',
                 items: [],
               ),
+              const SizedBox(height: 8),
+              _buildSocialLinkSection(context),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -207,6 +209,69 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildSocialLinkSection(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Link Social Platforms',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _SocialPlatformLinkRow(
+            icon: Icons.facebook,
+            label: 'Facebook',
+            onPressed: () {
+              // TODO: Implement Facebook linking logic
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Facebook linking coming soon!')),
+              );
+            },
+          ),
+          _SocialPlatformLinkRow(
+            icon: Icons.alternate_email,
+            label: 'Twitter',
+            onPressed: () {
+              // TODO: Implement Twitter linking logic
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Twitter linking coming soon!')),
+              );
+            },
+          ),
+          _SocialPlatformLinkRow(
+            icon: Icons.camera_alt,
+            label: 'Instagram',
+            onPressed: () {
+              // TODO: Implement Instagram linking logic
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Instagram linking coming soon!')),
+              );
+            },
+          ),
+          _SocialPlatformLinkRow(
+            icon: Icons.play_circle,
+            label: 'TikTok',
+            onPressed: () {
+              // TODO: Implement TikTok linking logic
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('TikTok linking coming soon!')),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
@@ -243,4 +308,37 @@ class _ProfileItem {
   final String value;
 
   _ProfileItem({required this.label, required this.value});
+}
+
+class _SocialPlatformLinkRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _SocialPlatformLinkRow({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blueAccent),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(label, style: theme.textTheme.bodyMedium),
+          ),
+          TextButton(
+            onPressed: onPressed,
+            child: const Text('Link'),
+          ),
+        ],
+      ),
+    );
+  }
 }

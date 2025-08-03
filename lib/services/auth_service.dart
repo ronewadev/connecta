@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:connecta/models/user.dart';
+
+import '../models/user_model.dart';
 
 class AuthService with ChangeNotifier {
   User? _currentUser;
@@ -16,7 +17,9 @@ class AuthService with ChangeNotifier {
       email: '$username@connecta.com',
       age: 25,
       gender: 'Other',
-      nationality: 'US',
+      nationality: 'RSA',
+      name: 'Jeffrey Mabaso',
+      location: 'Thohoyandou',
     );
     _isAuthenticated = true;
     notifyListeners();

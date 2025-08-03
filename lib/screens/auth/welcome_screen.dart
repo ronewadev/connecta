@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:connecta/screens/auth/login_screen.dart';
 import 'package:connecta/screens/auth/signup_screen.dart';
-import 'package:connecta/screens/home/main_screen.dart';
+import 'package:connecta/screens/main_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

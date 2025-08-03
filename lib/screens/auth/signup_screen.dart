@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:connecta/models/user.dart';
 import 'package:connecta/services/auth_service.dart';
 import 'package:connecta/screens/auth/login_screen.dart';
 import 'package:provider/provider.dart';
+
+import '../../models/user_model.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -289,7 +290,7 @@ class _SignupScreenState extends State<SignupScreen> {
           phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
           age: 18, // Default age, can be updated later
           gender: 'Other', // Default gender
-          nationality: _nationalityController.text,
+          nationality: _nationalityController.text, name: '', location: '',
         );
 
         await Provider.of<AuthService>(context, listen: false).register(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:connecta/models/user.dart';
+
+import '../../models/user_model.dart';
 
 class CallScreen extends StatefulWidget {
   const CallScreen({super.key});
@@ -149,11 +150,14 @@ class _CallScreenState extends State<CallScreen> {
       _isCalling = true;
       _matchedUser = User(
         id: 'call-1',
-        username: 'Jessica',
-        age: 24,
-        gender: 'Female',
-        nationality: 'USA',
-        profileImageUrl: 'https://i.pravatar.cc/300?img=32', email: '',
+        username: 'Ron',
+        age: 26,
+        gender: 'Male',
+        nationality: 'RSA',
+        profileImageUrl: 'https://i.pravatar.cc/300?img=32',
+        email: 'ro@gmail.com',
+        name: 'Ronewa Lovers Muthivhi',
+        location: 'Gondeni',
       );
     });
   }

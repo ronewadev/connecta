@@ -28,10 +28,11 @@ class CustomBottomNavBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(FontAwesomeIcons.fire, 0, currentIndex, onTap, showDot: false),
-            _buildNavItem(FontAwesomeIcons.earthAfrica, 1, currentIndex, onTap, showDot: false),
-            _buildNavItem(FontAwesomeIcons.commentDots, 2, currentIndex, onTap, showDot: true),
-            _buildNavItem(FontAwesomeIcons.user, 3, currentIndex, onTap, showDot: false),
+            _buildNavItem(FontAwesomeIcons.earthAfrica, 0, currentIndex, onTap, showDot: false), // Meet
+            _buildNavItem(FontAwesomeIcons.video, 1, currentIndex, onTap, showDot: false), // Live (replaces Discover)
+            _buildNavItem(FontAwesomeIcons.fire, 2, currentIndex, onTap, showDot: true), // Chat
+            _buildNavItem(FontAwesomeIcons.commentDots, 3, currentIndex, onTap, showDot: false), // Shopping bag (replaces Profile)
+            _buildNavItem(FontAwesomeIcons.crown, 4, currentIndex, onTap, showDot: false), // Plans
           ],
         ),
       ),

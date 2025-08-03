@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:connecta/models/user.dart';
-import 'package:connecta/services/auth_service.dart';
 import 'package:connecta/services/theme_service.dart';
 import 'package:connecta/screens/auth/welcome_screen.dart';
-import 'package:connecta/screens/home/main_screen.dart';
 
 void main() {
   runApp(
