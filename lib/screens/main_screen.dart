@@ -34,12 +34,11 @@ class _MainScreenState extends State<MainScreen> {
   // 6: Notification
   // 7: Profile
   final List<Widget> _bottomNavScreens = [
-    const HomeScreen(),         // 0: Connecta
-    const MeetScreen(),         // 1: Meet
-    const LiveScreen(),         // 2: Live
-    const HomeScreen(),         // 3: Home
+    const DiscoverScreen(),         // 0: Connecta
+    const LiveScreen(),         // 1: Meet
+    const HomeScreen(),         // 2: Live
     const ChatScreen(),         // 4: Chat
-    const SettingsScreen(),     // 5: Plans/Store
+    const ProfileScreen(),     // 5: Plans/Store
     // Dummy Notification Screen
     Scaffold(
       body: Center(child: Text('Notifications', style: TextStyle(fontSize: 24))),
@@ -104,8 +103,9 @@ class _MainScreenState extends State<MainScreen> {
         IconButton(
           icon: const Icon(Icons.settings_rounded),
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Settings screen coming soon!')),
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsScreen()),
             );
           },
         ),
