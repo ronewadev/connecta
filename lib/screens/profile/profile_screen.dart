@@ -1,6 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide IconButton;
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/auth/welcome_screen.dart';
 import 'package:connecta/screens/settings/settings_screen.dart';
+import 'package:connecta/screens/plans/tokens_screen.dart';
+import 'package:connecta/utils/text_strings.dart';
+import 'package:connecta/widgets/custom_button.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -10,44 +14,99 @@ class ProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Profile'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsScreen()),
-            ),
+        backgroundColor: theme.colorScheme.surface,
+        elevation: 2,
+        shadowColor: theme.colorScheme.shadow.withOpacity(0.1),
+        leading: IconButton(
+          icon:
+            FontAwesomeIcons.arrowLeft,
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          AppText.profile,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
           ),
-        ],
+        ),
+        centerTitle: true,
+
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(16.0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+              const SizedBox(height: 8), // Reduced space since we have AppBar
+              
               Center(
                 child: Column(
                   children: [
-                    const CircleAvatar(
-                      radius: 50,
-                      backgroundImage: NetworkImage('https://i.pravatar.cc/300?img=5'),
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(60),
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.secondary,
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(56),
+                          image: const DecorationImage(
+                            image: NetworkImage('https://i.pravatar.cc/300?img=5'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     Text(
                       'Jeniffer Chil',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      '9:41',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FaIcon(
+                            FontAwesomeIcons.circle,
+                            size: 8,
+                            color: Colors.green,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Online',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -56,7 +115,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 24),
               _buildProfileSection(
                 context,
-                title: 'Profile',
+                title: AppText.profile,
                 items: [
                   _ProfileItem(label: 'Username', value: 'Jeniffer Chil'),
                   _ProfileItem(label: 'Age', value: '23'),
@@ -75,49 +134,91 @@ class ProfileScreen extends StatelessWidget {
               _buildSocialLinkSection(context),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.1),
+                      theme.colorScheme.secondary.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withOpacity(0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Balance:',
-                          style: theme.textTheme.bodyLarge,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const FaIcon(
+                            FontAwesomeIcons.coins,
+                            color: Colors.amber,
+                            size: 20,
+                          ),
                         ),
-                        Row(
-                          children: [
-                            const Icon(Icons.wb_sunny_outlined),
-                            const SizedBox(width: 4),
-                            Text(
-                              '69',
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Wallet Balance',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
                             ),
-                          ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '69 Coins',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {},
-                            child: const Text('recharge'),
+                          child: PrimaryButton(
+                            text: 'Recharge',
+                            icon: FontAwesomeIcons.plus,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>  TokensScreen(),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {},
-                            child: const Text('wp'),
+                          child: SecondaryButton(
+                            text: 'Withdraw',
+                            icon: FontAwesomeIcons.arrowDown,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>  TokensScreen(),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -125,26 +226,55 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-              SizedBox(
+              const SizedBox(height: 32),
+              Container(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _confirmLogout(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade50,
-                    foregroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Column(
+                  children: [
+                    FaIcon(
+                      FontAwesomeIcons.arrowRightFromBracket,
+                      color: Colors.red,
+                      size: 32,
                     ),
-                  ),
-                  child: const Text('Logout'),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Ready to leave?',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'We\'ll miss you! You can always come back.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.red.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    CustomButton(
+                      text: AppText.logout,
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                      width: double.infinity,
+                      icon: FontAwesomeIcons.arrowRightFromBracket,
+                      onPressed: () => _confirmLogout(context),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-      ),
+      )
+    ])
     );
   }
 
@@ -155,42 +285,74 @@ class ProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: FaIcon(
+                  FontAwesomeIcons.user,
+                  color: theme.colorScheme.primary,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           if (items.isNotEmpty)
             Column(
-              children: items.map((item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+              children: items.map((item) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      width: 100,
+                      width: 80,
                       child: Text(
                         item.label,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Text(
                         item.value,
-                        style: theme.textTheme.bodyMedium,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
@@ -198,72 +360,117 @@ class ProfileScreen extends StatelessWidget {
               )).toList(),
             )
           else
-            Text(
-              'No linked accounts',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.grey,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  FaIcon(
+                    FontAwesomeIcons.link,
+                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'No linked accounts yet',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
               ),
             ),
-        ],
-      ),
+        ]
+      )
     );
   }
 
   Widget _buildSocialLinkSection(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Link Social Platforms',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: FaIcon(
+                  FontAwesomeIcons.share,
+                  color: theme.colorScheme.secondary,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Link Social Platforms',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _SocialPlatformLinkRow(
-            icon: Icons.facebook,
+            icon: FontAwesomeIcons.facebook,
             label: 'Facebook',
+            color: Colors.blue,
             onPressed: () {
-              // TODO: Implement Facebook linking logic
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Facebook linking coming soon!')),
+                SnackBar(content: Text(AppText.comingSoon)),
               );
             },
           ),
           _SocialPlatformLinkRow(
-            icon: Icons.alternate_email,
+            icon: FontAwesomeIcons.twitter,
             label: 'Twitter',
+            color: Colors.lightBlue,
             onPressed: () {
-              // TODO: Implement Twitter linking logic
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Twitter linking coming soon!')),
+                SnackBar(content: Text(AppText.comingSoon)),
               );
             },
           ),
           _SocialPlatformLinkRow(
-            icon: Icons.camera_alt,
+            icon: FontAwesomeIcons.instagram,
             label: 'Instagram',
+            color: Colors.pink,
             onPressed: () {
-              // TODO: Implement Instagram linking logic
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Instagram linking coming soon!')),
+                SnackBar(content: Text(AppText.comingSoon)),
               );
             },
           ),
           _SocialPlatformLinkRow(
-            icon: Icons.play_circle,
+            icon: FontAwesomeIcons.tiktok,
             label: 'TikTok',
+            color: Colors.black,
             onPressed: () {
-              // TODO: Implement TikTok linking logic
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('TikTok linking coming soon!')),
+                SnackBar(content: Text(AppText.comingSoon)),
               );
             },
           ),
@@ -276,26 +483,45 @@ class ProfileScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            FaIcon(
+              FontAwesomeIcons.triangleExclamation,
+              color: Colors.orange,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              AppText.logout,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Text('Are you sure you want to logout? You will need to sign in again to access your account.'),
         actions: [
-          TextButton(
+          SecondaryButton(
+            text: AppText.cancel,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
           ),
-          TextButton(
+          const SizedBox(width: 8),
+          CustomButton(
+            text: AppText.logout,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            icon: FontAwesomeIcons.arrowRightFromBracket,
             onPressed: () {
               Navigator.pop(context);
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-                    (route) => false,
+                (route) => false,
               );
             },
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
-            ),
           ),
         ],
       ),
@@ -313,29 +539,60 @@ class _ProfileItem {
 class _SocialPlatformLinkRow extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onPressed;
 
   const _SocialPlatformLinkRow({
     required this.icon,
     required this.label,
+    required this.color,
     required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+        ),
+      ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blueAccent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(label, style: theme.textTheme.bodyMedium),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: FaIcon(
+              icon,
+              color: color,
+              size: 20,
+            ),
           ),
-          TextButton(
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          CustomButton(
+            text: 'Link',
+            backgroundColor: color,
+            textColor: Colors.white,
+            height: 36,
+            borderRadius: 18,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             onPressed: onPressed,
-            child: const Text('Link'),
           ),
         ],
       ),

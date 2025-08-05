@@ -1,18 +1,16 @@
 import 'package:connecta/screens/chat/chat_screen.dart';
-import 'package:connecta/screens/discover/discover_screen.dart';
-import 'package:connecta/screens/home/live_screen.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:connecta/screens/home/meet_screen.dart';
-import 'package:connecta/screens/home/call_screen.dart';
+import 'package:connecta/screens/home/home_screen.dart';
+import 'package:connecta/screens/home/likes_screen.dart';
+import 'package:connecta/screens/plans/subscription_screen.dart';
 import 'package:connecta/screens/profile/profile_screen.dart';
 import 'package:connecta/screens/settings/settings_screen.dart';
+import 'package:connecta/utils/text_strings.dart';
 import 'package:connecta/widgets/custom_bottom_nav.dart';
-import 'package:connecta/widgets/user_card.dart';
-import 'package:connecta/services/user_service.dart';
-import 'package:connecta/models/user_model.dart';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:ui';
 
-import 'home/home_screen.dart';
+import 'live/live_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -22,35 +20,41 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 2; // Default to Home tab
+  int _currentIndex = 0;
 
-  // Screens for bottom navigation
-  // 0: Connecta
-  // 1: Meet
-  // 2: Live
-  // 3: Home
-  // 4: Chat
-  // 5: Plans/Store
-  // 6: Notification
-  // 7: Profile
   final List<Widget> _bottomNavScreens = [
-    const DiscoverScreen(),         // 0: Connecta
-    const LiveScreen(),         // 1: Meet
-    const HomeScreen(),         // 2: Live
-    const ChatScreen(),         // 4: Chat
-    const ProfileScreen(),     // 5: Plans/Store
-    // Dummy Notification Screen
-    Scaffold(
-      body: Center(child: Text('Notifications', style: TextStyle(fontSize: 24))),
-    ),
-    const ProfileScreen(),      // 7: Profile (must be at the end)
+    const HomeScreen(),         // 0: Home (Meet/Call)
+    const LiveScreen(),         // 1: Live
+    const ChatScreen(),         // 2: Chat
+    const LikesScreen(),      // 3: Likes
+    const SubscriptionScreen(),        // 4: Plans
+  ];
+
+  final List<String> _screenTitles = [
+    AppText.appName,
+    AppText.appName,
+    AppText.appName,
+    AppText.appName,
+    AppText.appName,
+  ];
+
+  final List<IconData> _screenIcons = [
+    FontAwesomeIcons.house,
+    FontAwesomeIcons.video,
+    FontAwesomeIcons.commentDots,
+    FontAwesomeIcons.solidHeart,
+    FontAwesomeIcons.crown,
   ];
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      appBar: _buildAppBarForIndex(_currentIndex),
-      body: _bottomNavScreens[_currentIndex],
+      appBar: _buildAppBar(),
+      body: SafeArea(
+        child: _bottomNavScreens[_currentIndex],
+      ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
@@ -58,68 +62,209 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  PreferredSizeWidget? _buildAppBarForIndex(int index) {
-    if (index == 3) return null; // Home tab: no app bar
-    String title = 'Connecta';
-    IconData? icon;
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      title: Row(
-        children: [
-          if (icon != null) ...[
-            Icon(icon, color: Colors.pinkAccent, size: 28),
-            const SizedBox(width: 10),
-          ],
-          ShaderMask(
-            shaderCallback: (Rect bounds) {
-              return const LinearGradient(
-                colors: [Colors.pink, CupertinoColors.systemPink],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ).createShader(bounds);
-            },
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontFamily: 'Baloo',
+  PreferredSizeWidget _buildAppBar() {
+    final theme = Theme.of(context);
+    
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: AppBar(
+            backgroundColor: theme.colorScheme.surface.withOpacity(0.8),
+            elevation: 0,
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.surface.withAlpha(90),
+                    theme.colorScheme.surface.withAlpha(70),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary.withOpacity(0.1),
+                        theme.colorScheme.primary.withOpacity(0.05),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: FaIcon(
+                    _screenIcons[_currentIndex],
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ShaderMask(
+                  shaderCallback: (Rect bounds) {
+                    return LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.secondary,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds);
+                  },
+                  child: Text(
+                    _screenTitles[_currentIndex],
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Notifications screen coming soon!')),
-            );
-          },
+        // Notifications icon with badge effect
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary.withOpacity(0.1),
+                theme.colorScheme.primary.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.primary.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Stack(
+            children: [
+              IconButton(
+                icon: FaIcon(
+                  FontAwesomeIcons.bell,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppText.notificationComingSoon)),
+                  );
+                },
+              ),
+              // Notification badge
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.5),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        IconButton(
-          icon: const Icon(Icons.settings_rounded),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsScreen()),
-            );
-          },
+        // Settings icon with enhanced styling
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary.withOpacity(0.1),
+                theme.colorScheme.primary.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.primary.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: IconButton(
+            icon: FaIcon(
+              FontAwesomeIcons.gear,
+              color: theme.colorScheme.primary,
+              size: 20,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
         ),
-        IconButton(
-          icon: const Icon(Icons.person_rounded),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          },
+        // Profile icon with avatar-like styling
+        Container(
+          margin: const EdgeInsets.only(right: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.primary.withOpacity(0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const FaIcon(
+              FontAwesomeIcons.user,
+              color: Colors.white,
+              size: 20,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+          ),
         ),
-      ],
+      ])
+        ),
+      ),
     );
   }
-
 }

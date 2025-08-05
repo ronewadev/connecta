@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../models/post_model.dart';
-import 'post.dart';
 import 'dart:math';
 
 class PostsWidget extends StatelessWidget {
@@ -31,9 +30,15 @@ class PostsWidget extends StatelessWidget {
       posts = posts.where((p) => p.content.toLowerCase().contains(search) || p.username.toLowerCase().contains(search)).toList();
     }
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 16),
       itemCount: posts.length,
       itemBuilder: (context, i) {
-        return PostCard(post: posts[i]);
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          //child: PostCard(post: posts[i]),
+        );
       },
     );
   }

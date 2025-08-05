@@ -1,12 +1,24 @@
+import 'package:connecta/providers/theme_provider.dart';
+import 'package:connecta/screens/auth/welcome_screen.dart';
+import 'package:connecta/screens/main_screen.dart';
+import 'package:connecta/services/subscriptions/subscription_services.dart';
+import 'package:connecta/utils/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:connecta/services/theme_service.dart';
-import 'package:connecta/screens/auth/welcome_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize theme provider
+  final themeProvider = ThemeProvider();
+  await themeProvider.loadThemePreferences();
+  
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeService(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: themeProvider),
+        ChangeNotifierProvider(create: (context) => SubscriptionService()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -17,27 +29,45 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeService = Provider.of<ThemeService>(context);
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        if (themeProvider.isLoading) {
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(
+                  color: AppThemes.getThemeColor(AppThemeType.pink),
+                ),
+              ),
+            ),
+            debugShowCheckedModeBanner: false,
+          );
+        }
 
-    return MaterialApp(
-      title: 'Connecta',
-      theme: ThemeData(
-        primaryColor: themeService.currentTheme.primaryColor,
-        scaffoldBackgroundColor: themeService.currentTheme.backgroundColor,
-        textTheme: TextTheme(
-          bodyLarge: TextStyle(color: themeService.currentTheme.textColor),
-          bodyMedium: TextStyle(color: themeService.currentTheme.textColor),
-        ),
-        appBarTheme: AppBarTheme(
-          backgroundColor: themeService.currentTheme.primaryColor,
-          titleTextStyle: TextStyle(
-            color: themeService.currentTheme.textColor,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+        return AnimatedTheme(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          data: themeProvider.isDarkMode 
+              ? themeProvider.darkTheme 
+              : themeProvider.lightTheme,
+          child: MaterialApp(
+            title: 'Connecta',
+            themeMode: themeProvider.themeMode,
+            theme: themeProvider.lightTheme,
+            darkTheme: themeProvider.darkTheme,
+            home: const WelcomeScreen(),
+            debugShowCheckedModeBanner: false,
+            builder: (context, child) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+                color: Theme.of(context).scaffoldBackgroundColor,
+                child: child,
+              );
+            },
           ),
-        ),
-      ),
-      home: const WelcomeScreen(),
+        );
+      },
     );
   }
 }

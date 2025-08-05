@@ -1,5 +1,7 @@
+
 class Chat {
   final String id;
+  final String userId;
   final String userName;
   final String lastMessage;
   final String avatarUrl;
@@ -7,6 +9,7 @@ class Chat {
 
   Chat({
     required this.id,
+    required this.userId,
     required this.userName,
     required this.lastMessage,
     required this.avatarUrl,
@@ -17,6 +20,7 @@ class Chat {
 List<Chat> demoChats = [
   Chat(
     id: '1',
+    userId: 'user_1',
     userName: 'Alice',
     lastMessage: 'Hey, how are you?',
     avatarUrl: 'https://i.pravatar.cc/150?img=1',
@@ -24,13 +28,15 @@ List<Chat> demoChats = [
   ),
   Chat(
     id: '2',
+    userId: 'user_2',
     userName: 'Bob',
-    lastMessage: 'Let’s meet tomorrow!',
+    lastMessage: 'Let\'s meet tomorrow!',
     avatarUrl: 'https://i.pravatar.cc/150?img=2',
     lastActive: DateTime.now().subtract(const Duration(hours: 1)),
   ),
   Chat(
     id: '3',
+    userId: 'user_3',
     userName: 'Cathy',
     lastMessage: 'Check out this photo!',
     avatarUrl: 'https://i.pravatar.cc/150?img=3',
