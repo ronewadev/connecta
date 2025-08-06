@@ -258,7 +258,7 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
                 ),
               ),
               Text(
-                'Step 3 of 5',
+                'Step 3 of 6',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.9),
                   fontSize: 16,
@@ -270,7 +270,7 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
           ),
           const SizedBox(height: 16),
           LinearProgressIndicator(
-            value: 0.6,
+            value: 0.5, // 3/6
             backgroundColor: Colors.white.withOpacity(0.2),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             minHeight: 4,

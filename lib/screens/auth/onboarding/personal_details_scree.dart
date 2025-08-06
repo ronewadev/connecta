@@ -333,7 +333,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
                 ),
               ),
               Text(
-                'Step 1 of 5',
+                'Step 1 of 6',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.9),
                   fontSize: 16,
@@ -345,7 +345,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
           ),
           const SizedBox(height: 16),
           LinearProgressIndicator(
-            value: 0.2,
+            value: 0.17, // 1/6
             backgroundColor: Colors.white.withOpacity(0.2),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             minHeight: 4,

@@ -279,7 +279,7 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
                 ),
               ),
               Text(
-                'Step 2 of 5',
+                'Step 2 of 6',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.9),
                   fontSize: 16,
@@ -291,7 +291,7 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
           ),
           const SizedBox(height: 16),
           LinearProgressIndicator(
-            value: 0.4,
+            value: 0.33, // 2/6
             backgroundColor: Colors.white.withOpacity(0.2),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             minHeight: 4,

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:connecta/screens/auth/onboarding/link_social_screen.dart';
+import 'package:connecta/screens/auth/onboarding/preferences_screen.dart';
 
 class LookingForScreen extends StatefulWidget {
   final String email;
@@ -323,7 +323,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                 ),
               ),
               Text(
-                'Step 4 of 5',
+                'Step 4 of 6',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.9),
                   fontSize: 16,
@@ -335,7 +335,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
           ),
           const SizedBox(height: 16),
           LinearProgressIndicator(
-            value: 0.8,
+            value: 0.67, // 4/6
             backgroundColor: Colors.white.withOpacity(0.2),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             minHeight: 4,
@@ -508,7 +508,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => LinkSocialScreen(
+        pageBuilder: (context, animation, secondaryAnimation) => PreferencesScreen(
           email: widget.email,
           password: widget.password,
           username: widget.username,

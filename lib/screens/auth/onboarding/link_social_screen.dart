@@ -17,6 +17,16 @@ class LinkSocialScreen extends StatefulWidget {
   final List<String> hobbies;
   final List<String> dealBreakers;
   final List<String> lookingFor;
+  // New preference parameters
+  final List<int> ageRange;
+  final int maxDistance;
+  final List<String> interestedIn;
+  final List<String> relationshipType;
+  final List<String> education;
+  final List<String> lifestyle;
+  final bool showOnline;
+  final bool verifiedOnly;
+  final bool photoRequired;
 
   const LinkSocialScreen({
     super.key,
@@ -33,6 +43,15 @@ class LinkSocialScreen extends StatefulWidget {
     required this.hobbies,
     required this.dealBreakers,
     required this.lookingFor,
+    required this.ageRange,
+    required this.maxDistance,
+    required this.interestedIn,
+    required this.relationshipType,
+    required this.education,
+    required this.lifestyle,
+    required this.showOnline,
+    required this.verifiedOnly,
+    required this.photoRequired,
   });
 
   @override
@@ -69,7 +88,7 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
     'Instagram': const Color(0xFFE4405F),
     'TikTok': const Color(0xFF000000),
     'Snapchat': const Color(0xFFFFFC00),
-    'X': const Color(0xFF1DA1F2),
+    'X': const Color(0xFF131313),
     'Facebook': const Color(0xFF1877F3),
     'WhatsApp': const Color(0xFF25D366),
   };
@@ -420,7 +439,7 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
                 ),
               ),
               Text(
-                'Step 5 of 5',
+                'Step 6 of 6',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.9),
                   fontSize: 16,
@@ -593,7 +612,7 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
           children: [
             const FaIcon(FontAwesomeIcons.checkCircle, color: Colors.white),
             const SizedBox(width: 12),
-            const Text('Profile created successfully! Welcome to Connecta!'),
+            const Text('Profile created successfully! \nWelcome to Connecta!'),
           ],
         ),
         backgroundColor: const Color(0xFF4CAF50),
