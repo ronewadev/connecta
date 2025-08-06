@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:connecta/models/theme_model.dart';
-import 'package:connecta/widgets/premium_badge.dart';
+import 'package:connecta/screens/plans/widgets/premium_badge.dart';
 
 class ThemePreviewCard extends StatelessWidget {
   final AppTheme theme;

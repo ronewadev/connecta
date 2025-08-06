@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/user_model.dart';
+import '../providers/theme_provider.dart';
 
 class AuthService with ChangeNotifier {
   User? _currentUser;
@@ -25,9 +27,20 @@ class AuthService with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> logout() async {
+  Future<void> logout([BuildContext? context]) async {
     _currentUser = null;
     _isAuthenticated = false;
+    
+    // Reset theme to pink on logout
+    if (context != null) {
+      try {
+        final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+        await themeProvider.resetThemeToPink();
+      } catch (e) {
+        debugPrint('Error resetting theme on logout: $e');
+      }
+    }
+    
     notifyListeners();
   }
 

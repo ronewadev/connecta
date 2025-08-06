@@ -9,6 +9,7 @@ class User {
   final String nationality;
   final String location;
   final String? profileImageUrl;
+  final List<String> profileImages;
   final List<String> interests;
   final String? bio;
   final String subscriptionType; // 'basic', 'premium', 'infinity'
@@ -18,6 +19,7 @@ class User {
   final Map<String, dynamic> preferences;
   final bool isVerified;
   final bool isOnline;
+  final DateTime lastActive;
   final List<String> socialMediaLinks;
 
   User({
@@ -31,6 +33,7 @@ class User {
     required this.nationality,
     required this.location,
     this.profileImageUrl,
+    this.profileImages = const [],
     this.interests = const [],
     this.bio,
     this.subscriptionType = 'basic',
@@ -40,8 +43,9 @@ class User {
     this.preferences = const {},
     this.isVerified = false,
     this.isOnline = false,
+    DateTime? lastActive,
     this.socialMediaLinks = const [],
-  });
+  }) : lastActive = lastActive ?? DateTime.now();
 
   factory User.fromMap(Map<String, dynamic> map, String documentId) {
     return User(
@@ -55,6 +59,7 @@ class User {
       nationality: map['nationality'] ?? '',
       location: map['location'] ?? '',
       profileImageUrl: map['profileImageUrl'],
+      profileImages: List<String>.from(map['profileImages'] ?? []),
       interests: List<String>.from(map['interests'] ?? []),
       bio: map['bio'],
       subscriptionType: map['subscriptionType'] ?? 'basic',
@@ -66,6 +71,9 @@ class User {
       preferences: Map<String, dynamic>.from(map['preferences'] ?? {}),
       isVerified: map['isVerified'] ?? false,
       isOnline: map['isOnline'] ?? false,
+      lastActive: map['lastActive'] != null
+          ? (map['lastActive']).toDate()
+          : DateTime.now(),
       socialMediaLinks: List<String>.from(map['socialMediaLinks'] ?? []),
     );
   }
@@ -81,6 +89,7 @@ class User {
       'nationality': nationality,
       'location': location,
       'profileImageUrl': profileImageUrl,
+      'profileImages': profileImages,
       'interests': interests,
       'bio': bio,
       'subscriptionType': subscriptionType,
@@ -90,6 +99,7 @@ class User {
       'preferences': preferences,
       'isVerified': isVerified,
       'isOnline': isOnline,
+      'lastActive': lastActive,
       'socialMediaLinks': socialMediaLinks,
     };
   }

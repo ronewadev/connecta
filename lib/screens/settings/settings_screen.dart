@@ -2,7 +2,7 @@ import 'package:connecta/screens/settings/theme_selector_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:connecta/providers/theme_provider.dart';
-import 'package:connecta/widgets/settings_tile.dart';
+import 'package:connecta/screens/settings/widgets/settings_tile.dart';
 import 'package:connecta/utils/text_strings.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:ui';

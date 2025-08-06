@@ -1,6 +1,6 @@
 import 'package:connecta/models/user_model.dart';
 import 'package:connecta/utils/text_strings.dart';
-import 'package:connecta/widgets/user_card.dart';
+import 'package:connecta/screens/home/widgets/user_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
@@ -72,9 +72,17 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
           gender: 'Female',
           nationality: 'USA',
           location: 'New York',
-          profileImageUrl: 'https://i.pravatar.cc/400?img=32',
+          profileImageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          profileImages: [
+            'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          ],
           bio: 'Adventure seeker and coffee lover ☕ Love exploring new places and meeting interesting people! 🌍✈️',
           interests: ['Hiking', 'Photography', 'Travel', 'Coffee', 'Art'],
+          isOnline: true,
+          lastActive: DateTime.now(),
         ),
         User(
           id: '2',
@@ -85,9 +93,16 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
           gender: 'Male',
           nationality: 'Canada',
           location: 'Toronto',
-          profileImageUrl: 'https://i.pravatar.cc/400?img=18',
+          profileImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          profileImages: [
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          ],
           bio: 'Musician by night, developer by day 🎸💻 Looking for someone to share adventures with!',
           interests: ['Music', 'Coding', 'Gaming', 'Movies', 'Food'],
+          isOnline: false,
+          lastActive: DateTime.now().subtract(const Duration(hours: 3)),
         ),
         User(
           id: '3',
@@ -98,9 +113,18 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
           gender: 'Female',
           nationality: 'Spain',
           location: 'Barcelona',
-          profileImageUrl: 'https://i.pravatar.cc/400?img=25',
+          profileImageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          profileImages: [
+            'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          ],
           bio: 'Yoga instructor and mindfulness coach 🧘‍♀️ Spreading positive vibes everywhere I go ✨',
           interests: ['Yoga', 'Meditation', 'Wellness', 'Nature', 'Books'],
+          isOnline: false,
+          lastActive: DateTime.now().subtract(const Duration(hours: 36)),
         ),
         User(
           id: '4',
@@ -111,9 +135,15 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
           gender: 'Male',
           nationality: 'Australia',
           location: 'Sydney',
-          profileImageUrl: 'https://i.pravatar.cc/400?img=12',
+          profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          profileImages: [
+            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          ],
           bio: 'Fitness enthusiast and outdoor lover 🏋️‍♂️🏖️ Life is better with good company!',
           interests: ['Fitness', 'Surfing', 'Cooking', 'Travel', 'Dogs'],
+          isOnline: false,
+          lastActive: DateTime.now().subtract(const Duration(hours: 12)),
         ),
         User(
           id: '5',
@@ -124,9 +154,16 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
           gender: 'Female',
           nationality: 'UK',
           location: 'London',
-          profileImageUrl: 'https://i.pravatar.cc/400?img=45',
+          profileImageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          profileImages: [
+            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+            'https://images.unsplash.com/photo-1488716820095-cbe80883c496?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
+          ],
           bio: 'Artist and creative soul 🎨 Always looking for inspiration in everyday moments',
           interests: ['Art', 'Painting', 'Museums', 'Wine', 'Culture'],
+          isOnline: true,
+          lastActive: DateTime.now(),
         ),
       ]);
     });
@@ -174,11 +211,11 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     }
   }
   
-  void _showFeedback(String text, Color color) {
+  void _showFeedback(String text, Color color, IconData icon) {
     setState(() {
       _showLikeFeedback = text == 'LIKE';
       _showDislikeFeedback = text == 'NOPE';
-      _showSuperLikeFeedback = text == 'SUPER LIKE';
+      _showSuperLikeFeedback = text == 'SUPER\nLIKE';
     });
     
     _feedbackController.forward().then((_) {
@@ -197,15 +234,15 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     // Handle different swipe directions
     switch (direction) {
       case CardSwiperDirection.left:
-        _showFeedback('NOPE', Colors.red);
+        _showFeedback('NOPE', Colors.red, FontAwesomeIcons.heartCrack);
         _onUserDisliked(previousIndex);
         break;
       case CardSwiperDirection.right:
-        _showFeedback('LIKE', Colors.green);
+        _showFeedback('LIKE', Colors.green, FontAwesomeIcons.heart);
         _onUserLiked(previousIndex);
         break;
       case CardSwiperDirection.top:
-        _showFeedback('SUPER\nLIKE', Colors.blue);
+        _showFeedback('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star);
         _onUserSuperLiked(previousIndex);
         break;
       case CardSwiperDirection.bottom:
@@ -279,7 +316,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                     onSwipe: _onSwipe,
                     numberOfCardsDisplayed: 3,
                     backCardOffset: const Offset(0, 40),
-                    padding: const EdgeInsets.fromLTRB(20, 80, 20, 140),
+                    padding: const EdgeInsets.fromLTRB(16, 80, 16, 120),
                     allowedSwipeDirection: const AllowedSwipeDirection.only(
                       left: true,   // Dislike
                       right: true,  // Like
@@ -406,9 +443,9 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
           ),
 
           // Feedback overlays with animations
-          if (_showLikeFeedback) _buildFeedbackOverlay('LIKE', Colors.green),
-          if (_showDislikeFeedback) _buildFeedbackOverlay('NOPE', Colors.red),
-          if (_showSuperLikeFeedback) _buildFeedbackOverlay('SUPER\nLIKE', Colors.blue),
+          if (_showLikeFeedback) _buildFeedbackOverlay('LIKE', Colors.green, FontAwesomeIcons.heart),
+          if (_showDislikeFeedback) _buildFeedbackOverlay('NOPE', Colors.red, FontAwesomeIcons.heartCrack),
+          if (_showSuperLikeFeedback) _buildFeedbackOverlay('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star),
 
           // Action buttons
           Positioned(
@@ -463,7 +500,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildFeedbackOverlay(String text, Color color) {
+  Widget _buildFeedbackOverlay(String text, Color color, IconData icon) {
     return AnimatedBuilder(
       animation: _feedbackController,
       builder: (context, child) {
@@ -474,7 +511,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
               child: Transform.scale(
                 scale: _feedbackScale.value,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
                   decoration: BoxDecoration(
                     color: color,
                     borderRadius: BorderRadius.circular(20),
@@ -486,15 +523,26 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  child: Text(
-                    text,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 2,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FaIcon(
+                        icon,
+                        color: Colors.white,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        text,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

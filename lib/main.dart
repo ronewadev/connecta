@@ -1,6 +1,5 @@
 import 'package:connecta/providers/theme_provider.dart';
-import 'package:connecta/screens/auth/welcome_screen.dart';
-import 'package:connecta/screens/main_screen.dart';
+import 'package:connecta/screens/splash_screen.dart';
 import 'package:connecta/services/subscriptions/subscription_services.dart';
 import 'package:connecta/utils/app_themes.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +54,7 @@ class MyApp extends StatelessWidget {
             themeMode: themeProvider.themeMode,
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
-            home: const WelcomeScreen(),
+            home: const SplashScreen(),
             debugShowCheckedModeBanner: false,
             builder: (context, child) {
               return AnimatedContainer(

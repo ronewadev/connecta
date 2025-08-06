@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:connecta/widgets/custom_button.dart';
-import 'package:connecta/widgets/premium_badge.dart';
+import 'package:connecta/screens/plans/widgets/premium_badge.dart';
 
 class SubscriptionScreen extends StatelessWidget {
   const SubscriptionScreen({super.key});
@@ -305,19 +305,23 @@ class SubscriptionScreen extends StatelessWidget {
                 context,
                 themeProvider,
                 title: 'Premium',
-                price: '\$9.99/month',
+                price: '\$19.99/month',
                 description: 'Most popular choice',
                 features: const [
                   'Unlimited matches',
+                  'Unlimited super likes',
                   'Advanced filters',
                   'See who liked you',
-                  'Priority placement',
-                  '5 gold tokens monthly',
-                  'Premium badge',
+                  'Profile highlighting',
+                  '5 linked social media messages per month',
+                  '15 direct messages per month',
+                  '20 gold tokens monthly',
+                  '100 silver tokens monthly',
+                  'Premium Gold badge',
                 ],
                 isCurrent: currentSubscription == 'premium',
                 isPremium: true,
-                gradientColors: [Colors.purple.shade400, Colors.blue.shade400],
+                gradientColors: [Colors.amber.shade400, Colors.orange.shade600],
                 onPressed: () {
                   subscriptionService.subscribe('premium', const Duration(days: 30));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -332,21 +336,65 @@ class SubscriptionScreen extends StatelessWidget {
               _buildSubscriptionCard(
                 context,
                 themeProvider,
-                title: 'Infinity',
-                price: '\$29.99/month',
-                description: 'Ultimate dating experience',
+                title: 'Elite',
+                price: '\$49.99/month',
+                description: 'For the truly dedicated',
                 features: const [
                   'All Premium features',
-                  'Unlimited gold tokens',
-                  'Profile highlighting',
+                  'Unlimited returns',
+                  'Unlimited live streams',
+                  'Priority placement',
+                  'Profile boost (3x per month)',
                   'Exclusive themes',
+                  'Unlimited direct messages',
+                  '15 linked social media messages per month',
+                  '50 gold tokens monthly',
+                  '200 silver tokens monthly',
                   'Priority customer support',
-                  'Advanced analytics',
+                  'Read receipts',
+                  'Elite Diamond badge',
+                ],
+                isCurrent: currentSubscription == 'elite',
+                isPremium: true,
+                gradientColors: [Colors.cyanAccent.shade400, Colors.lightBlueAccent.shade700],
+                onPressed: () {
+                  subscriptionService.subscribe('elite', const Duration(days: 30));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Elite subscription activated!'),
+                      backgroundColor: Colors.pink,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildSubscriptionCard(
+                context,
+                themeProvider,
+                title: 'Infinity',
+                price: '\$99.99/month',
+                description: 'Ultimate dating experience',
+                features: const [
+                  'All Elite features',
+                  'Unlimited profile boosts',
+                  'Unlimited linked social media messages',
+                  'Exclusive views & filters',
+                  'Advanced analytics & insights',
                   'Exclusive events access',
+                  'Personal dating coach consultation',
+                  'VIP customer support',
+                  'Profile verification priority',
+                  'Custom themes & animations',
+                  'Video call features',
+                  '100 gold tokens monthly',
+                  '500 silver tokens monthly',
+                  'Travel mode',
+                  'Incognito browsing',
+                  'Infinity badge',
                 ],
                 isCurrent: currentSubscription == 'infinity',
                 isPremium: true,
-                gradientColors: [Colors.amber.shade400, Colors.orange.shade400],
+                gradientColors: [Colors.deepPurple.shade600, Colors.purpleAccent.shade400],
                 onPressed: () {
                   subscriptionService.subscribe('infinity', const Duration(days: 30));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -514,10 +562,34 @@ class SubscriptionScreen extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: FaIcon(
-                    isPremium ? FontAwesomeIcons.crown : FontAwesomeIcons.user,
-                    color: Colors.white,
-                    size: 24,
+                  child: Builder(
+                    builder: (context) {
+                      if (title == 'Infinity') {
+                        return FaIcon(
+                          FontAwesomeIcons.infinity,
+                          color: Colors.white,
+                          size: 28,
+                        );
+                      } else if (title == 'Elite') {
+                        return FaIcon(
+                          FontAwesomeIcons.gem,
+                          color: Colors.white,
+                          size: 24,
+                        );
+                      } else if (isPremium) {
+                        return FaIcon(
+                          FontAwesomeIcons.crown,
+                          color: Colors.white,
+                          size: 24,
+                        );
+                      } else {
+                        return FaIcon(
+                          FontAwesomeIcons.user,
+                          color: Colors.white,
+                          size: 24,
+                        );
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -534,8 +606,16 @@ class SubscriptionScreen extends StatelessWidget {
                             ) ?? const TextStyle(),
                             child: Text(title),
                           ),
-                          if (isPremium) const SizedBox(width: 8),
-                          if (isPremium) const PremiumBadge(type: 'premium'),
+                          if (title == 'Infinity') ...[
+                            const SizedBox(width: 8),
+                            const PremiumBadge(type: 'infinity')
+                          ] else if (title == 'Elite') ...[
+                            const SizedBox(width: 8),
+                            const PremiumBadge(type: 'diamond')
+                          ] else if (title == 'Premium') ...[
+                            const SizedBox(width: 8),
+                            const PremiumBadge(type: 'gold')
+                          ],
                         ],
                       ),
                       const SizedBox(height: 4),

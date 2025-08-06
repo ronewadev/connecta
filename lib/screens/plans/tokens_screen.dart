@@ -1,11 +1,45 @@
+import 'package:connecta/screens/plans/stream_ads_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' hide IconButton;
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/widgets/custom_button.dart';
 import 'package:connecta/utils/text_strings.dart';
 
-class TokensScreen extends StatelessWidget {
+class TokensScreen extends StatefulWidget {
   const TokensScreen({super.key});
+
+  @override
+  State<TokensScreen> createState() => _TokensScreenState();
+}
+
+class _TokensScreenState extends State<TokensScreen> {
+  // Custom token purchase values
+  double _goldTokensSlider = 5.0; // Minimum 5 tokens
+  final TextEditingController _customAmountController = TextEditingController();
+  
+  @override
+  void initState() {
+    super.initState();
+    _customAmountController.text = _goldTokensSlider.round().toString();
+  }
+  
+  @override
+  void dispose() {
+    _customAmountController.dispose();
+    super.dispose();
+  }
+  
+  // Calculate silver tokens (2x for every 5 gold tokens)
+  int get _calculatedSilverTokens {
+    final goldTokens = _goldTokensSlider.round();
+    return (goldTokens ~/ 5) * 10 + (goldTokens % 5) * 2;
+  }
+  
+  // Calculate price based on gold tokens (example: $0.99 per gold token)
+  double get _calculatedPrice {
+    return _goldTokensSlider.round() * 0.99;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +180,7 @@ class TokensScreen extends StatelessWidget {
                   context,
                   title: 'Starter Pack',
                   goldTokens: 10,
-                  silverTokens: 50,
+                  silverTokens: 20,
                   price: '\$4.99',
                   color: Colors.blue,
                   isPopular: false,
@@ -156,7 +190,7 @@ class TokensScreen extends StatelessWidget {
                   context,
                   title: 'Popular Pack',
                   goldTokens: 25,
-                  silverTokens: 100,
+                  silverTokens: 75,
                   price: '\$9.99',
                   color: Colors.purple,
                   isPopular: true,
@@ -165,12 +199,15 @@ class TokensScreen extends StatelessWidget {
                 _buildTokenPackage(
                   context,
                   title: 'Premium Pack',
-                  goldTokens: 60,
+                  goldTokens: 70,
                   silverTokens: 200,
                   price: '\$19.99',
                   color: Colors.amber,
                   isPopular: false,
                 ),
+                const SizedBox(height: 32),
+                // Custom Token Purchase Section
+                _buildCustomTokenPurchase(context),
                 const SizedBox(height: 32),
                 Text(
                   'Earn Free Tokens',
@@ -186,9 +223,12 @@ class TokensScreen extends StatelessWidget {
                   description: 'Earn 5 silver tokens per ad',
                   reward: '+5 Silver',
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppText.comingSoon)),
-                    );
+                   Navigator.push(
+                     context,
+                     MaterialPageRoute(
+                       builder: (context) => const StreamAdsScreen(),
+                     ),
+                   );
                   },
                 ),
                 const SizedBox(height: 12),
@@ -308,8 +348,8 @@ class TokensScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           colors: isPopular 
-              ? [color.withOpacity(0.1), color.withOpacity(0.05)]
-              : [Colors.white, Colors.grey.shade50],
+              ? [color.withAlpha(10), color.withAlpha(90)]
+              : [Colors.white, Colors.grey.shade200],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -588,6 +628,519 @@ class TokensScreen extends StatelessWidget {
             icon:
               FontAwesomeIcons.chevronRight,
 
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomTokenPurchase(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.deepPurple.withOpacity(0.1),
+            Colors.indigo.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.deepPurple.withOpacity(0.3),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.deepPurple.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.deepPurple, Colors.indigo],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const FaIcon(
+                  FontAwesomeIcons.sliders,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Custom Token Pack',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    Text(
+                      'Choose your perfect amount',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.deepPurple.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text(
+                  'CUSTOM',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          
+          // Token Display Cards
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.star,
+                        color: Colors.amber,
+                        size: 24,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${_goldTokensSlider.round()}',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                        ),
+                      ),
+                      Text(
+                        'Gold Tokens',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.amber.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      FaIcon(
+                        FontAwesomeIcons.coins,
+                        color: Colors.grey.shade600,
+                        size: 24,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '$_calculatedSilverTokens',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      Text(
+                        'Silver Tokens',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          
+          // Custom Amount Input
+          Text(
+            'Gold Tokens Amount',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
+                  ),
+                  child: TextField(
+                    controller: _customAmountController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Enter amount',
+                    ),
+                    onChanged: (value) {
+                      final amount = int.tryParse(value) ?? 5;
+                      if (amount >= 5 && amount <= 1000) {
+                        setState(() {
+                          _goldTokensSlider = amount.toDouble();
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total: \$${_calculatedPrice.toStringAsFixed(2)}',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    Text(
+                      '\$${(_calculatedPrice / _goldTokensSlider.round()).toStringAsFixed(2)} per gold token',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.deepPurple.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Drag Bar / Slider
+          Text(
+            'Drag to adjust amount (5 - 1000 tokens)',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              children: [
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 6,
+                    activeTrackColor: Colors.deepPurple,
+                    inactiveTrackColor: Colors.deepPurple.withOpacity(0.3),
+                    thumbColor: Colors.deepPurple,
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 12,
+                    ),
+                    overlayColor: Colors.deepPurple.withOpacity(0.2),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 20,
+                    ),
+                    valueIndicatorColor: Colors.deepPurple,
+                    valueIndicatorTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  child: Slider(
+                    value: _goldTokensSlider,
+                    min: 5,
+                    max: 1000,
+                    divisions: 199, // (1000-5)/5 = 199 divisions for increments of 5
+                    label: '${_goldTokensSlider.round()} Gold',
+                    onChanged: (value) {
+                      setState(() {
+                        _goldTokensSlider = value;
+                        _customAmountController.text = value.round().toString();
+                      });
+                      HapticFeedback.lightImpact();
+                    },
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '5',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.deepPurple,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '1000',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.deepPurple,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Bonus Information
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const FaIcon(
+                  FontAwesomeIcons.gift,
+                  color: Colors.green,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Bonus: For every 5 Gold tokens, get 2x bonus Silver tokens (10 Silver tokens)',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Purchase Button
+          SizedBox(
+            width: double.infinity,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.deepPurple, Colors.indigo],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  _showCustomPurchaseDialog(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 56),
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const FaIcon(
+                      FontAwesomeIcons.shoppingCart,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Buy ${_goldTokensSlider.round()} Gold + $_calculatedSilverTokens Silver',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCustomPurchaseDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.deepPurple, Colors.indigo],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const FaIcon(
+                FontAwesomeIcons.shoppingCart,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Confirm Purchase',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Gold Tokens:', style: theme.textTheme.bodyMedium),
+                      Text(
+                        '${_goldTokensSlider.round()}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Silver Tokens:', style: theme.textTheme.bodyMedium),
+                      Text(
+                        '$_calculatedSilverTokens',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Total Price:',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '\$${_calculatedPrice.toStringAsFixed(2)}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.deepPurple, Colors.indigo],
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Purchase feature coming soon!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              child: const Text(
+                'Purchase',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:connecta/models/theme_model.dart';
 import 'package:connecta/services/theme_service.dart';
-import 'package:connecta/widgets/theme_preview_card.dart';
+import 'package:connecta/screens/settings/widgets/theme_preview_card.dart';
 
 class ThemeSelectorScreen extends StatelessWidget {
   const ThemeSelectorScreen({super.key});

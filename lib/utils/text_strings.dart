@@ -103,6 +103,28 @@ class AppText {
   static const String lightMode = 'Light Mode';
   static const String darkMode = 'Dark Mode';
   static const String systemMode = 'System Mode';
+  
+  // About App Screen
+  static const String aboutConnecta = 'About Connecta';
+  static const String connectaDescription = 'Connecta is more than just a dating app. It\'s your gateway to meaningful connections, fun activities, and lasting relationships.';
+  static const String funActivitiesTitle = 'Fun Activities Together';
+  static const String funActivitiesDesc = 'Discover exciting activities and events you can enjoy with your matches. From coffee dates to adventure sports.';
+  static const String monetizationTitle = 'Affordable Premium Plans';
+  static const String monetizationDesc = 'Unlock premium features with our variety of affordable plans designed for all users and budgets.';
+  static const String cashbackTitle = 'Cashback Rewards';
+  static const String cashbackDesc = 'Giving back to you with pleasure! Earn rewards and cashback on your activities. This exciting feature is coming soon to enhance your experience.';
+  static const String moreThanDatingTitle = 'More Than Just Dating';
+  static const String moreThanDatingDesc = 'Build friendships, find workout partners, or discover people who share your hobbies and interests.';
+  static const String nearFarTitle = 'Connect Near & Far';
+  static const String nearFarDesc = 'Whether you\'re looking for someone nearby or open to long-distance connections, we\'ve got you covered.';
+  static const String spreadingLoveTitle = 'Spreading Love Everywhere';
+  static const String spreadingLoveDesc = 'Join our community of millions spreading love, positivity, and genuine connections across the globe.';
+  static const String readyTitle = 'Ready to Begin?';
+  static const String readyDesc = 'Your journey to finding meaningful connections starts here. Join Connecta today and discover your perfect match.';
+  static const String next = 'Next';
+  static const String previous = 'Previous';
+  static const String skip = 'Skip';
+  static const String amReady = 'I\'m Ready';
   static const String about = 'About';
   static const String helpSupport = 'Help & Support';
   static const String termsConditions = 'Terms & Conditions';

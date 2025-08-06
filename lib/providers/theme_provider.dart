@@ -23,12 +23,21 @@ class ThemeProvider with ChangeNotifier {
       final themeModeIndex = prefs.getInt('theme_mode') ?? ThemeMode.system.index;
       _themeMode = ThemeMode.values[themeModeIndex];
       
-      // Load selected theme
+      // Load selected theme - default to pink for logged out users
       final themeTypeIndex = prefs.getInt('theme_type') ?? AppThemeType.pink.index;
       _selectedTheme = AppThemeType.values[themeTypeIndex];
       
+      // Ensure pink is default for new installations
+      if (!prefs.containsKey('theme_type')) {
+        _selectedTheme = AppThemeType.pink;
+        await prefs.setInt('theme_type', AppThemeType.pink.index);
+      }
+      
     } catch (e) {
       debugPrint('Error loading theme preferences: $e');
+      // If there's an error, default to pink theme
+      _selectedTheme = AppThemeType.pink;
+      _themeMode = ThemeMode.system;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -89,4 +98,12 @@ class ThemeProvider with ChangeNotifier {
   
   // Get theme color for display - uses appropriate color for current mode
   Color get currentThemeColor => AppThemes.getCurrentThemeColor(_selectedTheme, isDarkMode);
+  
+  // Reset theme to pink (for logout)
+  Future<void> resetThemeToPink() async {
+    _selectedTheme = AppThemeType.pink;
+    _themeMode = ThemeMode.system;
+    notifyListeners();
+    await _saveThemePreferences();
+  }
 }
