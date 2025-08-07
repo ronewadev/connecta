@@ -276,6 +276,22 @@ class UserDatabase {
     _realtimeSubscription?.cancel();
     _userDataController.close();
   }
+
+  // Static method for direct streaming (similar to your example)
+  static Stream<UserData?> streamUser(String userId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.exists && snapshot.data() != null) {
+        final data = snapshot.data()!;
+        data['id'] = userId;
+        return UserData.fromFirestore(data);
+      }
+      return null;
+    });
+  }
 }
 
 // User data model

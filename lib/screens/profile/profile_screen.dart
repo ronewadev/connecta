@@ -1,11 +1,13 @@
 
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/auth/welcome_screen.dart';
 import 'package:connecta/screens/plans/tokens_screen.dart';
 import 'package:connecta/utils/text_strings.dart';
 import 'package:connecta/widgets/custom_button.dart' hide IconButton;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../database/user_database.dart';
 
@@ -17,9 +19,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final UserDatabase _userDatabase = UserDatabase();
-  UserData? _userData;
-  StreamSubscription<UserData?>? _userDataSubscription;
+  final User? firebaseUser = FirebaseAuth.instance.currentUser;
   
   // Age range slider values
   RangeValues _ageRange = const RangeValues(22, 30);
@@ -43,34 +43,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeUserData();
-  }
-
-  void _initializeUserData() async {
-    // Get current cached data immediately
-    _userData = _userDatabase.currentUserData;
-    if (_userData != null) {
-      setState(() {});
-    }
-    
-    // Initialize UserDatabase (this will set up real-time listener)
-    await _userDatabase.initializeUserData();
-    
-    // Listen to user data changes
-    _userDataSubscription = _userDatabase.userDataStream.listen((userData) {
-      if (mounted) {
-        setState(() {
-          _userData = userData;
-        });
-        print('Profile Screen: User data updated - ${userData?.username ?? 'null'}');
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _userDataSubscription?.cancel();
-    super.dispose();
   }
 
   Color _getSubscriptionColor(String subscriptionType) {
@@ -251,12 +223,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Text(
-                      _userData?.username ?? 'Loading...',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
+                    StreamBuilder<UserData?>(
+                      stream: firebaseUser != null 
+                          ? UserDatabase.streamUser(firebaseUser!.uid)
+                          : null,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && snapshot.data != null) {
+                          final userData = snapshot.data!;
+                          
+                          return Text(
+                            userData.username,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          );
+                        }
+                        return Text(
+                          'Loading...',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -288,16 +278,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              _buildProfileSection(
-                context,
-                title: AppText.profile,
-                items: [
-                  _ProfileItem(label: 'Username', value: _userData?.username ?? 'Loading...'),
-                  _ProfileItem(label: 'Age', value: _userData?.age.toString() ?? 'Loading...'),
-                  _ProfileItem(label: 'Gender', value: _userData?.gender ?? 'Loading...'),
-                  _ProfileItem(label: 'Mobile', value: _userData?.phone ?? 'Not provided'),
-                  _ProfileItem(label: 'Nationality', value: _userData?.nationality ?? 'Loading...'),
-                ],
+              StreamBuilder<DocumentSnapshot>(
+                stream: firebaseUser != null 
+                    ? FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(firebaseUser!.uid)
+                        .snapshots()
+                    : null,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data!.exists) {
+                    final data = snapshot.data!.data() as Map<String, dynamic>;
+                    data['id'] = firebaseUser!.uid;
+                    final userData = UserData.fromFirestore(data);
+                    
+                    return _buildProfileSection(
+                      context,
+                      title: AppText.profile,
+                      items: [
+                        _ProfileItem(label: 'Username', value: userData.username),
+                        _ProfileItem(label: 'Age', value: userData.age.toString()),
+                        _ProfileItem(label: 'Gender', value: userData.gender),
+                        _ProfileItem(label: 'Mobile', value: userData.phone ?? 'Not provided'),
+                        _ProfileItem(label: 'Nationality', value: userData.nationality),
+                      ],
+                    );
+                  }
+                  return _buildProfileSection(
+                    context,
+                    title: AppText.profile,
+                    items: [
+                      _ProfileItem(label: 'Username', value: 'Loading...'),
+                      _ProfileItem(label: 'Age', value: 'Loading...'),
+                      _ProfileItem(label: 'Gender', value: 'Loading...'),
+                      _ProfileItem(label: 'Mobile', value: 'Loading...'),
+                      _ProfileItem(label: 'Nationality', value: 'Loading...'),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 8),
 
@@ -399,38 +416,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.shade300,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                (_userData?.goldTokens ?? 0).toString(),
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: firebaseUser != null 
+                              ? FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(firebaseUser!.uid)
+                                  .snapshots()
+                              : null,
+                          builder: (context, snapshot) {
+                            int goldTokens = 0;
+                            int silverTokens = 0;
+                            
+                            if (snapshot.hasData && snapshot.data!.exists) {
+                              final data = snapshot.data!.data() as Map<String, dynamic>;
+                              data['id'] = firebaseUser!.uid;
+                              final userData = UserData.fromFirestore(data);
+                              goldTokens = userData.goldTokens;
+                              silverTokens = userData.silverTokens;
+                            }
+                            
+                            return Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade300,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    goldTokens.toString(),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            SizedBox(width: 10,),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade500,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                (_userData?.silverTokens ?? 0).toString(),
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                const SizedBox(width: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade500,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    silverTokens.toString(),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -525,14 +563,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildLookingForContent(BuildContext context) {
-    final lookingFor = _userData?.lookingFor ?? [];
-    
-    return _buildSubSection(
-      title: 'Looking For',
-      icon: FontAwesomeIcons.search,
-      color: const Color(0xFFF59E0B),
-      items: lookingFor,
-      context: context,
+    return StreamBuilder<DocumentSnapshot>(
+      stream: firebaseUser != null 
+          ? FirebaseFirestore.instance
+              .collection('users')
+              .doc(firebaseUser!.uid)
+              .snapshots()
+          : null,
+      builder: (context, snapshot) {
+        List<String> lookingFor = [];
+        
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          data['id'] = firebaseUser!.uid;
+          final userData = UserData.fromFirestore(data);
+          lookingFor = userData.lookingFor;
+        }
+        
+        return _buildSubSection(
+          title: 'Looking For',
+          icon: FontAwesomeIcons.search,
+          color: const Color(0xFFF59E0B),
+          items: lookingFor,
+          context: context,
+        );
+      },
     );
   }
 
@@ -747,32 +802,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildInterestsContent(BuildContext context) {
-    final theme = Theme.of(context);
-    final interests = _userData?.interests ?? [];
-    final hobbies = _userData?.hobbies ?? [];
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Interests Section
-        _buildSubSection(
-          title: 'Interests',
-          icon: FontAwesomeIcons.heart,
-          color: const Color(0xFFEC4899),
-          items: interests,
-          context: context,
-        ),
-        const SizedBox(height: 24),
+    return StreamBuilder<DocumentSnapshot>(
+      stream: firebaseUser != null 
+          ? FirebaseFirestore.instance
+              .collection('users')
+              .doc(firebaseUser!.uid)
+              .snapshots()
+          : null,
+      builder: (context, snapshot) {
+        List<String> interests = [];
+        List<String> hobbies = [];
         
-        // Hobbies Section
-        _buildSubSection(
-          title: 'Hobbies',
-          icon: FontAwesomeIcons.gamepad,
-          color: const Color(0xFF9333EA),
-          items: hobbies,
-          context: context,
-        ),
-      ],
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          data['id'] = firebaseUser!.uid;
+          final userData = UserData.fromFirestore(data);
+          interests = userData.interests;
+          hobbies = userData.hobbies;
+        }
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Interests Section
+            _buildSubSection(
+              title: 'Interests',
+              icon: FontAwesomeIcons.heart,
+              color: const Color(0xFFEC4899),
+              items: interests,
+              context: context,
+            ),
+            const SizedBox(height: 24),
+            
+            // Hobbies Section
+            _buildSubSection(
+              title: 'Hobbies',
+              icon: FontAwesomeIcons.gamepad,
+              color: const Color(0xFF9333EA),
+              items: hobbies,
+              context: context,
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -863,14 +935,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildRedFlagsContent(BuildContext context) {
-    final dealBreakers = _userData?.dealBreakers ?? [];
-    
-    return _buildSubSection(
-      title: 'Deal Breakers',
-      icon: FontAwesomeIcons.ban,
-      color: const Color(0xFFDC2626),
-      items: dealBreakers,
-      context: context,
+    return StreamBuilder<DocumentSnapshot>(
+      stream: firebaseUser != null 
+          ? FirebaseFirestore.instance
+              .collection('users')
+              .doc(firebaseUser!.uid)
+              .snapshots()
+          : null,
+      builder: (context, snapshot) {
+        List<String> dealBreakers = [];
+        
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          data['id'] = firebaseUser!.uid;
+          final userData = UserData.fromFirestore(data);
+          dealBreakers = userData.dealBreakers;
+        }
+        
+        return _buildSubSection(
+          title: 'Deal Breakers',
+          icon: FontAwesomeIcons.ban,
+          color: const Color(0xFFDC2626),
+          items: dealBreakers,
+          context: context,
+        );
+      },
     );
   }
 
@@ -1086,146 +1175,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInterestsSection(BuildContext context) {
-    final theme = Theme.of(context);
-    final interests = [
-      'Photography', 'Travel', 'Hiking', 'Cooking', 'Music',
-      'Dancing', 'Reading', 'Fitness', 'Art', 'Movies'
-    ];
-    final hobbies = [
-      'Yoga', 'Swimming', 'Gaming', 'Painting', 'Gardening',
-      'Writing', 'Cycling', 'Meditation'
-    ];
-    
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const FaIcon(
-                  FontAwesomeIcons.star,
-                  color: Colors.purple,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Interests & Hobbies',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Interests',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: interests.map((interest) => _buildChip(context, interest, Colors.blue)).toList(),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Hobbies',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: hobbies.map((hobby) => _buildChip(context, hobby, Colors.green)).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRedFlagsSection(BuildContext context) {
-    final theme = Theme.of(context);
-    final redFlags = [
-      'Smoking', 'Excessive Drinking', 'Dishonesty', 'Poor Communication',
-      'Lack of Ambition', 'Disrespectful Behavior'
-    ];
-    
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const FaIcon(
-                  FontAwesomeIcons.triangleExclamation,
-                  color: Colors.red,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Deal Breakers',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: redFlags.map((flag) => _buildChip(context, flag, Colors.red)).toList(),
           ),
         ],
       ),
@@ -1516,8 +1465,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             backgroundColor: Colors.red,
             textColor: Colors.white,
             icon: FontAwesomeIcons.arrowRightFromBracket,
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
+              
+              // Clear remember me preference
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('remember_me', false);
+              
+              // Sign out from Firebase
+              await FirebaseAuth.instance.signOut();
+              
+              // Clear user database cache
+              UserDatabase().clearLocalData();
+              
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const WelcomeScreen()),

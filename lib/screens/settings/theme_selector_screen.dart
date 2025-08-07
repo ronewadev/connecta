@@ -78,58 +78,82 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
               ),
               centerTitle: true,
             ),
-            body: FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: CustomScrollView(
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.all(20),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            child: Text(
-                              'Select your favorite theme color. Each theme includes both light and dark modes.',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: theme.textTheme.bodyMedium?.color,
-                              ),
-                              textAlign: TextAlign.center,
+            body: Column(
+              children: [
+                // Scrollable theme options
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: CustomScrollView(
+                        slivers: [
+                          SliverPadding(
+                            padding: const EdgeInsets.all(16.0),
+                            sliver: SliverList(
+                              delegate: SliverChildListDelegate([
+                                const SizedBox(height: 8), // Reduced space since we have AppBar
+                                
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Text(
+                                    'Select your favorite theme color. Each theme includes both light and dark modes.',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: theme.textTheme.bodyMedium?.color,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                
+                                // Current Theme Display
+                                _buildCurrentThemeCard(themeProvider, theme),
+                                const SizedBox(height: 24),
+                                
+                                // Theme Options
+                                ...AppThemeType.values.asMap().entries.map((entry) {
+                                  final index = entry.key;
+                                  final themeType = entry.value;
+                                  return AnimatedContainer(
+                                    duration: Duration(milliseconds: 300 + (index * 100)),
+                                    child: _buildThemeOption(
+                                      context, 
+                                      themeProvider, 
+                                      themeType,
+                                      index,
+                                    ),
+                                  );
+                                }),
+                                
+                                const SizedBox(height: 20), // Space for the fixed preview
+                              ]),
                             ),
                           ),
-                          const SizedBox(height: 32),
-                          
-                          // Current Theme Display
-                          _buildCurrentThemeCard(themeProvider, theme),
-                          const SizedBox(height: 24),
-                          
-                          // Theme Options
-                          ...AppThemeType.values.asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final themeType = entry.value;
-                            return AnimatedContainer(
-                              duration: Duration(milliseconds: 300 + (index * 100)),
-                              child: _buildThemeOption(
-                                context, 
-                                themeProvider, 
-                                themeType,
-                                index,
-                              ),
-                            );
-                          }),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // Live Preview Section
-                          _buildLivePreview(themeProvider, theme),
-                        ]),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                
+                // Fixed Live Preview at bottom
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.scaffoldBackgroundColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildLivePreview(themeProvider, theme),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -138,8 +162,7 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
   }
 
   Widget _buildCurrentThemeCard(ThemeProvider themeProvider, ThemeData theme) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
+    return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -150,11 +173,18 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: themeProvider.currentThemeColor.withOpacity(0.3),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -191,31 +221,30 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 300),
+                Text(
+                  'Current Theme',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: themeProvider.currentThemeColor,
                   ),
-                  child: Text('Current Theme'),
                 ),
                 const SizedBox(height: 4),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 300),
+                Text(
+                  themeProvider.currentThemeName,
                   style: TextStyle(
                     fontSize: 16,
                     color: theme.textTheme.titleLarge?.color,
                     fontWeight: FontWeight.w600,
                   ),
-                  child: Text(themeProvider.currentThemeName),
                 ),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 300),
+                Text(
+                  themeProvider.isDarkMode ? 'Dark Mode' : 'Light Mode',
                   style: TextStyle(
                     color: theme.textTheme.bodyMedium?.color,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: Text(themeProvider.isDarkMode ? 'Dark Mode' : 'Light Mode'),
                 ),
               ],
             ),
@@ -248,10 +277,8 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
               duration: const Duration(milliseconds: 300),
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: theme.brightness == Brightness.dark
-                    ? const Color(0xFF2A2A2A)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
                 border: isSelected
                     ? Border.all(color: themeColor, width: 3)
                     : null,
@@ -259,16 +286,16 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
                   BoxShadow(
                     color: isSelected 
                         ? themeColor.withOpacity(0.3)
-                        : Colors.black.withOpacity(0.1),
+                        : Colors.black.withOpacity(0.05),
                     blurRadius: isSelected ? 20 : 10,
-                    offset: const Offset(0, 5),
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   onTap: () async {
                     await themeProvider.setSelectedTheme(themeType);
                     if (mounted) {
@@ -276,6 +303,10 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
                         SnackBar(
                           content: Text('Theme changed to $themeName'),
                           backgroundColor: themeColor,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           duration: const Duration(seconds: 2),
                         ),
                       );
@@ -287,30 +318,30 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
                       children: [
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
-                          width: 50,
-                          height: 50,
+                          width: 60,
+                          height: 60,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                themeColor.withOpacity(0.8),
                                 themeColor,
+                                themeColor.withOpacity(0.8),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
                                 color: themeColor.withOpacity(0.3),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
+                                blurRadius: 15,
+                                offset: const Offset(0, 5),
                               ),
                             ],
                           ),
                           child: const Icon(
                             FontAwesomeIcons.palette,
                             color: Colors.white,
-                            size: 20,
+                            size: 24,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -318,39 +349,32 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              AnimatedDefaultTextStyle(
-                                duration: const Duration(milliseconds: 300),
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.textTheme.titleLarge?.color,
+                              Text(
+                                themeName,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? themeColor : null,
                                 ),
-                                child: Text(themeName),
                               ),
-                              AnimatedDefaultTextStyle(
-                                duration: const Duration(milliseconds: 300),
-                                style: TextStyle(
-                                  color: theme.textTheme.bodyMedium?.color,
+                              const SizedBox(height: 4),
+                              Text(
+                                'Beautiful ${themeName.toLowerCase()} theme',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
                                 ),
-                                child: const Text('Light & Dark modes available'),
                               ),
                             ],
                           ),
                         ),
                         AnimatedScale(
                           duration: const Duration(milliseconds: 200),
-                          scale: isSelected ? 1.0 : 0.0,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: themeColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              FontAwesomeIcons.check,
-                              color: Colors.white,
-                              size: 16,
-                            ),
+                          scale: isSelected ? 1.2 : 1.0,
+                          child: Icon(
+                            isSelected 
+                                ? FontAwesomeIcons.solidCircleCheck 
+                                : FontAwesomeIcons.circle,
+                            color: isSelected ? themeColor : theme.disabledColor,
+                            size: 20,
                           ),
                         ),
                       ],
@@ -366,17 +390,18 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
   }
 
   Widget _buildLivePreview(ThemeProvider themeProvider, ThemeData theme) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
+    return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
-            ? const Color(0xFF2A2A2A)
-            : Colors.grey[100],
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: themeProvider.currentThemeColor.withOpacity(0.2),
-        ),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,14 +414,13 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
                 size: 20,
               ),
               const SizedBox(width: 8),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
+              Text(
+                'Live Preview',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: themeProvider.currentThemeColor,
                 ),
-                child: const Text('Live Preview'),
               ),
             ],
           ),

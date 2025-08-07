@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main_screen.dart';
 import 'signup_screen.dart';
@@ -631,6 +632,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         );
 
         if (result['success']) {
+          // Save remember me preference
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('remember_me', _rememberMe);
+          
           // Navigate to main screen directly (email verification removed)
           Navigator.pushReplacement(
             context,

@@ -5,9 +5,15 @@ import 'package:connecta/screens/auth/about_app_screen.dart';
 import 'package:connecta/screens/main_screen.dart';
 import 'package:connecta/utils/text_strings.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
+
+  Future<void> _setHasSeenWelcome() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_seen_welcome', true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +143,8 @@ class WelcomeScreen extends StatelessWidget {
                                       ],
                                     ),
                                     child: ElevatedButton(
-                                      onPressed: () {
+                                      onPressed: () async {
+                                        await _setHasSeenWelcome();
                                         Navigator.push(
                                           context,
                                           PageRouteBuilder(
@@ -186,7 +193,8 @@ class WelcomeScreen extends StatelessWidget {
                                       ),
                                     ),
                                     child: ElevatedButton(
-                                      onPressed: () {
+                                      onPressed: () async {
+                                        await _setHasSeenWelcome();
                                         Navigator.push(
                                           context,
                                           PageRouteBuilder(
@@ -224,7 +232,8 @@ class WelcomeScreen extends StatelessWidget {
                                   const SizedBox(height: 24),
                                   // Guest Option
                                   TextButton(
-                                    onPressed: () {
+                                    onPressed: () async {
+                                      await _setHasSeenWelcome();
                                       Navigator.pushReplacement(
                                         context,
                                         PageRouteBuilder(
