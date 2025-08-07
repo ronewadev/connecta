@@ -1277,15 +1277,17 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
 
   //grid view details of user
   Widget _buildUserDetailModalContent(User user) {
+    final theme = Theme.of(context);
+
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       maxChildSize: 0.95,
       minChildSize: 0.5,
       expand: false,
       builder: (context, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
@@ -1295,7 +1297,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: theme.dividerColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1306,195 +1308,73 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Profile images carousel
                     _buildProfileImagesCarousel(user),
-
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Name, age and location
+                          // User name, age, verification
                           Row(
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          '${user.name}, ${user.age}',
-                                          style: const TextStyle(
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        if (user.isVerified)
-                                          const Icon(
-                                            Icons.verified,
-                                            color: Colors.blue,
-                                            size: 24,
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.location_on,
-                                          color: Colors.grey,
-                                          size: 16,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          user.location,
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                              Text(
+                                '${user.name}, ${user.age}',
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              // Distance indicator
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue[50],
-                                  border: Border.all(color: Colors.blue),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '${((_users.indexOf(user) % 10) * 3 + 2)} km',
-                                  style: const TextStyle(
-                                    color: Colors.blue,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
+                              if (user.isVerified)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8),
+                                  child: Icon(
+                                    Icons.verified,
+                                    color: theme.colorScheme.primary,
+                                    size: 24,
                                   ),
                                 ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Location
+                          Row(
+                            children: [
+                              Icon(
+                                FontAwesomeIcons.locationDot,
+                                size: 14,
+                                color: theme.textTheme.bodySmall?.color,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                user.location!,
+                                style: theme.textTheme.bodyMedium,
                               ),
                             ],
                           ),
-
-                          const SizedBox(height: 16),
-
+                          const SizedBox(height: 20),
                           // Bio
-                          if (user.bio != null && user.bio!.isNotEmpty)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  user.bio!,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey[700],
-                                    height: 1.4,
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                              ],
-                            ),
-
-                          // Social media section
-                          if (user.socialMediaLinks.isNotEmpty) ...[
-                            const Text(
-                              'Connect with me',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: user.socialMediaLinks.take(4).map((link) {
-                                final platform = link.split(':')[0].toLowerCase();
-                                final username = link.split(':').length > 1 ? link.split(':')[1] : '';
-                                
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  child: GestureDetector(
-                                    onTap: () => _handleSocialMediaTap(link),
-                                    child: Container(
-                                      width: 50,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            _getSocialMediaColor(link).withOpacity(0.8),
-                                            _getSocialMediaColor(link).withOpacity(0.6),
-                                          ],
-                                        ),
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: _getSocialMediaColor(link).withOpacity(0.3),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Center(
-                                        child: _getSocialMediaIconLarge(link),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-
-                          // Interests section
-                          if (user.interests.isNotEmpty) ...[
-                            const Text(
-                              'Interests',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: user.interests.map((interest) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey[300]!),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    interest,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                          
-                          // Additional info
-                          _buildDetailRow('Gender', user.gender),
-                          _buildDetailRow('Nationality', user.nationality),
-                          if (user.hobbies.isNotEmpty)
-                            _buildDetailRow('Hobbies', user.hobbies.join(', ')),
-
-                          const SizedBox(height: 80), // Space for action buttons
+                          Text(
+                            'About Me',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            user.bio!,
+                            style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                          ),
+                          const SizedBox(height: 20),
+                          // Interests
+                          Text(
+                            'Interests',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: user.interests!
+                                .map((interest) => _buildInterestChip(interest, theme))
+                                .toList(),
+                          ),
                         ],
                       ),
                     ),
@@ -1507,22 +1387,37 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: theme.shadowColor.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
                 ],
               ),
+              //henefha
               child: Row(
                 children: [
                   Expanded(
                     child: _buildModalActionButton(
                       icon: FontAwesomeIcons.xmark,
-                      color: Colors.red,
-                      onPressed: () => Navigator.pop(context),
+                      color: theme.colorScheme.error,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _handleDislike();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildModalActionButton(
+                      icon: FontAwesomeIcons.star,
+                      color: Colors.blue,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _handleDislike();
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -1532,7 +1427,18 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                       color: Colors.green,
                       onPressed: () {
                         Navigator.pop(context);
-                        _onUserLiked(_users.indexOf(user));
+                        _handleDislike();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildModalActionButton(
+                      icon: FontAwesomeIcons.bolt,
+                      color: Colors.purple,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _handleLike();
                       },
                     ),
                   ),
@@ -1648,10 +1554,10 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     required VoidCallback onPressed,
   }) {
     return Container(
-      height: 56,
+      height: 60,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(150),
         boxShadow: [
           BoxShadow(
             color: color.withOpacity(0.3),
@@ -2064,6 +1970,43 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
       _users.remove(user);
       _filteredUsers.remove(user);
     });
+  }
+
+  Widget _buildInterestChip(String interest, ThemeData theme) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 10,
+          ),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary.withOpacity(0.15),
+                theme.colorScheme.primary.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: theme.colorScheme.primary.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            interest,
+            style: TextStyle(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildSocialMediaChip(String socialLink) {
