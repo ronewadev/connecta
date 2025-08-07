@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:connecta/services/subscriptions/subscription_services.dart';
 import 'package:connecta/screens/plans/tokens_screen.dart';
 import 'package:connecta/providers/theme_provider.dart';
@@ -6,20 +7,62 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:connecta/widgets/custom_button.dart';
 import 'package:connecta/screens/plans/widgets/premium_badge.dart';
+import 'package:connecta/database/user_database.dart';
 
-class SubscriptionScreen extends StatelessWidget {
+class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
+
+  @override
+  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
+}
+
+class _SubscriptionScreenState extends State<SubscriptionScreen> {
+  final UserDatabase _userDatabase = UserDatabase();
+  UserData? _userData;
+  StreamSubscription<UserData?>? _userDataSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeUserData();
+  }
+
+  void _initializeUserData() async {
+    // Get current cached data immediately
+    _userData = _userDatabase.currentUserData;
+    if (_userData != null) {
+      setState(() {});
+    }
+    
+    // Initialize UserDatabase (this will set up real-time listener)
+    await _userDatabase.initializeUserData();
+    
+    // Listen to user data changes
+    _userDataSubscription = _userDatabase.userDataStream.listen((userData) {
+      if (mounted) {
+        setState(() {
+          _userData = userData;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _userDataSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final subscriptionService = Provider.of<SubscriptionService>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final currentSubscription = subscriptionService.subscriptionType;
+    final currentSubscription = _userData?.subscriptionType ?? subscriptionService.subscriptionType;
     final theme = Theme.of(context);
 
-    // Static token values for display
-    const goldTokens = 15;
-    const silverTokens = 69;
+    // Dynamic token values from user data
+    final goldTokens = _userData?.goldTokens ?? 0;
+    final silverTokens = _userData?.silverTokens ?? 0;
 
     return AnimatedTheme(
       duration: const Duration(milliseconds: 500),
@@ -180,7 +223,7 @@ class SubscriptionScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '$goldTokens',
+                              _userData == null ? 'Loading...' : '$goldTokens',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.amber,
@@ -215,7 +258,7 @@ class SubscriptionScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '$silverTokens',
+                              _userData == null ? 'Loading...' : '$silverTokens',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey.shade700,

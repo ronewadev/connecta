@@ -1,7 +1,9 @@
 import 'dart:ui';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
+import 'package:image_picker/image_picker.dart';
 
 class PersonalDetailsScreen extends StatefulWidget {
   final String email;
@@ -22,10 +24,12 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
   final _usernameController = TextEditingController();
   final _ageController = TextEditingController();
   final _mobileController = TextEditingController();
+  final _bioController = TextEditingController();
 
   String _selectedGender = '';
   String _selectedNationality = '';
-  int _selectedAvatarIndex = -1;
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -60,14 +64,6 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
     'Zambia', 'Zimbabwe'
   ];
 
-  final List<IconData> _avatarIcons = [
-    FontAwesomeIcons.user,
-    FontAwesomeIcons.userTie,
-    FontAwesomeIcons.userGraduate,
-    FontAwesomeIcons.userNinja,
-    FontAwesomeIcons.userAstronaut,
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -95,6 +91,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
     _usernameController.addListener(() => setState(() {}));
     _ageController.addListener(() => setState(() {}));
     _mobileController.addListener(() => setState(() {}));
+    _bioController.addListener(() => setState(() {}));
 
     _animationController.forward();
   }
@@ -108,9 +105,10 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
         int.parse(_ageController.text) <= 100;
     final hasGender = _selectedGender.isNotEmpty;
     final hasNationality = _selectedNationality.isNotEmpty;
-    final hasAvatar = _selectedAvatarIndex != -1;
+    final hasProfile = _profileImage != null;
+    final hasBio = _bioController.text.isNotEmpty && _bioController.text.length >= 20;
 
-    return hasUsername && hasValidAge && hasGender && hasNationality && hasAvatar;
+    return hasUsername && hasValidAge && hasGender && hasNationality && hasProfile && hasBio;
   }
 
   @override
@@ -169,7 +167,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
                             ),
                           ),
                           const SizedBox(height: 24),
-                          _buildAvatarSelection(),
+                          _buildProfileImageSection(),
                           const SizedBox(height: 20),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(28),
@@ -239,6 +237,8 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
                                         ),
                                         const SizedBox(height: 16),
                                         _buildNationalityDropdown(),
+                                        const SizedBox(height: 16),
+                                        _buildBioTextField(),
                                       ],
                                     ),
                                   ),
@@ -273,10 +273,10 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
                                 } else {
                                   // Show validation errors
                                   _formKey.currentState?.validate();
-                                  if (_selectedAvatarIndex == -1) {
+                                  if (_profileImage == null) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: const Text('Please select an avatar'),
+                                        content: const Text('Please upload a profile picture'),
                                         backgroundColor: const Color(0xFFEC4899),
                                         behavior: SnackBarBehavior.floating,
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -355,11 +355,11 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
     );
   }
 
-  Widget _buildAvatarSelection() {
+  Widget _buildProfileImageSection() {
     return Column(
       children: [
         Text(
-          'Choose your avatar',
+          'Profile Picture',
           style: TextStyle(
             color: Colors.white.withOpacity(0.9),
             fontSize: 16,
@@ -367,63 +367,160 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: List.generate(5, (index) {
-            final isSelected = _selectedAvatarIndex == index;
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedAvatarIndex = index;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? const LinearGradient(
-                          colors: [
-                            Color(0xFFEC4899),
-                            Color(0xFFBE185D),
-                          ],
-                        )
-                      : LinearGradient(
-                          colors: [
-                            Colors.white.withOpacity(0.2),
-                            Colors.white.withOpacity(0.1),
-                          ],
-                        ),
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(
-                    color: isSelected
-                        ? Colors.white
-                        : Colors.white.withOpacity(0.3),
-                    width: isSelected ? 2 : 1,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFFEC4899).withOpacity(0.4),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Center(
-                  child: FaIcon(
-                    _avatarIcons[index],
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
+        GestureDetector(
+          onTap: _pickProfileImage,
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              gradient: _profileImage != null
+                  ? null
+                  : LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.2),
+                        Colors.white.withOpacity(0.1),
+                      ],
+                    ),
+              borderRadius: BorderRadius.circular(60),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 2,
               ),
-            );
-          }),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: _profileImage != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(60),
+                    child: Image.file(
+                      _profileImage!,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FaIcon(
+                        FontAwesomeIcons.camera,
+                        color: Colors.white.withOpacity(0.8),
+                        size: 30,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Add Photo',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Required for profile',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.6),
+            fontSize: 12,
+          ),
         ),
       ],
+    );
+  }
+
+  Future<void> _pickProfileImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _profileImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to pick image: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
+  Widget _buildBioTextField() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.2),
+            Colors.white.withOpacity(0.1),
+          ],
+        ),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: TextFormField(
+        controller: _bioController,
+        maxLines: 4,
+        maxLength: 300,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+        ),
+        decoration: InputDecoration(
+          labelText: 'Bio',
+          labelStyle: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 16,
+          ),
+          hintText: 'Tell us about yourself... (at least 20 characters)',
+          hintStyle: TextStyle(
+            color: Colors.white.withOpacity(0.6),
+            fontSize: 14,
+          ),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 12, right: 8, top: 12),
+            child: FaIcon(
+              FontAwesomeIcons.penToSquare,
+              color: Colors.white.withOpacity(0.8),
+              size: 18,
+            ),
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          errorStyle: const TextStyle(color: Colors.yellowAccent, fontSize: 12),
+          counterStyle: TextStyle(
+            color: Colors.white.withOpacity(0.6),
+            fontSize: 12,
+          ),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please write a bio';
+          }
+          if (value.length < 20) {
+            return 'Bio must be at least 20 characters';
+          }
+          return null;
+        },
+      ),
     );
   }
 
@@ -608,7 +705,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
   }
 
   void _continueToNext() {
-    if (_formKey.currentState!.validate() && _selectedAvatarIndex != -1) {
+    if (_formKey.currentState!.validate() && _profileImage != null) {
       Navigator.push(
         context,
         PageRouteBuilder(
@@ -620,7 +717,8 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
             gender: _selectedGender,
             mobile: _mobileController.text,
             nationality: _selectedNationality,
-            avatarIndex: _selectedAvatarIndex,
+            bio: _bioController.text,
+            profileImage: _profileImage,
           ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return SlideTransition(
@@ -634,15 +732,19 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
           transitionDuration: const Duration(milliseconds: 400),
         ),
       );
-    } else if (_selectedAvatarIndex == -1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please select an avatar'),
-          backgroundColor: const Color(0xFFEC4899),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+    } else {
+      // Show validation errors
+      _formKey.currentState?.validate();
+      if (_profileImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please upload a profile picture'),
+            backgroundColor: const Color(0xFFEC4899),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
     }
   }
 
@@ -652,6 +754,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
     _usernameController.dispose();
     _ageController.dispose();
     _mobileController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 }

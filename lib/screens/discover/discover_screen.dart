@@ -1,5 +1,6 @@
 import 'package:connecta/screens/discover/posts_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -44,7 +45,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: 'Search Discover...',
-                      prefixIcon: Icon(Icons.search, color: Colors.purple),
+                      prefixIcon: FaIcon(FontAwesomeIcons.magnifyingGlass, color: Colors.purple),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 16),
                     ),
@@ -158,7 +159,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               color: Colors.purple.shade50,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.image, color: Colors.purple, size: 40),
+            child: const FaIcon(FontAwesomeIcons.image, color: Colors.purple, size: 40),
           ),
           const SizedBox(height: 10),
           Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purple)),

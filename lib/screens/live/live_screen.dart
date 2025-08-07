@@ -147,7 +147,7 @@ class LiveScreen extends StatelessWidget {
             right: 30,
             child: FloatingActionButton(
               backgroundColor: Colors.pink,
-              child: const Icon(Icons.videocam, color: Colors.white, size: 32),
+              child: const FaIcon(FontAwesomeIcons.video, color: Colors.white, size: 32),
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Start your live stream (demo)!')),

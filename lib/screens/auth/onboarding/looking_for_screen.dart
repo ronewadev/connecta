@@ -11,11 +11,11 @@ class LookingForScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final int avatarIndex;
   final List<String> images;
   final List<String> interests;
   final List<String> hobbies;
   final List<String> dealBreakers;
+  final String bio;
 
   const LookingForScreen({
     super.key,
@@ -26,11 +26,11 @@ class LookingForScreen extends StatefulWidget {
     required this.gender,
     required this.mobile,
     required this.nationality,
-    required this.avatarIndex,
     required this.images,
     required this.interests,
     required this.hobbies,
     required this.dealBreakers,
+    required this.bio,
   });
 
   @override
@@ -190,7 +190,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Select up to 2 from each category to help us find your perfect match',
+                            'Select up to 2 from each category (minimum 6 total) to help us find your perfect match',
                             style: TextStyle(
                               fontSize: 18,
                               color: Colors.white.withOpacity(0.9),
@@ -217,7 +217,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                               ),
                             ),
                             child: Text(
-                              'Select 2 from each category (${_getTotalSelected()}/8 selected)',
+                              'Select 2 from each category (${_getTotalSelected()}/8 selected, minimum 6 required)',
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.9),
                                 fontSize: 16,
@@ -249,7 +249,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                             width: double.infinity,
                             height: 56,
                             decoration: BoxDecoration(
-                              gradient: _getTotalSelected() > 0
+                              gradient: _getTotalSelected() >= 6
                                   ? const LinearGradient(
                                 colors: [
                                   Color(0xFFEC4899),
@@ -263,7 +263,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(28),
-                              boxShadow: _getTotalSelected() > 0
+                              boxShadow: _getTotalSelected() >= 6
                                   ? [
                                 BoxShadow(
                                   color: const Color(0xFFEC4899).withOpacity(0.4),
@@ -274,7 +274,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                                   : null,
                             ),
                             child: ElevatedButton(
-                              onPressed: _getTotalSelected() > 0 ? _continueToNext : null,
+                              onPressed: _getTotalSelected() >= 6 ? _continueToNext : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
@@ -287,7 +287,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: _getTotalSelected() > 0 ? Colors.white : Colors.white.withOpacity(0.5),
+                                  color: _getTotalSelected() >= 6 ? Colors.white : Colors.white.withOpacity(0.5),
                                   letterSpacing: 1,
                                 ),
                               ),
@@ -516,12 +516,12 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
           gender: widget.gender,
           mobile: widget.mobile,
           nationality: widget.nationality,
-          avatarIndex: widget.avatarIndex,
           images: widget.images,
           interests: widget.interests,
           hobbies: widget.hobbies,
           dealBreakers: widget.dealBreakers,
           lookingFor: _getAllSelected(),
+          bio: widget.bio,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(

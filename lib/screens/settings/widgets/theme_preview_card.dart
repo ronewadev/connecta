@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/models/theme_model.dart';
 import 'package:connecta/screens/plans/widgets/premium_badge.dart';
 
@@ -47,8 +48,8 @@ class ThemePreviewCard extends StatelessWidget {
                   ),
                 ),
                 child: Center(
-                  child: Icon(
-                    Icons.person,
+                  child: FaIcon(
+                    FontAwesomeIcons.user,
                     size: 48,
                     color: theme.textColor,
                   ),
@@ -86,7 +87,7 @@ class ThemePreviewCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Row(
                         children: [
-                          const Icon(Icons.monetization_on, size: 16),
+                          const FaIcon(FontAwesomeIcons.coins, size: 16),
                           const SizedBox(width: 4),
                           Text(
                             '${theme.cost} tokens',

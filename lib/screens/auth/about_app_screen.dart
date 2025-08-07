@@ -115,24 +115,6 @@ class _AboutAppScreenState extends State<AboutAppScreen> with TickerProviderStat
         child: SafeArea(
           child: Stack(
             children: [
-              // Skip Button with higher z-index
-              if (_currentIndex < _pages.length - 1)
-                Positioned(
-                  top: 20,
-                  right: 20,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 1,
-                      ),
-                    ),
-                    child: _buildSkipButton(),
-                  ),
-                ),
-              
               // Main Content
               FadeTransition(
                 opacity: _fadeAnimation,
@@ -183,7 +165,7 @@ class _AboutAppScreenState extends State<AboutAppScreen> with TickerProviderStat
 
   Widget _buildSkipButton() {
     return GestureDetector(
-      onTap: () => _goToLastPage(),
+      onTap: () => _goToSignup(),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
@@ -194,11 +176,34 @@ class _AboutAppScreenState extends State<AboutAppScreen> with TickerProviderStat
             width: 1,
           ),
         ),
+
         child: Text(
           AppText.skip,
           style: TextStyle(
             color: Colors.white.withOpacity(0.8),
             fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkipTextButton() {
+    return Container(
+      height: 56,
+      child: TextButton(
+        onPressed: _goToSignup,
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.white.withOpacity(0.8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+        ),
+        child: Text(
+          AppText.skip,
+          style: const TextStyle(
+            fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -473,8 +478,13 @@ class _AboutAppScreenState extends State<AboutAppScreen> with TickerProviderStat
           // Navigation Buttons
           Row(
             children: [
-              // Previous Button
-              if (_currentIndex > 0)
+              // Skip Button on first page, Previous Button on other pages
+              if (_currentIndex == 0)
+                Expanded(
+                  flex: 1,
+                  child: _buildSkipTextButton(),
+                )
+              else if (_currentIndex > 0)
                 Expanded(
                   flex: 1,
                   child: _buildPreviousButton(),
@@ -539,7 +549,7 @@ class _AboutAppScreenState extends State<AboutAppScreen> with TickerProviderStat
         child: Text(
           AppText.previous,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
             color: Colors.white.withOpacity(0.8),
           ),

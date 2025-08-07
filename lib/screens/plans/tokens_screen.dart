@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:connecta/screens/plans/stream_ads_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' hide IconButton;
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/widgets/custom_button.dart';
 import 'package:connecta/utils/text_strings.dart';
+import 'package:connecta/database/user_database.dart';
 
 class TokensScreen extends StatefulWidget {
   const TokensScreen({super.key});
@@ -14,6 +16,10 @@ class TokensScreen extends StatefulWidget {
 }
 
 class _TokensScreenState extends State<TokensScreen> {
+  final UserDatabase _userDatabase = UserDatabase();
+  UserData? _userData;
+  StreamSubscription<UserData?>? _userDataSubscription;
+  
   // Custom token purchase values
   double _goldTokensSlider = 5.0; // Minimum 5 tokens
   final TextEditingController _customAmountController = TextEditingController();
@@ -22,11 +28,33 @@ class _TokensScreenState extends State<TokensScreen> {
   void initState() {
     super.initState();
     _customAmountController.text = _goldTokensSlider.round().toString();
+    _initializeUserData();
   }
   
+  void _initializeUserData() async {
+    // Get current cached data immediately
+    _userData = _userDatabase.currentUserData;
+    if (_userData != null) {
+      setState(() {});
+    }
+    
+    // Initialize UserDatabase (this will set up real-time listener)
+    await _userDatabase.initializeUserData();
+    
+    // Listen to user data changes
+    _userDataSubscription = _userDatabase.userDataStream.listen((userData) {
+      if (mounted) {
+        setState(() {
+          _userData = userData;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _customAmountController.dispose();
+    _userDataSubscription?.cancel();
     super.dispose();
   }
   
@@ -45,9 +73,9 @@ class _TokensScreenState extends State<TokensScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Static token values for display
-    const goldTokens = 15;
-    const silverTokens = 69;
+    // Dynamic token values from user data
+    final goldTokens = _userData?.goldTokens ?? 0;
+    final silverTokens = _userData?.silverTokens ?? 0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,

@@ -40,6 +40,7 @@ class _UserCardState extends State<UserCard> {
       setState(() {
         _currentImageIndex = (_currentImageIndex + 1) % _images.length;
       });
+      print('Moving to next picture: ${_currentImageIndex + 1} of ${_images.length}');
     }
   }
 
@@ -48,6 +49,7 @@ class _UserCardState extends State<UserCard> {
       setState(() {
         _currentImageIndex = (_currentImageIndex - 1 + _images.length) % _images.length;
       });
+      print('Moving to previous picture: ${_currentImageIndex + 1} of ${_images.length}');
     }
   }
 
@@ -132,7 +134,7 @@ class _UserCardState extends State<UserCard> {
                   return Container(
                     color: Colors.grey.shade300,
                     child: const Center(
-                      child: Icon(Icons.person, size: 64, color: Colors.grey),
+                      child: FaIcon(FontAwesomeIcons.user, size: 64, color: Colors.grey),
                     ),
                   );
                 },
@@ -201,7 +203,7 @@ class _UserCardState extends State<UserCard> {
                       ),
                       const SizedBox(width: 8),
                       if (widget.user.isVerified)
-                        const Icon(Icons.verified, color: Colors.lightBlue),
+                        const FaIcon(FontAwesomeIcons.circleCheck, color: Colors.lightBlue),
                       const SizedBox(width: 8),
                       if (widget.user.subscriptionType != 'basic')
                         PremiumBadge(type: widget.user.subscriptionType),
@@ -214,7 +216,7 @@ class _UserCardState extends State<UserCard> {
                   // Location
                   Row(
                     children: [
-                      const Icon(Icons.location_on, 
+                      const FaIcon(FontAwesomeIcons.locationDot, 
                         color: Colors.white70, 
                         size: 16
                       ),
@@ -287,7 +289,7 @@ class _UserCardState extends State<UserCard> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on, size: 14, color: Colors.white),
+                  const FaIcon(FontAwesomeIcons.locationDot, size: 14, color: Colors.white),
                   const SizedBox(width: 4),
                   Text(
                     '2.5 km away',

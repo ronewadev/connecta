@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:connecta/providers/theme_provider.dart';
 import 'package:connecta/utils/app_themes.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'dart:ui';
 
 class ThemeSelectorScreen extends StatefulWidget {
   const ThemeSelectorScreen({super.key});
@@ -62,115 +61,22 @@ class _ThemeSelectorScreenState extends State<ThemeSelectorScreen>
           data: theme,
           child: Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
-            appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(kToolbarHeight),
-              child: ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: AppBar(
-                    backgroundColor: theme.colorScheme.surface.withOpacity(0.8),
-                    elevation: 0,
-                    flexibleSpace: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            theme.colorScheme.surface.withOpacity(0.9),
-                            theme.colorScheme.surface.withOpacity(0.7),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                        border: Border(
-                          bottom: BorderSide(
-                            color: theme.colorScheme.primary.withOpacity(0.1),
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                    leading: Container(
-                      margin: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            theme.colorScheme.primary.withOpacity(0.1),
-                            theme.colorScheme.primary.withOpacity(0.05),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: IconButton(
-                        icon: FaIcon(
-                          FontAwesomeIcons.arrowLeft,
-                          color: theme.colorScheme.primary,
-                          size: 18,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ),
-                    title: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                theme.colorScheme.primary.withOpacity(0.1),
-                                theme.colorScheme.primary.withOpacity(0.05),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: theme.colorScheme.primary.withOpacity(0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: FaIcon(
-                            FontAwesomeIcons.palette,
-                            color: theme.colorScheme.primary,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 300),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 20,
-                          ) ?? const TextStyle(),
-                          child: ShaderMask(
-                            shaderCallback: (Rect bounds) {
-                              return LinearGradient(
-                                colors: [
-                                  theme.colorScheme.primary,
-                                  theme.colorScheme.secondary,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ).createShader(bounds);
-                            },
-                            child: const Text(
-                              'Choose Theme',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    centerTitle: true,
-                  ),
+            appBar: AppBar(
+              backgroundColor: theme.colorScheme.surface,
+              elevation: 2,
+              shadowColor: theme.colorScheme.shadow.withOpacity(0.1),
+              leading: IconButton(
+                icon: const FaIcon(FontAwesomeIcons.arrowLeft),
+                onPressed: () => Navigator.pop(context),
+              ),
+              title: Text(
+                'Choose Theme',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
                 ),
               ),
+              centerTitle: true,
             ),
             body: FadeTransition(
               opacity: _fadeAnimation,

@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "810053569527",
+    "project_id": "connectta-aa0a6",
+    "storage_bucket": "connectta-aa0a6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810053569527:android:650948f964b0f7b8003cf2",
+        "android_client_info": {
+          "package_name": "com.example.connecta"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "810053569527-k6m082us5a80gscb1aeun5ho2cog9cto.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADR1Fsnc8VJIuV963P3GhL2XNkx3-8Kx4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "810053569527-k6m082us5a80gscb1aeun5ho2cog9cto.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "810053569527-tepj1afv7ekvnjt3pori4stpn93dd7an.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.connectta"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810053569527:android:59a47a9a3461894e003cf2",
+        "android_client_info": {
+          "package_name": "com.example.connectta"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "810053569527-k6m082us5a80gscb1aeun5ho2cog9cto.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADR1Fsnc8VJIuV963P3GhL2XNkx3-8Kx4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "810053569527-k6m082us5a80gscb1aeun5ho2cog9cto.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "810053569527-tepj1afv7ekvnjt3pori4stpn93dd7an.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.connectta"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

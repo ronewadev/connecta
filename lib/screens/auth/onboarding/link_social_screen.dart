@@ -2,6 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/main_screen.dart';
+import 'package:connecta/services/auth_service.dart';
+import 'package:connecta/models/user_model.dart';
+import 'package:provider/provider.dart';
 
 class LinkSocialScreen extends StatefulWidget {
   final String email;
@@ -11,12 +14,12 @@ class LinkSocialScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final int avatarIndex;
   final List<String> images;
   final List<String> interests;
   final List<String> hobbies;
   final List<String> dealBreakers;
   final List<String> lookingFor;
+  final String bio;
   // New preference parameters
   final List<int> ageRange;
   final int maxDistance;
@@ -37,12 +40,12 @@ class LinkSocialScreen extends StatefulWidget {
     required this.gender,
     required this.mobile,
     required this.nationality,
-    required this.avatarIndex,
     required this.images,
     required this.interests,
     required this.hobbies,
     required this.dealBreakers,
     required this.lookingFor,
+    required this.bio,
     required this.ageRange,
     required this.maxDistance,
     required this.interestedIn,
@@ -598,47 +601,138 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
       _isCreatingProfile = true;
     });
 
-    // Simulate profile creation
-    await Future.delayed(const Duration(seconds: 3));
+    try {
+      // Get linked social platforms
+      List<String> linkedSocials = _linkedPlatforms.entries
+          .where((entry) => entry.value)
+          .map((entry) => entry.key)
+          .toList();
 
-    setState(() {
-      _isCreatingProfile = false;
-    });
-
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const FaIcon(FontAwesomeIcons.checkCircle, color: Colors.white),
-            const SizedBox(width: 12),
-            const Text('Profile created successfully! \nWelcome to Connecta!'),
-          ],
-        ),
-        backgroundColor: const Color(0xFF4CAF50),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-
-    // Navigate to main screen
-    Navigator.pushAndRemoveUntil(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
-              child: child,
-            ),
-          );
+      // Create complete user model with all collected data
+      final completeUser = User(
+        id: '', // Will be set by Firebase
+        username: widget.username,
+        name: widget.username, // Using username as name initially
+        email: widget.email,
+        phone: widget.mobile.isNotEmpty ? widget.mobile : null,
+        age: widget.age,
+        gender: widget.gender,
+        nationality: widget.nationality,
+        location: widget.nationality, // Using nationality as default location
+        profileImages: widget.images,
+        interests: widget.interests,
+        hobbies: widget.hobbies,
+        dealBreakers: widget.dealBreakers,
+        bio: widget.bio, // Use the actual bio from the form
+        subscriptionType: 'basic',
+        goldTokens: 0,
+        silverTokens: 0,
+        isPremium: false,
+        isElite: false,
+        isInfinity: false,
+        premiumExpiry: null,
+        eliteExpiryDate: null,
+        infinityExpiryDate: null,
+        socialMediaLinks: linkedSocials,
+        preferences: {
+          'ageRange': widget.ageRange,
+          'maxDistance': widget.maxDistance,
+          'interestedIn': widget.interestedIn,
+          'relationshipType': widget.relationshipType,
+          'education': widget.education,
+          'lifestyle': widget.lifestyle,
+          'showOnline': widget.showOnline,
+          'verifiedOnly': widget.verifiedOnly,
+          'photoRequired': widget.photoRequired,
+          'dealBreakers': widget.dealBreakers,
+          'allowDirectContact': _allowDirectContact,
         },
-        transitionDuration: const Duration(milliseconds: 800),
-      ),
-      (route) => false,
-    );
+      );
+
+      // Now create the Firebase user with all the complete data
+      final authService = Provider.of<AuthService>(context, listen: false);
+      
+      Map<String, dynamic> result = await authService.signUp(
+        email: widget.email,
+        password: widget.password,
+        name: completeUser.name,
+        username: completeUser.username,
+      );
+
+      if (result['success']) {
+        // Send email verification
+        await authService.sendEmailVerification();
+        
+        // Update the user profile with complete data
+        await authService.updateUserProfile(completeUser.toMap());
+
+        setState(() {
+          _isCreatingProfile = false;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const FaIcon(FontAwesomeIcons.checkCircle, color: Colors.white),
+                const SizedBox(width: 12),
+                const Text('Profile created successfully! \nWelcome to Connecta!'),
+              ],
+            ),
+            backgroundColor: const Color(0xFF4CAF50),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+
+        // Navigate to main screen
+        Navigator.pushAndRemoveUntil(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 800),
+          ),
+          (route) => false,
+        );
+      } else {
+        setState(() {
+          _isCreatingProfile = false;
+        });
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create account: ${result['message']}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isCreatingProfile = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error creating profile: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
   }
 
   @override

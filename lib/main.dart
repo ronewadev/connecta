@@ -1,12 +1,29 @@
 import 'package:connecta/providers/theme_provider.dart';
 import 'package:connecta/screens/splash_screen.dart';
 import 'package:connecta/services/subscriptions/subscription_services.dart';
+import 'package:connecta/services/auth_service.dart';
 import 'package:connecta/utils/app_themes.dart';
+import 'package:connecta/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase safely
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    // Firebase is already initialized, which is fine during hot restart
+    if (e.toString().contains('duplicate-app')) {
+      print('Firebase already initialized');
+    } else {
+      print('Firebase initialization error: $e');
+    }
+  }
   
   // Initialize theme provider
   final themeProvider = ThemeProvider();
@@ -16,6 +33,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: themeProvider),
+        ChangeNotifierProvider(create: (context) => AuthService()),
         ChangeNotifierProvider(create: (context) => SubscriptionService()),
       ],
       child: const MyApp(),

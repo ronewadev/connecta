@@ -11,12 +11,12 @@ class PreferencesScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final int avatarIndex;
   final List<String> images;
   final List<String> interests;
   final List<String> hobbies;
   final List<String> dealBreakers;
   final List<String> lookingFor;
+  final String bio;
 
   const PreferencesScreen({
     super.key,
@@ -27,12 +27,12 @@ class PreferencesScreen extends StatefulWidget {
     required this.gender,
     required this.mobile,
     required this.nationality,
-    required this.avatarIndex,
     required this.images,
     required this.interests,
     required this.hobbies,
     required this.dealBreakers,
     required this.lookingFor,
+    required this.bio,
   });
 
   @override
@@ -46,14 +46,14 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
 
   // Preference settings with default values
   RangeValues _ageRange = const RangeValues(18, 35);
-  double _maxDistance = 50.0;
-  Set<String> _selectedInterestedIn = <String>{'Everyone'};
-  Set<String> _selectedRelationshipType = <String>{'Serious Dating'};
-  Set<String> _selectedEducation = <String>{'College'};
-  Set<String> _selectedLifestyle = <String>{'Non-smoker'};
-  bool _showOnline = true;
+  double _maxDistance = 25.0;
+  Set<String> _selectedInterestedIn = <String>{};
+  Set<String> _selectedRelationshipType = <String>{};
+  Set<String> _selectedEducation = <String>{};
+  Set<String> _selectedLifestyle = <String>{};
+  bool _showOnline = false;
   bool _verifiedOnly = false;
-  bool _photoRequired = true;
+  bool _photoRequired = false;
 
   final int _maxSelectionPerCategory = 2;
 
@@ -85,6 +85,14 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
   @override
   void initState() {
     super.initState();
+    
+    // Ensure distance is within valid range (5-50)
+    if (_maxDistance < 5.0) {
+      _maxDistance = 5.0;
+    } else if (_maxDistance > 50.0) {
+      _maxDistance = 50.0;
+    }
+    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -228,15 +236,15 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
                                 ),
                                 const SizedBox(height: 16),
                                 Slider(
-                                  value: _maxDistance,
-                                  min: 1,
-                                  max: 100,
-                                  divisions: 99,
+                                  value: _maxDistance.clamp(5.0, 50.0),
+                                  min: 5,
+                                  max: 50,
+                                  divisions: 45,
                                   activeColor: Colors.white,
                                   inactiveColor: Colors.white.withOpacity(0.3),
                                   onChanged: (value) {
                                     setState(() {
-                                      _maxDistance = value;
+                                      _maxDistance = value.clamp(5.0, 50.0);
                                     });
                                   },
                                 ),
@@ -731,12 +739,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
           gender: widget.gender,
           mobile: widget.mobile,
           nationality: widget.nationality,
-          avatarIndex: widget.avatarIndex,
           images: widget.images,
           interests: widget.interests,
           hobbies: widget.hobbies,
           dealBreakers: widget.dealBreakers,
           lookingFor: widget.lookingFor,
+          bio: widget.bio,
           // Pass the selected preferences as lists
           ageRange: [_ageRange.start.round(), _ageRange.end.round()],
           maxDistance: _maxDistance.round(),

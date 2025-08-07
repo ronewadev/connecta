@@ -11,8 +11,8 @@ class InterestsDealbrakersScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final int avatarIndex;
   final List<String> images;
+  final String bio;
 
   const InterestsDealbrakersScreen({
     super.key,
@@ -23,8 +23,8 @@ class InterestsDealbrakersScreen extends StatefulWidget {
     required this.gender,
     required this.mobile,
     required this.nationality,
-    required this.avatarIndex,
     required this.images,
+    required this.bio,
   });
 
   @override
@@ -467,11 +467,11 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
           gender: widget.gender,
           mobile: widget.mobile,
           nationality: widget.nationality,
-          avatarIndex: widget.avatarIndex,
           images: widget.images,
           interests: _selectedInterests.toList(),
           hobbies: _selectedHobbies.toList(),
           dealBreakers: _selectedDealBreakers.toList(),
+          bio: widget.bio,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(

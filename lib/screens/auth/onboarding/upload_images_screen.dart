@@ -13,7 +13,8 @@ class UploadImagesScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final int avatarIndex;
+  final String bio;
+  final File? profileImage;
 
   const UploadImagesScreen({
     super.key,
@@ -24,7 +25,8 @@ class UploadImagesScreen extends StatefulWidget {
     required this.gender,
     required this.mobile,
     required this.nationality,
-    required this.avatarIndex,
+    required this.bio,
+    this.profileImage,
   });
 
   @override
@@ -550,8 +552,8 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
           gender: widget.gender,
           mobile: widget.mobile,
           nationality: widget.nationality,
-          avatarIndex: widget.avatarIndex,
           images: _images.where((img) => img != null).map((img) => img!.path).toList(),
+          bio: widget.bio,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(

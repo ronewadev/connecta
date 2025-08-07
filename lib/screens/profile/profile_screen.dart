@@ -1,9 +1,13 @@
-import 'package:flutter/material.dart' hide IconButton;
+
+import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/auth/welcome_screen.dart';
 import 'package:connecta/screens/plans/tokens_screen.dart';
 import 'package:connecta/utils/text_strings.dart';
-import 'package:connecta/widgets/custom_button.dart';
+import 'package:connecta/widgets/custom_button.dart' hide IconButton;
+
+import '../../database/user_database.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,14 +17,15 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final UserDatabase _userDatabase = UserDatabase();
+  UserData? _userData;
+  StreamSubscription<UserData?>? _userDataSubscription;
+  
   // Age range slider values
   RangeValues _ageRange = const RangeValues(22, 30);
   
   // Distance slider value
   double _distance = 15.0;
-  
-  // Looking for tab index
-  int _lookingForTabIndex = 0;
   
   // Dropdown values
   String _selectedGender = 'Men';
@@ -36,6 +41,149 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLookingForExpanded = false;
 
   @override
+  void initState() {
+    super.initState();
+    _initializeUserData();
+  }
+
+  void _initializeUserData() async {
+    // Get current cached data immediately
+    _userData = _userDatabase.currentUserData;
+    if (_userData != null) {
+      setState(() {});
+    }
+    
+    // Initialize UserDatabase (this will set up real-time listener)
+    await _userDatabase.initializeUserData();
+    
+    // Listen to user data changes
+    _userDataSubscription = _userDatabase.userDataStream.listen((userData) {
+      if (mounted) {
+        setState(() {
+          _userData = userData;
+        });
+        print('Profile Screen: User data updated - ${userData?.username ?? 'null'}');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _userDataSubscription?.cancel();
+    super.dispose();
+  }
+
+  Color _getSubscriptionColor(String subscriptionType) {
+    switch (subscriptionType.toLowerCase()) {
+      case 'premium':
+        return Colors.amber;
+      case 'elite':
+        return Colors.cyan;
+      case 'infinity':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getSubscriptionIcon(String subscriptionType) {
+    switch (subscriptionType.toLowerCase()) {
+      case 'premium':
+        return FontAwesomeIcons.crown;
+      case 'elite':
+        return FontAwesomeIcons.gem;
+      case 'infinity':
+        return FontAwesomeIcons.infinity;
+      default:
+        return FontAwesomeIcons.user;
+    }
+  }
+
+  Widget _buildTokenDisplay({
+    required IconData icon,
+    required String label,
+    required int count,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FaIcon(
+            icon,
+            color: color,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '$count',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAction(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+          ),
+        ),
+        child: Column(
+          children: [
+            FaIcon(
+              icon,
+              color: Colors.white,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -46,8 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 2,
         shadowColor: theme.colorScheme.shadow.withOpacity(0.1),
         leading: IconButton(
-          icon:
-            FontAwesomeIcons.arrowLeft,
+          icon: const FaIcon(FontAwesomeIcons.arrowLeft),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -58,7 +205,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         centerTitle: true,
-
       ),
       body: CustomScrollView(
         slivers: [
@@ -94,8 +240,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(56),
-                          image: const DecorationImage(
-                            image: NetworkImage('https://i.pravatar.cc/300?img=5'),
+                          image: DecorationImage(
+                            image: //_userData?.profileImageUrls?.isNotEmpty == true
+                               // ? NetworkImage(_userData!.profileImageUrls!.first)
+                               // : const NetworkImage('https://i.pravatar.cc/300?img=5'),
+                            NetworkImage('https://i.pravatar.cc/300?img=5'),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -103,7 +252,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Jeniffer Chil',
+                      _userData?.username ?? 'Loading...',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.onSurface,
@@ -143,11 +292,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 context,
                 title: AppText.profile,
                 items: [
-                  _ProfileItem(label: 'Username', value: 'Jeniffer Chil'),
-                  _ProfileItem(label: 'Age', value: '23'),
-                  _ProfileItem(label: 'Gender', value: 'Female'),
-                  _ProfileItem(label: 'Mobile', value: '(+1) 783 467 870'),
-                  _ProfileItem(label: 'Nationality', value: 'Japan'),
+                  _ProfileItem(label: 'Username', value: _userData?.username ?? 'Loading...'),
+                  _ProfileItem(label: 'Age', value: _userData?.age.toString() ?? 'Loading...'),
+                  _ProfileItem(label: 'Gender', value: _userData?.gender ?? 'Loading...'),
+                  _ProfileItem(label: 'Mobile', value: _userData?.phone ?? 'Not provided'),
+                  _ProfileItem(label: 'Nationality', value: _userData?.nationality ?? 'Loading...'),
                 ],
               ),
               const SizedBox(height: 8),
@@ -250,19 +399,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.amber,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '69 Coins',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade300,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                (_userData?.goldTokens ?? 0).toString(),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
+                            SizedBox(width: 10,),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade500,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                (_userData?.silverTokens ?? 0).toString(),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -270,7 +438,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: PrimaryButton(
+                          child: CustomButton(
                             text: 'Recharge',
                             icon: FontAwesomeIcons.plus,
                             onPressed: () {
@@ -285,9 +453,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: SecondaryButton(
+                          child: CustomButton(
                             text: 'Withdraw',
                             icon: FontAwesomeIcons.arrowDown,
+                            isOutlined: true,
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -343,15 +512,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: double.infinity,
                       icon: FontAwesomeIcons.arrowRightFromBracket,
                       onPressed: () => _confirmLogout(context),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      )
+                       ),
+                     ],
+                   ),
+                 ),
+                ],
+              )
+            )
+          )
     ])
+    );
+  }
+
+  Widget _buildLookingForContent(BuildContext context) {
+    final lookingFor = _userData?.lookingFor ?? [];
+    
+    return _buildSubSection(
+      title: 'Looking For',
+      icon: FontAwesomeIcons.search,
+      color: const Color(0xFFF59E0B),
+      items: lookingFor,
+      context: context,
     );
   }
 
@@ -567,257 +748,129 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildInterestsContent(BuildContext context) {
     final theme = Theme.of(context);
-    final interests = [
-      'Photography', 'Travel', 'Hiking', 'Cooking', 'Music',
-      'Dancing', 'Reading', 'Fitness', 'Art', 'Movies'
-    ];
-    final hobbies = [
-      'Yoga', 'Swimming', 'Gaming', 'Painting', 'Gardening',
-      'Writing', 'Cycling', 'Meditation'
-    ];
+    final interests = _userData?.interests ?? [];
+    final hobbies = _userData?.hobbies ?? [];
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Interests',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.primary,
-          ),
+        // Interests Section
+        _buildSubSection(
+          title: 'Interests',
+          icon: FontAwesomeIcons.heart,
+          color: const Color(0xFFEC4899),
+          items: interests,
+          context: context,
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: interests.map((interest) => _buildChip(context, interest, Colors.blue)).toList(),
+        const SizedBox(height: 24),
+        
+        // Hobbies Section
+        _buildSubSection(
+          title: 'Hobbies',
+          icon: FontAwesomeIcons.gamepad,
+          color: const Color(0xFF9333EA),
+          items: hobbies,
+          context: context,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubSection({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required List<String> items,
+    required BuildContext context,
+  }) {
+    final theme = Theme.of(context);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    color.withOpacity(0.8),
+                    color.withOpacity(0.6),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: FaIcon(
+                  icon,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        Text(
-          'Hobbies',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.primary,
+        
+        // Items
+        if (items.isNotEmpty)
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: items.map((item) => _buildStyledChip(
+              context: context,
+              label: item,
+              color: color,
+            )).toList(),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+            child: Text(
+              'No $title added',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: hobbies.map((hobby) => _buildChip(context, hobby, Colors.green)).toList(),
-        ),
       ],
     );
   }
 
   Widget _buildRedFlagsContent(BuildContext context) {
-    final redFlags = [
-      'Smoking', 'Excessive Drinking', 'Dishonesty', 'Poor Communication',
-      'Lack of Ambition', 'Disrespectful Behavior'
-    ];
+    final dealBreakers = _userData?.dealBreakers ?? [];
     
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: redFlags.map((flag) => _buildChip(context, flag, Colors.red)).toList(),
-    );
-  }
-
-  Widget _buildLookingForContent(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    final List<Map<String, dynamic>> lookingForCategories = [
-      {
-        'title': 'Personality',
-        'items': ['Kind', 'Funny', 'Ambitious', 'Genuine', 'Adventurous', 'Creative', 'Empathetic', 'Confident'],
-        'color': Colors.pink,
-      },
-      {
-        'title': 'Values',
-        'items': ['Family-oriented', 'Honest', 'Loyal', 'Respectful', 'Spiritual', 'Goal-driven', 'Compassionate'],
-        'color': Colors.blue,
-      },
-      {
-        'title': 'Lifestyle',
-        'items': ['Active', 'Traveler', 'Fitness enthusiast', 'Foodie', 'Social', 'Work-life balance', 'Outdoorsy'],
-        'color': Colors.green,
-      },
-      {
-        'title': 'Connection',
-        'items': ['Emotional depth', 'Intellectual', 'Physical chemistry', 'Shared interests', 'Communication', 'Trust'],
-        'color': Colors.purple,
-      },
-    ];
-    
-    return Column(
-      children: [
-        // Tab Navigation
-        Container(
-          height: 45,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Row(
-            children: List.generate(lookingForCategories.length, (index) {
-              final isSelected = _lookingForTabIndex == index;
-              final category = lookingForCategories[index];
-              
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _lookingForTabIndex = index;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: isSelected ? category['color'] : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Center(
-                      child: Text(
-                        category['title'],
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 20),
-        
-        // Tab Content
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: Container(
-            key: ValueKey(_lookingForTabIndex),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: lookingForCategories[_lookingForTabIndex]['items']
-                  .map<Widget>((item) => _buildChip(
-                        context, 
-                        item, 
-                        lookingForCategories[_lookingForTabIndex]['color']
-                      ))
-                  .toList(),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPreferencesSection(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.pink.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const FaIcon(
-                  FontAwesomeIcons.heart,
-                  color: Colors.pink,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Dating Preferences',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          
-          // Age Range Slider
-          _buildAgeRangeSlider(context),
-          const SizedBox(height: 20),
-          
-          // Distance Slider
-          _buildDistanceSlider(context),
-          const SizedBox(height: 16),
-          
-          // Region Selection
-          _buildRegionSelector(context),
-          const SizedBox(height: 16),
-          
-          // Gender Dropdown
-          _buildDropdownSelector(
-            context,
-            'Gender',
-            _selectedGender,
-            ['Men', 'Women', 'Non-binary', 'Everyone'],
-            FontAwesomeIcons.person,
-            Colors.indigo,
-            (value) => setState(() => _selectedGender = value!),
-          ),
-          const SizedBox(height: 16),
-          
-          // Relationship Type Dropdown
-          _buildDropdownSelector(
-            context,
-            'Relationship Type',
-            _selectedRelationshipType,
-            ['Casual Dating', 'Serious Dating', 'Long-term', 'Marriage', 'Friendship', 'Something Casual'],
-            FontAwesomeIcons.heartCircleCheck,
-            Colors.pink,
-            (value) => setState(() => _selectedRelationshipType = value!),
-          ),
-          const SizedBox(height: 16),
-          
-          // Education Dropdown
-          _buildDropdownSelector(
-            context,
-            'Education',
-            _selectedEducation,
-            ['High School', 'Some College', 'College+', 'Graduate Degree', 'PhD/Doctorate', 'Trade School', 'Other'],
-            FontAwesomeIcons.graduationCap,
-            Colors.blue,
-            (value) => setState(() => _selectedEducation = value!),
-          ),
-          const SizedBox(height: 16),
-          
-          // Lifestyle Dropdown
-          _buildDropdownSelector(
-            context,
-            'Lifestyle',
-            _selectedLifestyle,
-            ['Very Active', 'Active', 'Somewhat Active', 'Not Very Active', 'Varies'],
-            FontAwesomeIcons.dumbbell,
-            Colors.green,
-            (value) => setState(() => _selectedLifestyle = value!),
-          ),
-        ],
-      ),
+    return _buildSubSection(
+      title: 'Deal Breakers',
+      icon: FontAwesomeIcons.ban,
+      color: const Color(0xFFDC2626),
+      items: dealBreakers,
+      context: context,
     );
   }
 
@@ -1271,6 +1324,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
 
+  Widget _buildStyledChip({
+    required BuildContext context,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.8),
+            color.withOpacity(0.6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
   Widget _buildChip(BuildContext context, String label, Color color) {
     final theme = Theme.of(context);
     return Container(
@@ -1414,8 +1505,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         content: Text('Are you sure you want to logout? You will need to sign in again to access your account.'),
         actions: [
-          SecondaryButton(
+          CustomButton(
             text: AppText.cancel,
+            isOutlined: true,
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),

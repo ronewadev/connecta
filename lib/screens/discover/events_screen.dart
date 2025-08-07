@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'widgets/events.dart';
 
@@ -33,7 +34,7 @@ class _EventsScreenState extends State<EventsScreen> {
             TextField(
               decoration: InputDecoration(
                 hintText: 'Search events...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: FaIcon(FontAwesomeIcons.magnifyingGlass),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),

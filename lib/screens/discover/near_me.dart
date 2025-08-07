@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'widgets/near_me.dart';
 
 class NearMeScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _NearMeScreenState extends State<NearMeScreen> {
             TextField(
               decoration: InputDecoration(
                 hintText: 'Search people...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: FaIcon(FontAwesomeIcons.magnifyingGlass),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
