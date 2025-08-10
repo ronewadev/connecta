@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/auth/onboarding/link_social_screen.dart';
+import 'package:connecta/services/profile_data_service.dart';
+import 'package:connecta/models/user_model.dart';
 
 class PreferencesScreen extends StatefulWidget {
   final String email;
@@ -17,6 +19,7 @@ class PreferencesScreen extends StatefulWidget {
   final List<String> dealBreakers;
   final List<String> lookingFor;
   final String bio;
+  final UserLocation? userLocation;
 
   const PreferencesScreen({
     super.key,
@@ -33,6 +36,7 @@ class PreferencesScreen extends StatefulWidget {
     required this.dealBreakers,
     required this.lookingFor,
     required this.bio,
+    this.userLocation,
   });
 
   @override
@@ -57,30 +61,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
 
   final int _maxSelectionPerCategory = 2;
 
-  final List<String> _genderOptions = ['Men', 'Women', 'Everyone'];
-  final List<String> _relationshipOptions = [
-    'Casual Dating',
-    'Serious Dating',
-    'Marriage',
-    'Friendship',
-    'Networking'
-  ];
-  final List<String> _educationOptions = [
-    'High School',
-    'College',
-    'University',
-    'Graduate',
-    'PhD'
-  ];
-  final List<String> _lifestyleOptions = [
-    'Non-smoker',
-    'Smoker',
-    'Social Drinker',
-    'Non-drinker',
-    'Fitness Enthusiast',
-    'Vegetarian',
-    'Vegan'
-  ];
+  // Dynamic data from Firestore
+  List<String> _genderOptions = [];
+  List<String> _relationshipOptions = [];
+  List<String> _educationOptions = [];
+  List<String> _lifestyleOptions = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -92,6 +78,8 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
     } else if (_maxDistance > 50.0) {
       _maxDistance = 50.0;
     }
+    
+    _loadProfileData();
     
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
@@ -115,6 +103,24 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
     ));
     
     _animationController.forward();
+  }
+
+  Future<void> _loadProfileData() async {
+    try {
+      final profileData = await ProfileDataService.getAllProfileData();
+      setState(() {
+        _genderOptions = ['Men', 'Women', 'Non-binary','Everyone'];
+        _relationshipOptions = profileData['relationship_types'] ?? [];
+        _educationOptions = profileData['education'] ?? [];
+        _lifestyleOptions = profileData['lifestyle'] ?? [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading profile data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   bool get _canContinue {
@@ -149,13 +155,19 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
               _buildProgressBar(),
               
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: SlideTransition(
+                            position: _slideAnimation,
+                            child: Column(
                         children: [
                           const SizedBox(height: 20),
                           
@@ -367,78 +379,84 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
                             ),
                           ),
                           
-                          const SizedBox(height: 32),
-                          
-                          // Continue Button
-                          Container(
-                            width: double.infinity,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              gradient: _canContinue
-                                  ? LinearGradient(
-                                      colors: [
-                                        const Color(0xFFEC4899),
-                                        const Color(0xFFBE185D),
-                                      ],
-                                    )
-                                  : LinearGradient(
-                                      colors: [
-                                        Colors.grey.withOpacity(0.5),
-                                        Colors.grey.withOpacity(0.3),
-                                      ],
-                                    ),
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: _canContinue
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFFEC4899).withOpacity(0.4),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ]
-                                  : [],
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _canContinue ? _continueToNextStep : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const FaIcon(
-                                    FontAwesomeIcons.arrowRight,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Continue',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          const SizedBox(height: 100), // Extra spacing for button clearance
                         ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
+
+              // Fixed Continue Button at bottom
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                decoration: const BoxDecoration(
+                  color: Colors.transparent, // Make the section transparent
+                ),
+                child: Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: _canContinue
+                        ? LinearGradient(
+                            colors: [
+                              const Color(0xFFEC4899),
+                              const Color(0xFFBE185D),
+                            ],
+                          )
+                        : LinearGradient(
+                            colors: [
+                              Colors.grey.withOpacity(0.5),
+                              Colors.grey.withOpacity(0.3),
+                            ],
+                          ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: _canContinue
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFEC4899).withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _canContinue ? _continueToNextStep : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const FaIcon(
+                          FontAwesomeIcons.arrowRight,
+                          color: Colors.white,
+                          size: 20,
+                                  ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Continue',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+                 ] ),
+                ),
+              ),
+
+          );
   }
 
   Widget _buildProgressBar() {
@@ -745,6 +763,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
           dealBreakers: widget.dealBreakers,
           lookingFor: widget.lookingFor,
           bio: widget.bio,
+          userLocation: widget.userLocation,
           // Pass the selected preferences as lists
           ageRange: [_ageRange.start.round(), _ageRange.end.round()],
           maxDistance: _maxDistance.round(),

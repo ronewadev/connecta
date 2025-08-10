@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:connecta/screens/auth/onboarding/interests_deal_breakers_screen.dart';
+import 'package:connecta/models/user_model.dart';
 
 class UploadImagesScreen extends StatefulWidget {
   final String email;
@@ -15,6 +16,7 @@ class UploadImagesScreen extends StatefulWidget {
   final String nationality;
   final String bio;
   final File? profileImage;
+  final UserLocation? userLocation;
 
   const UploadImagesScreen({
     super.key,
@@ -27,6 +29,7 @@ class UploadImagesScreen extends StatefulWidget {
     required this.nationality,
     required this.bio,
     this.profileImage,
+    this.userLocation,
   });
 
   @override
@@ -189,71 +192,77 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
                           const SizedBox(height: 32),
                           // Photos Grid
                           _buildPhotosGrid(),
-                          const SizedBox(height: 32),
-                          
-                          // Continue Button
-                          Container(
-                            width: double.infinity,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              gradient: (_images[0] != null && !_isUploading)
-                                  ? LinearGradient(
-                                      colors: [
-                                        const Color(0xFFEC4899),
-                                        const Color(0xFFBE185D),
-                                      ],
-                                    )
-                                  : LinearGradient(
-                                      colors: [
-                                        Colors.grey.withOpacity(0.5),
-                                        Colors.grey.withOpacity(0.3),
-                                      ],
-                                    ),
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: (_images[0] != null && !_isUploading)
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFFEC4899).withOpacity(0.4),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: ElevatedButton(
-                              onPressed: (_images[0] != null && !_isUploading) ? _continueToNext : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
-                                ),
-                              ),
-                              child: _isUploading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Text(
-                                      'Continue',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: (_images[0] != null && !_isUploading)
-                                            ? Colors.white
-                                            : Colors.white.withOpacity(0.5),
-                                        letterSpacing: 1,
-                                      ),
-                                    ),
-                            ),
-                          ),
+                          const SizedBox(height: 100), // Extra spacing for button clearance
                         ],
                       ),
                     ),
+                  ),
+                ),
+              ),
+
+              // Fixed Continue Button at bottom
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                decoration: const BoxDecoration(
+                  color: Colors.transparent, // Make the section transparent
+                ),
+                child: Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: (_images[0] != null && !_isUploading)
+                        ? LinearGradient(
+                            colors: [
+                              const Color(0xFFEC4899),
+                              const Color(0xFFBE185D),
+                            ],
+                          )
+                        : LinearGradient(
+                            colors: [
+                              Colors.grey.withOpacity(0.5),
+                              Colors.grey.withOpacity(0.3),
+                            ],
+                          ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: (_images[0] != null && !_isUploading)
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFEC4899).withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: (_images[0] != null && !_isUploading) ? _continueToNext : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                    ),
+                    child: _isUploading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Continue',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: (_images[0] != null && !_isUploading)
+                                  ? Colors.white
+                                  : Colors.white.withOpacity(0.5),
+                              letterSpacing: 1,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -554,6 +563,7 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
           nationality: widget.nationality,
           images: _images.where((img) => img != null).map((img) => img!.path).toList(),
           bio: widget.bio,
+          userLocation: widget.userLocation,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(

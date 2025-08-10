@@ -1,9 +1,107 @@
-
 import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+// Linked socials model
+class LinkedSocials {
+  final bool whatsapp;
+  final bool facebook;
+  final bool x; // formerly Twitter
+  final bool tiktok;
+  final bool instagram;
+  final bool snapchat;
+  final String? whatsappLink;
+  final String? facebookLink;
+  final String? xLink;
+  final String? tiktokLink;
+  final String? instagramLink;
+  final String? snapchatLink;
+
+  LinkedSocials({
+    this.whatsapp = false,
+    this.facebook = false,
+    this.x = false,
+    this.tiktok = false,
+    this.instagram = false,
+    this.snapchat = false,
+    this.whatsappLink,
+    this.facebookLink,
+    this.xLink,
+    this.tiktokLink,
+    this.instagramLink,
+    this.snapchatLink,
+  });
+
+  factory LinkedSocials.fromMap(Map<String, dynamic> map) {
+    return LinkedSocials(
+      whatsapp: map['whatsapp'] ?? false,
+      facebook: map['facebook'] ?? false,
+      x: map['x'] ?? false,
+      tiktok: map['tiktok'] ?? false,
+      instagram: map['instagram'] ?? false,
+      snapchat: map['snapchat'] ?? false,
+      whatsappLink: map['whatsappLink'],
+      facebookLink: map['facebookLink'],
+      xLink: map['xLink'],
+      tiktokLink: map['tiktokLink'],
+      instagramLink: map['instagramLink'],
+      snapchatLink: map['snapchatLink'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'whatsapp': whatsapp,
+      'facebook': facebook,
+      'x': x,
+      'tiktok': tiktok,
+      'instagram': instagram,
+      'snapchat': snapchat,
+      'whatsappLink': whatsappLink,
+      'facebookLink': facebookLink,
+      'xLink': xLink,
+      'tiktokLink': tiktokLink,
+      'instagramLink': instagramLink,
+      'snapchatLink': snapchatLink,
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return toMap();
+  }
+
+  LinkedSocials copyWith({
+    bool? whatsapp,
+    bool? facebook,
+    bool? x,
+    bool? tiktok,
+    bool? instagram,
+    bool? snapchat,
+    String? whatsappLink,
+    String? facebookLink,
+    String? xLink,
+    String? tiktokLink,
+    String? instagramLink,
+    String? snapchatLink,
+  }) {
+    return LinkedSocials(
+      whatsapp: whatsapp ?? this.whatsapp,
+      facebook: facebook ?? this.facebook,
+      x: x ?? this.x,
+      tiktok: tiktok ?? this.tiktok,
+      instagram: instagram ?? this.instagram,
+      snapchat: snapchat ?? this.snapchat,
+      whatsappLink: whatsappLink ?? this.whatsappLink,
+      facebookLink: facebookLink ?? this.facebookLink,
+      xLink: xLink ?? this.xLink,
+      tiktokLink: tiktokLink ?? this.tiktokLink,
+      instagramLink: instagramLink ?? this.instagramLink,
+      snapchatLink: snapchatLink ?? this.snapchatLink,
+    );
+  }
+}
 
 class UserDatabase {
   static final UserDatabase _instance = UserDatabase._internal();
@@ -97,8 +195,10 @@ class UserDatabase {
   StreamSubscription<DocumentSnapshot>? _realtimeSubscription;
   
   void _setupRealtimeListener(String userId) {
-    // Cancel existing subscription
+    // Cancel existing subscription if it exists
     _realtimeSubscription?.cancel();
+    
+    print('UserDatabase: Setting up real-time listener for user: $userId');
     
     // Set up new real-time listener
     _realtimeSubscription = FirebaseFirestore.instance
@@ -121,6 +221,9 @@ class UserDatabase {
         _userDataController.add(userData);
         
         print('UserDatabase: Real-time data updated for: ${userData.username}');
+      } else {
+        print('UserDatabase: Document does not exist or has no data');
+        _userDataController.add(null);
       }
     }, onError: (error) {
       print('UserDatabase: Real-time listener error: $error');
@@ -251,6 +354,22 @@ class UserDatabase {
     }
   }
 
+  // Update linked socials
+  Future<void> updateLinkedSocials(LinkedSocials linkedSocials) async {
+    final updates = <String, dynamic>{
+      'linkedSocials': linkedSocials.toMap(),
+    };
+    
+    await updateUserData(updates);
+    
+    // Force a local update immediately for responsive UI
+    if (_cachedUserData != null) {
+      _cachedUserData = _cachedUserData!.copyWith(updates);
+      _userDataController.add(_cachedUserData);
+      await _saveToLocalStorage(_cachedUserData!);
+    }
+  }
+
   // Force refresh from Firestore (useful for manual refresh)
   Future<UserData?> forceRefresh() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -310,6 +429,7 @@ class UserData {
   final List<String> dealBreakers;
   final List<String> lookingFor;
   final String subscriptionType;
+  final String profileImageUrl;
   final int goldTokens;
   final int silverTokens;
   final bool isPremium;
@@ -319,7 +439,10 @@ class UserData {
   final DateTime? eliteExpiryDate;
   final DateTime? infinityExpiryDate;
   final List<String> socialMediaLinks;
+  final LinkedSocials linkedSocials;
   final Map<String, dynamic> preferences;
+  final bool rememberMe;
+  final String? currentCity;
 
   UserData({
     required this.id,
@@ -336,6 +459,7 @@ class UserData {
     required this.dealBreakers,
     required this.lookingFor,
     required this.subscriptionType,
+    required this.profileImageUrl,
     required this.goldTokens,
     required this.silverTokens,
     required this.isPremium,
@@ -345,8 +469,11 @@ class UserData {
     this.eliteExpiryDate,
     this.infinityExpiryDate,
     required this.socialMediaLinks,
+    LinkedSocials? linkedSocials,
     required this.preferences,
-  });
+    this.rememberMe = false,
+    this.currentCity,
+  }) : linkedSocials = linkedSocials ?? LinkedSocials();
 
   factory UserData.fromFirestore(Map<String, dynamic> data) {
     print('UserData.fromFirestore: Processing data with keys: ${data.keys.toList()}');
@@ -393,6 +520,7 @@ class UserData {
       dealBreakers: _safeParseStringList(data['dealBreakers']),
       lookingFor: _safeParseStringList(data['lookingFor']),
       subscriptionType: data['subscriptionType'] ?? 'basic',
+      profileImageUrl: data['profileImageUrl'] ?? '',
       goldTokens: _safeParseInt(data['goldTokens'], 0),
       silverTokens: _safeParseInt(data['silverTokens'], 0),
       isPremium: _safeParseBool(data['isPremium'], false),
@@ -402,7 +530,12 @@ class UserData {
       eliteExpiryDate: data['eliteExpiryDate']?.toDate(),
       infinityExpiryDate: data['infinityExpiryDate']?.toDate(),
       socialMediaLinks: _safeParseStringList(data['socialMediaLinks']),
+      linkedSocials: data['linkedSocials'] != null 
+          ? LinkedSocials.fromMap(Map<String, dynamic>.from(data['linkedSocials']))
+          : LinkedSocials(),
       preferences: Map<String, dynamic>.from(data['preferences'] ?? {}),
+      rememberMe: _safeParseBool(data['rememberMe'], false),
+      currentCity: data['currentCity'],
     );
   }
 
@@ -422,6 +555,7 @@ class UserData {
       dealBreakers: List<String>.from(json['dealBreakers'] ?? []),
       lookingFor: List<String>.from(json['lookingFor'] ?? []),
       subscriptionType: json['subscriptionType'] ?? 'basic',
+      profileImageUrl: json['profileImageUrl'] ?? '',
       goldTokens: json['goldTokens'] ?? 0,
       silverTokens: json['silverTokens'] ?? 0,
       isPremium: json['isPremium'] ?? false,
@@ -431,7 +565,12 @@ class UserData {
       eliteExpiryDate: json['eliteExpiryDate'] != null ? DateTime.parse(json['eliteExpiryDate']) : null,
       infinityExpiryDate: json['infinityExpiryDate'] != null ? DateTime.parse(json['infinityExpiryDate']) : null,
       socialMediaLinks: List<String>.from(json['socialMediaLinks'] ?? []),
+      linkedSocials: json['linkedSocials'] != null 
+          ? LinkedSocials.fromMap(Map<String, dynamic>.from(json['linkedSocials']))
+          : LinkedSocials(),
       preferences: Map<String, dynamic>.from(json['preferences'] ?? {}),
+      rememberMe: json['rememberMe'] ?? false,
+      currentCity: json['currentCity'],
     );
   }
 
@@ -451,16 +590,12 @@ class UserData {
       'dealBreakers': dealBreakers,
       'lookingFor': lookingFor,
       'subscriptionType': subscriptionType,
+      'profileImageUrl': profileImageUrl,
       'goldTokens': goldTokens,
       'silverTokens': silverTokens,
-      'isPremium': isPremium,
-      'isElite': isElite,
-      'isInfinity': isInfinity,
-      'premiumExpiry': premiumExpiry?.toIso8601String(),
-      'eliteExpiryDate': eliteExpiryDate?.toIso8601String(),
-      'infinityExpiryDate': infinityExpiryDate?.toIso8601String(),
-      'socialMediaLinks': socialMediaLinks,
-      'preferences': preferences,
+      'linkedSocials': linkedSocials.toJson(),
+      'rememberMe': rememberMe,
+      'currentCity': currentCity,
     };
   }
 
@@ -490,6 +625,7 @@ class UserData {
           ? List<String>.from(updates['lookingFor']) 
           : lookingFor,
       subscriptionType: updates['subscriptionType'] ?? subscriptionType,
+      profileImageUrl: updates['profileImageUrl'] ?? profileImageUrl,
       goldTokens: updates['goldTokens'] ?? goldTokens,
       silverTokens: updates['silverTokens'] ?? silverTokens,
       isPremium: updates['isPremium'] ?? isPremium,
@@ -507,9 +643,14 @@ class UserData {
       socialMediaLinks: updates['socialMediaLinks'] != null 
           ? List<String>.from(updates['socialMediaLinks']) 
           : socialMediaLinks,
+      linkedSocials: updates['linkedSocials'] != null 
+          ? LinkedSocials.fromMap(Map<String, dynamic>.from(updates['linkedSocials']))
+          : linkedSocials,
       preferences: updates['preferences'] != null 
           ? Map<String, dynamic>.from(updates['preferences']) 
           : preferences,
+      rememberMe: updates['rememberMe'] ?? rememberMe,
+      currentCity: updates['currentCity'] ?? currentCity,
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/main_screen.dart';
 import 'package:connecta/services/auth_service.dart';
 import 'package:connecta/models/user_model.dart';
+import 'package:connecta/database/user_database.dart';
 import 'package:provider/provider.dart';
 
 class LinkSocialScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class LinkSocialScreen extends StatefulWidget {
   final List<String> dealBreakers;
   final List<String> lookingFor;
   final String bio;
+  final UserLocation? userLocation;
   // New preference parameters
   final List<int> ageRange;
   final int maxDistance;
@@ -46,6 +48,7 @@ class LinkSocialScreen extends StatefulWidget {
     required this.dealBreakers,
     required this.lookingFor,
     required this.bio,
+    this.userLocation,
     required this.ageRange,
     required this.maxDistance,
     required this.interestedIn,
@@ -75,6 +78,17 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
     'WhatsApp': false,
   };
 
+  Map<String, String> _platformLinks = {
+    'Instagram': '',
+    'TikTok': '',
+    'Snapchat': '',
+    'X': '',
+    'Facebook': '',
+    'WhatsApp': '',
+  };
+
+  final Map<String, TextEditingController> _linkControllers = {};
+
   bool _allowDirectContact = false;
   bool _isCreatingProfile = false;
 
@@ -99,6 +113,12 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
   @override
   void initState() {
     super.initState();
+    
+    // Initialize text controllers for each platform
+    for (String platform in _linkedPlatforms.keys) {
+      _linkControllers[platform] = TextEditingController();
+    }
+    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -548,23 +568,389 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
   }
 
   void _togglePlatform(String platform) {
-    setState(() {
-      _linkedPlatforms[platform] = !_linkedPlatforms[platform]!;
-    });
+    if (_linkedPlatforms[platform]!) {
+      // If already linked, disconnect
+      setState(() {
+        _linkedPlatforms[platform] = false;
+        _platformLinks[platform] = '';
+        _linkControllers[platform]!.clear();
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$platform disconnected'),
+          backgroundColor: const Color(0xFF6B46C1),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } else {
+      // Show input dialog for linking
+      _showLinkDialog(platform);
+    }
+  }
+
+  void _showLinkDialog(String platform) {
+    String hint = '';
+    String example = '';
     
-    // Show appropriate message
-    final message = _linkedPlatforms[platform]!
-        ? '$platform connected successfully!'
-        : '$platform disconnected';
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: _linkedPlatforms[platform]!
-            ? const Color(0xFF4CAF50)
-            : const Color(0xFF6B46C1),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    switch (platform) {
+      case 'WhatsApp':
+        hint = 'Enter your WhatsApp number';
+        example = 'e.g., 27792818288';
+        break;
+      case 'Instagram':
+        hint = 'Enter your Instagram username';
+        example = 'e.g., @username';
+        break;
+      case 'TikTok':
+        hint = 'Enter your TikTok username';
+        example = 'e.g., @username';
+        break;
+      case 'Snapchat':
+        hint = 'Enter your Snapchat username';
+        example = 'e.g., username';
+        break;
+      case 'X':
+        hint = 'Enter your X (Twitter) handle';
+        example = 'e.g., @username';
+        break;
+      case 'Facebook':
+        hint = 'Enter your Facebook profile URL or username';
+        example = 'e.g., facebook.com/username';
+        break;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF6B46C1).withOpacity(0.95),
+                const Color(0xFF9333EA).withOpacity(0.95),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _platformColors[platform]!.withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 5,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with platform icon and title
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _platformColors[platform]!,
+                          _platformColors[platform]!.withOpacity(0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _platformColors[platform]!.withOpacity(0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: FaIcon(
+                        _platformIcons[platform]!,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Link $platform',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Connect your $platform profile',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Input field with beautiful styling
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.2),
+                      Colors.white.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: TextField(
+                  controller: _linkControllers[platform],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: TextStyle(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 16,
+                    ),
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: FaIcon(
+                        _platformIcons[platform]!,
+                        color: _platformColors[platform]!.withOpacity(0.8),
+                        size: 18,
+                      ),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                  keyboardType: platform == 'WhatsApp' 
+                      ? TextInputType.phone 
+                      : TextInputType.text,
+                ),
+              ),
+              
+              const SizedBox(height: 12),
+              
+              // Example text
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    FaIcon(
+                      FontAwesomeIcons.lightbulb,
+                      color: Colors.amber.withOpacity(0.8),
+                      size: 14,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        example,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.2),
+                            Colors.white.withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 12),
+                  
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _platformColors[platform]!,
+                            _platformColors[platform]!.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _platformColors[platform]!.withOpacity(0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          String input = _linkControllers[platform]!.text.trim();
+                          if (input.isNotEmpty) {
+                            setState(() {
+                              _linkedPlatforms[platform] = true;
+                              
+                              // Format the link based on platform
+                              if (platform == 'WhatsApp') {
+                                // Remove any non-numeric characters and ensure it starts with country code
+                                String cleanNumber = input.replaceAll(RegExp(r'[^0-9]'), '');
+                                if (!cleanNumber.startsWith('27') && cleanNumber.length == 10) {
+                                  cleanNumber = '27${cleanNumber.substring(1)}'; // Replace leading 0 with 27
+                                }
+                                _platformLinks[platform] = 'https://wa.me/$cleanNumber';
+                              } else if (platform == 'Instagram') {
+                                String username = input.replaceAll('@', '');
+                                _platformLinks[platform] = 'https://instagram.com/$username';
+                              } else if (platform == 'TikTok') {
+                                String username = input.replaceAll('@', '');
+                                _platformLinks[platform] = 'https://tiktok.com/@$username';
+                              } else if (platform == 'Snapchat') {
+                                _platformLinks[platform] = 'https://snapchat.com/add/$input';
+                              } else if (platform == 'X') {
+                                String username = input.replaceAll('@', '');
+                                _platformLinks[platform] = 'https://twitter.com/$username';
+                              } else if (platform == 'Facebook') {
+                                if (!input.startsWith('http')) {
+                                  input = input.replaceAll('facebook.com/', '');
+                                  _platformLinks[platform] = 'https://facebook.com/$input';
+                                } else {
+                                  _platformLinks[platform] = input;
+                                }
+                              }
+                            });
+                            
+                            Navigator.pop(context);
+                            
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    FaIcon(
+                                      FontAwesomeIcons.checkCircle,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text('$platform linked successfully!'),
+                                  ],
+                                ),
+                                backgroundColor: const Color(0xFF4CAF50),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const FaIcon(
+                              FontAwesomeIcons.link,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Link Account',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -572,26 +958,143 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
   void _showDirectContactInfo() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF6B46C1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Direct Contact',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          'When enabled, other users will be able to contact you directly through your linked social platforms. This adds more ways to connect but also shares your social profiles with matches.',
-          style: TextStyle(color: Colors.white.withOpacity(0.9)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Got it',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF6B46C1).withOpacity(0.95),
+                const Color(0xFF9333EA).withOpacity(0.95),
+              ],
             ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFEC4899).withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 5,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with icon
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFEC4899),
+                      const Color(0xFFBE185D),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFEC4899).withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: FaIcon(
+                    FontAwesomeIcons.circleInfo,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              
+              const Text(
+                'Direct Contact',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  'When enabled, other users will be able to contact you directly through your linked social platforms. This adds more ways to connect but also shares your social profiles with matches.',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              Container(
+                width: double.infinity,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFEC4899),
+                      const Color(0xFFBE185D),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFEC4899).withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: const Text(
+                    'Got it!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -602,8 +1105,24 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
     });
 
     try {
-      // Get linked social platforms
-      List<String> linkedSocials = _linkedPlatforms.entries
+      // Create LinkedSocials object with the collected data
+      final linkedSocials = LinkedSocials(
+        whatsapp: _linkedPlatforms['WhatsApp']!,
+        facebook: _linkedPlatforms['Facebook']!,
+        x: _linkedPlatforms['X']!,
+        tiktok: _linkedPlatforms['TikTok']!,
+        instagram: _linkedPlatforms['Instagram']!,
+        snapchat: _linkedPlatforms['Snapchat']!,
+        whatsappLink: _platformLinks['WhatsApp']?.isNotEmpty == true ? _platformLinks['WhatsApp'] : null,
+        facebookLink: _platformLinks['Facebook']?.isNotEmpty == true ? _platformLinks['Facebook'] : null,
+        xLink: _platformLinks['X']?.isNotEmpty == true ? _platformLinks['X'] : null,
+        tiktokLink: _platformLinks['TikTok']?.isNotEmpty == true ? _platformLinks['TikTok'] : null,
+        instagramLink: _platformLinks['Instagram']?.isNotEmpty == true ? _platformLinks['Instagram'] : null,
+        snapchatLink: _platformLinks['Snapchat']?.isNotEmpty == true ? _platformLinks['Snapchat'] : null,
+      );
+
+      // Get linked social platforms (for backward compatibility)
+      List<String> linkedSocialsList = _linkedPlatforms.entries
           .where((entry) => entry.value)
           .map((entry) => entry.key)
           .toList();
@@ -618,22 +1137,15 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
         age: widget.age,
         gender: widget.gender,
         nationality: widget.nationality,
-        location: widget.nationality, // Using nationality as default location
+        location: widget.userLocation?.city ?? widget.nationality, // Use location city or nationality as fallback
+        userLocation: widget.userLocation, // Add the user location data
         profileImages: widget.images,
         interests: widget.interests,
         hobbies: widget.hobbies,
         dealBreakers: widget.dealBreakers,
-        bio: widget.bio, // Use the actual bio from the form
-        subscriptionType: 'basic',
-        goldTokens: 0,
-        silverTokens: 0,
-        isPremium: false,
-        isElite: false,
-        isInfinity: false,
-        premiumExpiry: null,
-        eliteExpiryDate: null,
-        infinityExpiryDate: null,
-        socialMediaLinks: linkedSocials,
+        bio: widget.bio,
+        socialMediaLinks: linkedSocialsList,
+        allowDirectContact: _allowDirectContact, // Add this line
         preferences: {
           'ageRange': widget.ageRange,
           'maxDistance': widget.maxDistance,
@@ -649,7 +1161,7 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
         },
       );
 
-      // Now create the Firebase user with all the complete data
+      // Create the Firebase user with all the complete data
       final authService = Provider.of<AuthService>(context, listen: false);
       
       Map<String, dynamic> result = await authService.signUp(
@@ -663,8 +1175,11 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
         // Send email verification
         await authService.sendEmailVerification();
         
-        // Update the user profile with complete data
-        await authService.updateUserProfile(completeUser.toMap());
+        // Update the user profile with complete data including linkedSocials
+        Map<String, dynamic> userMap = completeUser.toMap();
+        userMap['linkedSocials'] = linkedSocials.toMap(); // Add linkedSocials to the user data
+        
+        await authService.updateUserProfile(userMap);
 
         setState(() {
           _isCreatingProfile = false;
@@ -738,6 +1253,10 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
   @override
   void dispose() {
     _animationController.dispose();
+    // Dispose all text controllers
+    for (var controller in _linkControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 }

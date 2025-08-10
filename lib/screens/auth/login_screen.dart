@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../database/user_database.dart';
 import '../main_screen.dart';
 import 'signup_screen.dart';
 import '../../services/auth_service.dart';
@@ -632,20 +633,13 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         );
 
         if (result['success']) {
-          // Save remember me preference
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('remember_me', _rememberMe);
+          // Save remember me preference to Firestore
+          await UserDatabase().updateUserData({'rememberMe': _rememberMe});
           
           // Navigate to main screen directly (email verification removed)
           Navigator.pushReplacement(
             context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 500),
-            ),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         } else {
           // Show error message

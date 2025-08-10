@@ -341,6 +341,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 isCurrent: currentSubscription == 'basic',
                 isPremium: false,
                 gradientColors: [Colors.grey.shade300, Colors.grey.shade500],
+                currentSubscription: currentSubscription,
                 onPressed: () {},
               ),
               const SizedBox(height: 20),
@@ -365,6 +366,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 isCurrent: currentSubscription == 'premium',
                 isPremium: true,
                 gradientColors: [Colors.amber.shade400, Colors.orange.shade600],
+                currentSubscription: currentSubscription,
                 onPressed: () {
                   subscriptionService.subscribe('premium', const Duration(days: 30));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -400,6 +402,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 isCurrent: currentSubscription == 'elite',
                 isPremium: true,
                 gradientColors: [Colors.cyanAccent.shade400, Colors.lightBlueAccent.shade700],
+                currentSubscription: currentSubscription,
                 onPressed: () {
                   subscriptionService.subscribe('elite', const Duration(days: 30));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -438,6 +441,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 isCurrent: currentSubscription == 'infinity',
                 isPremium: true,
                 gradientColors: [Colors.deepPurple.shade600, Colors.purpleAccent.shade400],
+                currentSubscription: currentSubscription,
                 onPressed: () {
                   subscriptionService.subscribe('infinity', const Duration(days: 30));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -554,9 +558,45 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     required bool isCurrent,
     required bool isPremium,
     required List<Color> gradientColors,
+    required String currentSubscription,
     required VoidCallback onPressed,
   }) {
     final theme = Theme.of(context);
+    
+    // Helper function to determine subscription hierarchy
+    int getSubscriptionLevel(String subscription) {
+      switch (subscription.toLowerCase()) {
+        case 'basic': return 1;
+        case 'premium': return 2;
+        case 'elite': return 3;
+        case 'infinity': return 4;
+        default: return 1;
+      }
+    }
+    
+    // Determine if this is an upgrade or downgrade
+    final currentLevel = getSubscriptionLevel(currentSubscription);
+    final targetLevel = getSubscriptionLevel(title);
+    final isUpgrade = targetLevel > currentLevel;
+    final isDowngrade = targetLevel < currentLevel;
+    
+    // Determine button text and icon
+    String buttonText;
+    IconData buttonIcon;
+    
+    if (isCurrent) {
+      buttonText = 'Current Plan';
+      buttonIcon = FontAwesomeIcons.check;
+    } else if (isUpgrade) {
+      buttonText = 'Upgrade Now';
+      buttonIcon = FontAwesomeIcons.arrowUp;
+    } else if (isDowngrade) {
+      buttonText = 'Downgrade';
+      buttonIcon = FontAwesomeIcons.arrowDown;
+    } else {
+      buttonText = 'Select Plan';
+      buttonIcon = FontAwesomeIcons.arrowRight;
+    }
     
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
@@ -756,9 +796,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       FaIcon(
-                        isCurrent 
-                          ? FontAwesomeIcons.check
-                          : FontAwesomeIcons.arrowUp,
+                        buttonIcon,
                         size: 16,
                       ),
                       const SizedBox(width: 12),
@@ -768,9 +806,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
-                        child: Text(
-                          isCurrent ? 'Current Plan' : 'Upgrade Now',
-                        ),
+                        child: Text(buttonText),
                       ),
                     ],
                   ),

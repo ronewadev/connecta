@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connecta/screens/plans/stream_ads_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' hide IconButton;
@@ -6,7 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/widgets/custom_button.dart';
 import 'package:connecta/utils/text_strings.dart';
-import 'package:connecta/database/user_database.dart';
+import 'package:connecta/models/user_model.dart' as UserModel;
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../functions/submitCollection.dart';
 
 class TokensScreen extends StatefulWidget {
   const TokensScreen({super.key});
@@ -16,9 +20,12 @@ class TokensScreen extends StatefulWidget {
 }
 
 class _TokensScreenState extends State<TokensScreen> {
-  final UserDatabase _userDatabase = UserDatabase();
-  UserData? _userData;
-  StreamSubscription<UserData?>? _userDataSubscription;
+  UserModel.User? _userData;
+  StreamSubscription<DocumentSnapshot>? _userSubscription;
+  
+  // Token packages from Firestore
+  Map<String, Map<String, dynamic>> _tokenPackages = {};
+  bool _packagesLoading = true;
   
   // Custom token purchase values
   double _goldTokensSlider = 5.0; // Minimum 5 tokens
@@ -29,32 +36,71 @@ class _TokensScreenState extends State<TokensScreen> {
     super.initState();
     _customAmountController.text = _goldTokensSlider.round().toString();
     _initializeUserData();
+    _loadTokenPackages();
   }
   
-  void _initializeUserData() async {
-    // Get current cached data immediately
-    _userData = _userDatabase.currentUserData;
-    if (_userData != null) {
-      setState(() {});
+  void _initializeUserData() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Set up real-time listener for current user
+      _userSubscription = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists && snapshot.data() != null) {
+          setState(() {
+            _userData = UserModel.User.fromMap(snapshot.data()!, user.uid);
+          });
+        }
+      });
     }
-    
-    // Initialize UserDatabase (this will set up real-time listener)
-    await _userDatabase.initializeUserData();
-    
-    // Listen to user data changes
-    _userDataSubscription = _userDatabase.userDataStream.listen((userData) {
+  }
+
+  Future<void> _loadTokenPackages() async {
+    try {
+      setState(() {
+        _packagesLoading = true;
+      });
+
+      // Initialize packages if they don't exist
+      //await TokenPackageService.initializeTokenPackages();
+      
+      // Fetch packages from Firestore
+      final snapshot = await FirebaseFirestore.instance
+          .collection('token_packages')
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      final Map<String, Map<String, dynamic>> packages = {};
+      
+      for (var doc in snapshot.docs) {
+        packages[doc.id] = {
+          'id': doc.id,
+          ...doc.data(),
+        };
+      }
+
       if (mounted) {
         setState(() {
-          _userData = userData;
+          _tokenPackages = packages;
+          _packagesLoading = false;
         });
       }
-    });
+    } catch (e) {
+      print('Error loading token packages: $e');
+      if (mounted) {
+        setState(() {
+          _packagesLoading = false;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
+    _userSubscription?.cancel();
     _customAmountController.dispose();
-    _userDataSubscription?.cancel();
     super.dispose();
   }
   
@@ -64,9 +110,15 @@ class _TokensScreenState extends State<TokensScreen> {
     return (goldTokens ~/ 5) * 10 + (goldTokens % 5) * 2;
   }
   
-  // Calculate price based on gold tokens (example: $0.99 per gold token)
+  // Calculate price based on gold tokens using custom pack pricing from Firestore
   double get _calculatedPrice {
-    return _goldTokensSlider.round() * 0.99;
+    final customPack = _tokenPackages['customTokenPack'];
+    if (customPack != null) {
+      final pricePerGold = (customPack['pricePerGold'] as num?)?.toDouble() ?? 0.50;
+      final pricePerSilver = (customPack['pricePerSilver'] as num?)?.toDouble() ?? 0.05;
+      return (_goldTokensSlider.round() * pricePerGold) + (_calculatedSilverTokens * pricePerSilver);
+    }
+    return _goldTokensSlider.round() * 0.99; // Fallback
   }
 
   @override
@@ -85,7 +137,7 @@ class _TokensScreenState extends State<TokensScreen> {
         shadowColor: theme.colorScheme.shadow.withOpacity(0.1),
         leading: IconButton(
           icon:  FontAwesomeIcons.arrowLeft,
-            onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Tokens & Balance',
@@ -96,7 +148,13 @@ class _TokensScreenState extends State<TokensScreen> {
         ),
         centerTitle: true,
       ),
-      body: CustomScrollView(
+      body: _userData == null
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              ),
+            )
+          : CustomScrollView(
         slivers: [
           // Header Section
           SliverToBoxAdapter(
@@ -204,35 +262,53 @@ class _TokensScreenState extends State<TokensScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildTokenPackage(
-                  context,
-                  title: 'Starter Pack',
-                  goldTokens: 10,
-                  silverTokens: 20,
-                  price: '\$4.99',
-                  color: Colors.blue,
-                  isPopular: false,
-                ),
-                const SizedBox(height: 16),
-                _buildTokenPackage(
-                  context,
-                  title: 'Popular Pack',
-                  goldTokens: 25,
-                  silverTokens: 75,
-                  price: '\$9.99',
-                  color: Colors.purple,
-                  isPopular: true,
-                ),
-                const SizedBox(height: 16),
-                _buildTokenPackage(
-                  context,
-                  title: 'Premium Pack',
-                  goldTokens: 70,
-                  silverTokens: 200,
-                  price: '\$19.99',
-                  color: Colors.amber,
-                  isPopular: false,
-                ),
+                if (_packagesLoading)
+                  Container(
+                    height: 200,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Loading token packages...',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
+                  // Dynamic packages from Firestore
+                  if (_tokenPackages.containsKey('starterPack'))
+                    _buildDynamicTokenPackage(
+                      context,
+                      packageData: _tokenPackages['starterPack']!,
+                      color: Colors.blue,
+                      isPopular: false,
+                    ),
+                  const SizedBox(height: 16),
+                  if (_tokenPackages.containsKey('popularPack'))
+                    _buildDynamicTokenPackage(
+                      context,
+                      packageData: _tokenPackages['popularPack']!,
+                      color: Colors.purple,
+                      isPopular: true,
+                    ),
+                  const SizedBox(height: 16),
+                  if (_tokenPackages.containsKey('premiumPack'))
+                    _buildDynamicTokenPackage(
+                      context,
+                      packageData: _tokenPackages['premiumPack']!,
+                      color: Colors.amber,
+                      isPopular: false,
+                    ),
+                ],
                 const SizedBox(height: 32),
                 // Custom Token Purchase Section
                 _buildCustomTokenPurchase(context),
@@ -248,8 +324,8 @@ class _TokensScreenState extends State<TokensScreen> {
                   context,
                   icon: FontAwesomeIcons.video,
                   title: 'Watch Ads',
-                  description: 'Earn 5 silver tokens per ad',
-                  reward: '+5 Silver',
+                  description: 'Earn silver tokens per ad',
+                  reward:'5+ Silver',
                   onPressed: () {
                    Navigator.push(
                      context,
@@ -360,16 +436,19 @@ class _TokensScreenState extends State<TokensScreen> {
     );
   }
 
-  Widget _buildTokenPackage(
+  Widget _buildDynamicTokenPackage(
     BuildContext context, {
-    required String title,
-    required int goldTokens,
-    required int silverTokens,
-    required String price,
+    required Map<String, dynamic> packageData,
     required Color color,
     required bool isPopular,
   }) {
     final theme = Theme.of(context);
+    
+    final name = packageData['name'] as String? ?? 'Token Package';
+    final goldTokens = packageData['goldCoins'] as int? ?? 0;
+    final silverTokens = packageData['silverCoins'] as int? ?? 0;
+    final price = packageData['price'] as double? ?? 0.0;
+    final currency = packageData['currency'] as String? ?? 'USD';
     
     return Container(
       decoration: BoxDecoration(
@@ -444,14 +523,14 @@ class _TokensScreenState extends State<TokensScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            title,
+                            name,
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            price,
+                            currency == 'USD' ? '\$${price.toStringAsFixed(2)}' : '$price $currency',
                             style: theme.textTheme.headlineMedium?.copyWith(
                               color: color,
                               fontWeight: FontWeight.bold,
@@ -532,12 +611,7 @@ class _TokensScreenState extends State<TokensScreen> {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Purchase feature coming soon!'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
+                        _showPurchaseDialog(context, packageData);
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
@@ -558,7 +632,7 @@ class _TokensScreenState extends State<TokensScreen> {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            'Purchase $title',
+                            'Purchase $name',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -575,6 +649,156 @@ class _TokensScreenState extends State<TokensScreen> {
         ],
       ),
     );
+  }
+
+  void _showPurchaseDialog(BuildContext context, Map<String, dynamic> packageData) {
+    final theme = Theme.of(context);
+    final name = packageData['name'] as String? ?? 'Token Package';
+    final goldTokens = packageData['goldCoins'] as int? ?? 0;
+    final silverTokens = packageData['silverCoins'] as int? ?? 0;
+    final price = packageData['price'] as double? ?? 0.0;
+    final currency = packageData['currency'] as String? ?? 'USD';
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.deepPurple, Colors.indigo],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const FaIcon(
+                FontAwesomeIcons.shoppingCart,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Confirm Purchase',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    name,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Gold Tokens:', style: theme.textTheme.bodyMedium),
+                      Text(
+                        '$goldTokens',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Silver Tokens:', style: theme.textTheme.bodyMedium),
+                      Text(
+                        '$silverTokens',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Total Price:',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        currency == 'USD' ? '\$${price.toStringAsFixed(2)}' : '$price $currency',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.deepPurple, Colors.indigo],
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Purchase feature coming soon!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              child: const Text(
+                'Purchase',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+            );
   }
 
   Widget _buildEarnTokenOption(

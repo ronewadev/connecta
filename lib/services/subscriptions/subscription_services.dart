@@ -23,4 +23,26 @@ class SubscriptionService with ChangeNotifier {
 
   bool get isPremium => _subscriptionType == 'premium' || _subscriptionType == 'infinity';
   bool get isInfinity => _subscriptionType == 'infinity';
+
+  void downgrade(String currentSubscription) {
+    if (currentSubscription == 'infinity') {
+      _subscriptionType = 'elite';
+    } else if (currentSubscription == 'elite') {
+      _subscriptionType = 'premium';
+    } else if (currentSubscription == 'premium') {
+      _subscriptionType = 'basic';
+    }
+    notifyListeners();
+  }
+
+  void upgrade(String currentSubscription) {
+    if (currentSubscription == 'basic') {
+      _subscriptionType = 'premium';
+    } else if (currentSubscription == 'premium') {
+      _subscriptionType = 'elite';
+    } else if (currentSubscription == 'elite') {
+      _subscriptionType = 'infinity';
+    }
+    notifyListeners();
+  }
 }

@@ -3,7 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
+import 'package:connecta/functions/location_picker.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../../models/user_model.dart';
 
 class PersonalDetailsScreen extends StatefulWidget {
   final String email;
@@ -28,14 +31,16 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
 
   String _selectedGender = '';
   String _selectedNationality = '';
+  LocationData? _userLocation;
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
+  bool _isGettingLocation = false;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  final List<String> _genders = ['Male', 'Female', 'Non-binary', 'Other'];
+  final List<String> _genders = ['Male', 'Female', 'Non-binary'];
 
   final List<String> _countries = [
     'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Armenia', 'Australia', 'Austria', 'Azerbaijan',
@@ -105,10 +110,11 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
         int.parse(_ageController.text) <= 100;
     final hasGender = _selectedGender.isNotEmpty;
     final hasNationality = _selectedNationality.isNotEmpty;
+    final hasLocation = _userLocation != null;
     final hasProfile = _profileImage != null;
     final hasBio = _bioController.text.isNotEmpty && _bioController.text.length >= 20;
 
-    return hasUsername && hasValidAge && hasGender && hasNationality && hasProfile && hasBio;
+    return hasUsername && hasValidAge && hasGender && hasNationality && hasLocation && hasProfile && hasBio;
   }
 
   @override
@@ -132,181 +138,193 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
           child: Column(
             children: [
               _buildProgressBar(),
+              
+              // Main content with fixed bottom button
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          ShaderMask(
-                            shaderCallback: (bounds) => LinearGradient(
-                              colors: [Colors.white, Colors.white.withOpacity(0.8)],
-                            ).createShader(bounds),
-                            child: const Text(
-                              'Tell us about yourself',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Help us create your perfect profile',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white.withOpacity(0.9),
-                              fontWeight: FontWeight.w300,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          _buildProfileImageSection(),
-                          const SizedBox(height: 20),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(28),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.white.withOpacity(0.25),
-                                      Colors.white.withOpacity(0.15),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(28),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.2),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Form(
-                                    key: _formKey,
-                                    child: Column(
-                                      children: [
-                                        _buildTextField(
-                                          controller: _usernameController,
-                                          label: 'Username',
-                                          icon: FontAwesomeIcons.user,
-                                          validator: (value) {
-                                            if (value == null || value.isEmpty) {
-                                              return 'Please enter a username';
-                                            }
-                                            if (value.length < 3) {
-                                              return 'Username must be at least 3 characters';
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 16),
-                                        _buildTextField(
-                                          controller: _ageController,
-                                          label: 'Age',
-                                          icon: FontAwesomeIcons.birthdayCake,
-                                          keyboardType: TextInputType.number,
-                                          validator: (value) {
-                                            if (value == null || value.isEmpty) {
-                                              return 'Required';
-                                            }
-                                            final age = int.tryParse(value);
-                                            if (age == null || age < 18 || age > 100) {
-                                              return 'Invalid age (18-100)';
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 16),
-                                        _buildGenderDropdown(),
-                                        const SizedBox(height: 16),
-                                        _buildTextField(
-                                          controller: _mobileController,
-                                          label: 'Mobile (Optional)',
-                                          icon: FontAwesomeIcons.phone,
-                                          keyboardType: TextInputType.phone,
-                                        ),
-                                        const SizedBox(height: 16),
-                                        _buildNationalityDropdown(),
-                                        const SizedBox(height: 16),
-                                        _buildBioTextField(),
-                                      ],
+                child: Column(
+                  children: [
+                    // Scrollable content
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: SlideTransition(
+                            position: _slideAnimation,
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 20),
+                                ShaderMask(
+                                  shaderCallback: (bounds) => LinearGradient(
+                                    colors: [Colors.white, Colors.white.withOpacity(0.8)],
+                                  ).createShader(bounds),
+                                  child: const Text(
+                                    'Tell us about yourself',
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      letterSpacing: 1.2,
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            width: double.infinity,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFFEC4899),
-                                  Color(0xFFBE185D),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFEC4899).withOpacity(0.4),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Help us create your perfect profile',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontWeight: FontWeight.w300,
+                                  ),
                                 ),
+                                const SizedBox(height: 24),
+                                _buildProfileImageSection(),
+                                const SizedBox(height: 20),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(28),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.white.withOpacity(0.25),
+                                            Colors.white.withOpacity(0.15),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(28),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.2),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(24),
+                                        child: Form(
+                                          key: _formKey,
+                                          child: Column(
+                                            children: [
+                                              _buildTextField(
+                                                controller: _usernameController,
+                                                label: 'Username',
+                                                icon: FontAwesomeIcons.user,
+                                                validator: (value) {
+                                                  if (value == null || value.isEmpty) {
+                                                    return 'Please enter a username';
+                                                  }
+                                                  if (value.length < 3) {
+                                                    return 'Username must be at least 3 characters';
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                              const SizedBox(height: 16),
+                                              _buildTextField(
+                                                controller: _ageController,
+                                                label: 'Age',
+                                                icon: FontAwesomeIcons.birthdayCake,
+                                                keyboardType: TextInputType.number,
+                                                validator: (value) {
+                                                  if (value == null || value.isEmpty) {
+                                                    return 'Required';
+                                                  }
+                                                  final age = int.tryParse(value);
+                                                  if (age == null || age < 18 || age > 100) {
+                                                    return 'Invalid age (18-100)';
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                              const SizedBox(height: 16),
+                                              _buildGenderDropdown(),
+                                              const SizedBox(height: 24),
+                                              _buildNationalityDropdown(),
+                                              const SizedBox(height: 24),
+                                              _buildLocationSection(),
+                                              const SizedBox(height: 24),
+                                              _buildBioTextField(),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 100), // Extra spacing for button clearance
                               ],
                             ),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (_isFormValid()) {
-                                  _continueToNext();
-                                } else {
-                                  // Show validation errors
-                                  _formKey.currentState?.validate();
-                                  if (_profileImage == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text('Please upload a profile picture'),
-                                        backgroundColor: const Color(0xFFEC4899),
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
-                                ),
-                              ),
-                              child: const Text(
-                                'Continue',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+
+                    // Fixed Continue Button at bottom
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                      decoration: const BoxDecoration(
+                        color: Colors.transparent, // Make the section transparent
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFFEC4899),
+                              Color(0xFFBE185D),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFEC4899).withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_isFormValid()) {
+                              _continueToNext();
+                            } else {
+                              // Show validation errors
+                              _formKey.currentState?.validate();
+                              if (_profileImage == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text('Please upload a profile picture'),
+                                    backgroundColor: const Color(0xFFEC4899),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                          ),
+                          child: const Text(
+                            'Continue',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -448,14 +466,61 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
         setState(() {
           _profileImage = File(pickedFile.path);
         });
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                FaIcon(
+                  FontAwesomeIcons.checkCircle,
+                  color: Colors.white,
+                  size: 16,
+                ),
+                SizedBox(width: 12),
+                Text('Profile picture uploaded successfully!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
       }
     } catch (e) {
+      String userFriendlyMessage;
+      
+      if (e.toString().contains('already_active')) {
+        userFriendlyMessage = 'Please wait a moment and try again. The image picker is still processing.';
+      } else if (e.toString().contains('permission')) {
+        userFriendlyMessage = 'Please allow photo access in your device settings to upload a profile picture.';
+      } else if (e.toString().contains('cancelled')) {
+        userFriendlyMessage = 'Photo selection was cancelled. Please try again.';
+      } else if (e.toString().contains('network') || e.toString().contains('connection')) {
+        userFriendlyMessage = 'Please check your internet connection and try again.';
+      } else {
+        userFriendlyMessage = 'Unable to select photo. Please try again or restart the app.';
+      }
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to pick image: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          content: Row(
+            children: [
+              const FaIcon(
+                FontAwesomeIcons.exclamationTriangle,
+                color: Colors.white,
+                size: 16,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(userFriendlyMessage),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFFEC4899),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
@@ -704,12 +769,327 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
     );
   }
 
+  Widget _buildLocationSection() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.2),
+            Colors.white.withOpacity(0.1),
+          ],
+        ),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, right: 12),
+                  child: FaIcon(
+                    FontAwesomeIcons.locationDot,
+                    color: Colors.white.withOpacity(0.8),
+                    size: 18,
+                  ),
+                ),
+                Text(
+                  'Location',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_userLocation != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        FaIcon(
+                          FontAwesomeIcons.checkCircle,
+                          color: Colors.green,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Location detected',
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${_userLocation!.city}, ${_userLocation!.country}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      _userLocation!.address,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 13,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                  icon: _isGettingLocation
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.8)),
+                          ),
+                        )
+                      : FaIcon(
+                          FontAwesomeIcons.arrowsRotate,
+                          size: 16,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                  label: Text(
+                    _isGettingLocation ? 'Updating...' : 'Update Location',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 14,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        FaIcon(
+                          FontAwesomeIcons.locationCrosshairs,
+                          color: Colors.orange,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'We need your location to show you nearby matches',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                        icon: _isGettingLocation
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const FaIcon(
+                                FontAwesomeIcons.locationArrow,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                        label: Text(
+                          _isGettingLocation ? 'Getting Location...' : 'Enable Location',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEC4899),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Text(
+              'Your location helps us find matches nearby and is updated when you open the app',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isGettingLocation = true;
+    });
+
+    try {
+      final locationData = await LocationService.getCurrentLocation();
+      if (locationData != null) {
+        setState(() {
+          _userLocation = locationData;
+          _isGettingLocation = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const FaIcon(
+                  FontAwesomeIcons.checkCircle,
+                  color: Colors.white,
+                  size: 16,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text('Location updated: ${locationData.city}, ${locationData.country}'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      } else {
+        setState(() {
+          _isGettingLocation = false;
+        });
+        
+        _showLocationErrorDialog();
+      }
+    } catch (e) {
+      setState(() {
+        _isGettingLocation = false;
+      });
+      
+      _showLocationErrorDialog();
+    }
+  }
+
+  void _showLocationErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Row(
+          children: [
+            FaIcon(
+              FontAwesomeIcons.locationPin,
+              color: Colors.orange,
+              size: 24,
+            ),
+            SizedBox(width: 12),
+            Text('Location Required'),
+          ],
+        ),
+        content: const Text(
+          'We couldn\'t get your location. Please make sure location services are enabled and try again.\n\nLocation is required to find matches nearby.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _getCurrentLocation();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEC4899),
+            ),
+            child: const Text(
+              'Try Again',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Convert LocationData to UserLocation
+  UserLocation? _locationDataToUserLocation(LocationData? locationData) {
+    if (locationData == null) return null;
+    return UserLocation(
+      latitude: locationData.latitude,
+      longitude: locationData.longitude,
+      address: locationData.address,
+      city: locationData.city,
+      country: locationData.country,
+      ipAddress: locationData.ipAddress,
+      lastUpdated: locationData.timestamp,
+    );
+  }
+
   void _continueToNext() {
-    if (_formKey.currentState!.validate() && _profileImage != null) {
+    if (_isFormValid()) {
       Navigator.push(
         context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => UploadImagesScreen(
+        MaterialPageRoute(
+          builder: (context) => UploadImagesScreen(
             email: widget.email,
             password: widget.password,
             username: _usernameController.text,
@@ -717,19 +1097,10 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
             gender: _selectedGender,
             mobile: _mobileController.text,
             nationality: _selectedNationality,
+            profileImage: _profileImage!,
             bio: _bioController.text,
-            profileImage: _profileImage,
+            userLocation: _locationDataToUserLocation(_userLocation),
           ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(1.0, 0.0),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
-            );
-          },
-          transitionDuration: const Duration(milliseconds: 400),
         ),
       );
     } else {
@@ -739,6 +1110,16 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Please upload a profile picture'),
+            backgroundColor: const Color(0xFFEC4899),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+      if (_userLocation == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please enable location to continue'),
             backgroundColor: const Color(0xFFEC4899),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 enum AppThemeType { 
   pink, blue, purple, green, orange, red, cyan, amber, indigo, 
   teal, lime, deepOrange, blueGrey, brown, crimson, magenta, 
-  violet, turquoise, gold, silver, emerald, ruby, sapphire, coral, mint
+  violet, turquoise, gold, silver, emerald, ruby, sapphire, coral, mint,
+  // VS Code themes
+  dracula, monokai, solarizedDark, solarizedLight, githubDark, githubLight,
+  oneDark, oneLight, materialDark, materialLight, tomorrow, nord, 
+  ayu, gruvbox, cobalt, synthwave
 }
 
 class AppThemes {
@@ -1385,6 +1389,888 @@ class AppThemes {
     ),
   );
 
+  // ============ VS CODE THEMES ============
+
+  // Dracula Theme - Vampire Dark Colors
+  static final draculaLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.purple,
+    scaffoldBackgroundColor: const Color(0xFFF8F8F2), // Light cream
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF6272A4)),
+      titleTextStyle: const TextStyle(color: Color(0xFF6272A4), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF6272A4)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF44475A)),
+      bodyMedium: TextStyle(color: Color(0xFF6272A4)),
+      titleLarge: TextStyle(color: Color(0xFF6272A4), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.purple).copyWith(
+      primary: const Color(0xFF6272A4),
+      secondary: const Color(0xFFBD93F9),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final draculaDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.purple,
+    scaffoldBackgroundColor: const Color(0xFF282A36), // Dracula background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF44475A), // Dracula selection
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF44475A).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFBD93F9)), // Dracula purple
+      titleTextStyle: const TextStyle(color: Color(0xFFBD93F9), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFBD93F9)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFF8F8F2)), // Dracula foreground
+      bodyMedium: TextStyle(color: Color(0xFF6272A4)), // Dracula comment
+      titleLarge: TextStyle(color: Color(0xFFBD93F9), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.purple, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFFBD93F9),
+      secondary: const Color(0xFF50FA7B), // Dracula green
+      surface: const Color(0xFF44475A).withOpacity(0.8),
+    ),
+  );
+
+  // Monokai Theme - Classic Editor Colors
+  static final monokaiLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.green,
+    scaffoldBackgroundColor: const Color(0xFFFAFAFA),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF75715E)),
+      titleTextStyle: const TextStyle(color: Color(0xFF75715E), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF75715E)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF272822)),
+      bodyMedium: TextStyle(color: Color(0xFF75715E)),
+      titleLarge: TextStyle(color: Color(0xFF75715E), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.green).copyWith(
+      primary: const Color(0xFF75715E),
+      secondary: const Color(0xFFA6E22E),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final monokaiDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.green,
+    scaffoldBackgroundColor: const Color(0xFF272822), // Monokai background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF383830),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF383830).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFA6E22E)), // Monokai green
+      titleTextStyle: const TextStyle(color: Color(0xFFA6E22E), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFA6E22E)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFF8F8F2)), // Monokai foreground
+      bodyMedium: TextStyle(color: Color(0xFF75715E)), // Monokai comment
+      titleLarge: TextStyle(color: Color(0xFFA6E22E), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.green, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFFA6E22E),
+      secondary: const Color(0xFFE6DB74), // Monokai yellow
+      surface: const Color(0xFF383830).withOpacity(0.8),
+    ),
+  );
+
+  // Solarized Dark Theme
+  static final solarizedDarkLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFFFDF6E3), // Solarized light background
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF268BD2)),
+      titleTextStyle: const TextStyle(color: Color(0xFF268BD2), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF268BD2)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF657B83)),
+      bodyMedium: TextStyle(color: Color(0xFF93A1A1)),
+      titleLarge: TextStyle(color: Color(0xFF268BD2), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue).copyWith(
+      primary: const Color(0xFF268BD2),
+      secondary: const Color(0xFF2AA198),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final solarizedDarkDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFF002B36), // Solarized dark background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF073642),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF073642).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF268BD2)),
+      titleTextStyle: const TextStyle(color: Color(0xFF268BD2), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF268BD2)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF839496)),
+      bodyMedium: TextStyle(color: Color(0xFF586E75)),
+      titleLarge: TextStyle(color: Color(0xFF268BD2), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFF268BD2),
+      secondary: const Color(0xFF2AA198),
+      surface: const Color(0xFF073642).withOpacity(0.8),
+    ),
+  );
+
+  // Solarized Light Theme
+  static final solarizedLightLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.orange,
+    scaffoldBackgroundColor: const Color(0xFFFDF6E3), // Solarized light background
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFCB4B16)),
+      titleTextStyle: const TextStyle(color: Color(0xFFCB4B16), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFCB4B16)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF657B83)),
+      bodyMedium: TextStyle(color: Color(0xFF93A1A1)),
+      titleLarge: TextStyle(color: Color(0xFFCB4B16), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.orange).copyWith(
+      primary: const Color(0xFFCB4B16),
+      secondary: const Color(0xFFB58900),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final solarizedLightDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.orange,
+    scaffoldBackgroundColor: const Color(0xFF002B36),
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF073642),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF073642).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFCB4B16)),
+      titleTextStyle: const TextStyle(color: Color(0xFFCB4B16), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFCB4B16)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF839496)),
+      bodyMedium: TextStyle(color: Color(0xFF586E75)),
+      titleLarge: TextStyle(color: Color(0xFFCB4B16), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.orange, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFFCB4B16),
+      secondary: const Color(0xFFB58900),
+      surface: const Color(0xFF073642).withOpacity(0.8),
+    ),
+  );
+
+  // GitHub Dark Theme
+  static final githubDarkLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.grey,
+    scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF24292E)),
+      titleTextStyle: const TextStyle(color: Color(0xFF24292E), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF24292E)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF24292E)),
+      bodyMedium: TextStyle(color: Color(0xFF586069)),
+      titleLarge: TextStyle(color: Color(0xFF24292E), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.grey).copyWith(
+      primary: const Color(0xFF24292E),
+      secondary: const Color(0xFF0366D6),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final githubDarkDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.grey,
+    scaffoldBackgroundColor: const Color(0xFF0D1117), // GitHub dark background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF161B22),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF161B22).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF58A6FF)),
+      titleTextStyle: const TextStyle(color: Color(0xFF58A6FF), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF58A6FF)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFF0F6FC)),
+      bodyMedium: TextStyle(color: Color(0xFF8B949E)),
+      titleLarge: TextStyle(color: Color(0xFF58A6FF), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.grey, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFF58A6FF),
+      secondary: const Color(0xFF238636),
+      surface: const Color(0xFF161B22).withOpacity(0.8),
+    ),
+  );
+
+  // GitHub Light Theme
+  static final githubLightLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF0969DA)),
+      titleTextStyle: const TextStyle(color: Color(0xFF0969DA), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF0969DA)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF24292F)),
+      bodyMedium: TextStyle(color: Color(0xFF656D76)),
+      titleLarge: TextStyle(color: Color(0xFF0969DA), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue).copyWith(
+      primary: const Color(0xFF0969DA),
+      secondary: const Color(0xFF1F883D),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final githubLightDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFF0D1117),
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF161B22),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF161B22).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF0969DA)),
+      titleTextStyle: const TextStyle(color: Color(0xFF0969DA), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF0969DA)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFF0F6FC)),
+      bodyMedium: TextStyle(color: Color(0xFF8B949E)),
+      titleLarge: TextStyle(color: Color(0xFF0969DA), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFF0969DA),
+      secondary: const Color(0xFF1F883D),
+      surface: const Color(0xFF161B22).withOpacity(0.8),
+    ),
+  );
+
+  // One Dark Theme
+  static final oneDarkLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFFFAFAFA),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF4078F2)),
+      titleTextStyle: const TextStyle(color: Color(0xFF4078F2), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF4078F2)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF383A42)),
+      bodyMedium: TextStyle(color: Color(0xFF696C77)),
+      titleLarge: TextStyle(color: Color(0xFF4078F2), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue).copyWith(
+      primary: const Color(0xFF4078F2),
+      secondary: const Color(0xFF50A14F),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final oneDarkDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFF282C34), // One Dark background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF3E4451),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF3E4451).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF61AFEF)),
+      titleTextStyle: const TextStyle(color: Color(0xFF61AFEF), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF61AFEF)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFABB2BF)),
+      bodyMedium: TextStyle(color: Color(0xFF5C6370)),
+      titleLarge: TextStyle(color: Color(0xFF61AFEF), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFF61AFEF),
+      secondary: const Color(0xFF98C379),
+      surface: const Color(0xFF3E4451).withOpacity(0.8),
+    ),
+  );
+
+  // One Light Theme
+  static final oneLightLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.purple,
+    scaffoldBackgroundColor: const Color(0xFFFAFAFA),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFA626A4)),
+      titleTextStyle: const TextStyle(color: Color(0xFFA626A4), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFA626A4)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF383A42)),
+      bodyMedium: TextStyle(color: Color(0xFF696C77)),
+      titleLarge: TextStyle(color: Color(0xFFA626A4), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.purple).copyWith(
+      primary: const Color(0xFFA626A4),
+      secondary: const Color(0xFF4078F2),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final oneLightDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.purple,
+    scaffoldBackgroundColor: const Color(0xFF282C34),
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF3E4451),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF3E4451).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFA626A4)),
+      titleTextStyle: const TextStyle(color: Color(0xFFA626A4), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFA626A4)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFABB2BF)),
+      bodyMedium: TextStyle(color: Color(0xFF5C6370)),
+      titleLarge: TextStyle(color: Color(0xFFA626A4), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.purple, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFFA626A4),
+      secondary: const Color(0xFF4078F2),
+      surface: const Color(0xFF3E4451).withOpacity(0.8),
+    ),
+  );
+
+  // Material Dark Theme
+  static final materialDarkLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.indigo,
+    scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF2196F3)),
+      titleTextStyle: const TextStyle(color: Color(0xFF2196F3), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF2196F3)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF212121)),
+      bodyMedium: TextStyle(color: Color(0xFF616161)),
+      titleLarge: TextStyle(color: Color(0xFF2196F3), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.indigo).copyWith(
+      primary: const Color(0xFF2196F3),
+      secondary: const Color(0xFF03DAC6),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final materialDarkDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.indigo,
+    scaffoldBackgroundColor: const Color(0xFF212121), // Material dark background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF424242),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF424242).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF2196F3)),
+      titleTextStyle: const TextStyle(color: Color(0xFF2196F3), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF2196F3)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFFFFFFF)),
+      bodyMedium: TextStyle(color: Color(0xFFBDBDBD)),
+      titleLarge: TextStyle(color: Color(0xFF2196F3), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.indigo, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFF2196F3),
+      secondary: const Color(0xFF03DAC6),
+      surface: const Color(0xFF424242).withOpacity(0.8),
+    ),
+  );
+
+  // Material Light Theme
+  static final materialLightLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF1976D2)),
+      titleTextStyle: const TextStyle(color: Color(0xFF1976D2), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF1976D2)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF212121)),
+      bodyMedium: TextStyle(color: Color(0xFF757575)),
+      titleLarge: TextStyle(color: Color(0xFF1976D2), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue).copyWith(
+      primary: const Color(0xFF1976D2),
+      secondary: const Color(0xFF03DAC6),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final materialLightDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFF303030),
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF424242),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF424242).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF1976D2)),
+      titleTextStyle: const TextStyle(color: Color(0xFF1976D2), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF1976D2)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFFFFFFF)),
+      bodyMedium: TextStyle(color: Color(0xFFBDBDBD)),
+      titleLarge: TextStyle(color: Color(0xFF1976D2), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFF1976D2),
+      secondary: const Color(0xFF03DAC6),
+      surface: const Color(0xFF424242).withOpacity(0.8),
+    ),
+  );
+
+  // Tomorrow Theme
+  static final tomorrowLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF4271AE)),
+      titleTextStyle: const TextStyle(color: Color(0xFF4271AE), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF4271AE)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF4D4D4C)),
+      bodyMedium: TextStyle(color: Color(0xFF8E908C)),
+      titleLarge: TextStyle(color: Color(0xFF4271AE), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue).copyWith(
+      primary: const Color(0xFF4271AE),
+      secondary: const Color(0xFF718C00),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final tomorrowDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFF1D1F21), // Tomorrow night background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF373B41),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF373B41).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF81A2BE)),
+      titleTextStyle: const TextStyle(color: Color(0xFF81A2BE), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF81A2BE)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFC5C8C6)),
+      bodyMedium: TextStyle(color: Color(0xFF969896)),
+      titleLarge: TextStyle(color: Color(0xFF81A2BE), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFF81A2BE),
+      secondary: const Color(0xFFB5BD68),
+      surface: const Color(0xFF373B41).withOpacity(0.8),
+    ),
+  );
+
+  // Nord Theme
+  static final nordLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFFECEFF4), // Nord light background
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF5E81AC)),
+      titleTextStyle: const TextStyle(color: Color(0xFF5E81AC), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF5E81AC)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF2E3440)),
+      bodyMedium: TextStyle(color: Color(0xFF4C566A)),
+      titleLarge: TextStyle(color: Color(0xFF5E81AC), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue).copyWith(
+      primary: const Color(0xFF5E81AC),
+      secondary: const Color(0xFF88C0D0),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final nordDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFF2E3440), // Nord dark background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF3B4252),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF3B4252).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF88C0D0)),
+      titleTextStyle: const TextStyle(color: Color(0xFF88C0D0), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF88C0D0)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFECEFF4)),
+      bodyMedium: TextStyle(color: Color(0xFFD8DEE9)),
+      titleLarge: TextStyle(color: Color(0xFF88C0D0), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFF88C0D0),
+      secondary: const Color(0xFF81A1C1),
+      surface: const Color(0xFF3B4252).withOpacity(0.8),
+    ),
+  );
+
+  // Ayu Theme
+  static final ayuLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.orange,
+    scaffoldBackgroundColor: const Color(0xFFFAFAFA), // Ayu light background
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFFF9940)),
+      titleTextStyle: const TextStyle(color: Color(0xFFFF9940), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFFF9940)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF5C6166)),
+      bodyMedium: TextStyle(color: Color(0xFF828C99)),
+      titleLarge: TextStyle(color: Color(0xFFFF9940), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.orange).copyWith(
+      primary: const Color(0xFFFF9940),
+      secondary: const Color(0xFF4CBF99),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final ayuDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.orange,
+    scaffoldBackgroundColor: const Color(0xFF0A0E14), // Ayu dark background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF0D1016),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF0D1016).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFFF9940)),
+      titleTextStyle: const TextStyle(color: Color(0xFFFF9940), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFFF9940)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFBFBDB6)),
+      bodyMedium: TextStyle(color: Color(0xFF565B66)),
+      titleLarge: TextStyle(color: Color(0xFFFF9940), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.orange, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFFFF9940),
+      secondary: const Color(0xFF95E6CB),
+      surface: const Color(0xFF0D1016).withOpacity(0.8),
+    ),
+  );
+
+  // Gruvbox Theme
+  static final gruvboxLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.orange,
+    scaffoldBackgroundColor: const Color(0xFFFBF1C7), // Gruvbox light background
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFD65D0E)),
+      titleTextStyle: const TextStyle(color: Color(0xFFD65D0E), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFD65D0E)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF3C3836)),
+      bodyMedium: TextStyle(color: Color(0xFF7C6F64)),
+      titleLarge: TextStyle(color: Color(0xFFD65D0E), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.orange).copyWith(
+      primary: const Color(0xFFD65D0E),
+      secondary: const Color(0xFF98971A),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final gruvboxDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.orange,
+    scaffoldBackgroundColor: const Color(0xFF282828), // Gruvbox dark background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF3C3836),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF3C3836).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFFE8019)),
+      titleTextStyle: const TextStyle(color: Color(0xFFFE8019), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFFE8019)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFEBDBB2)),
+      bodyMedium: TextStyle(color: Color(0xFFA89984)),
+      titleLarge: TextStyle(color: Color(0xFFFE8019), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.orange, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFFFE8019),
+      secondary: const Color(0xFFB8BB26),
+      surface: const Color(0xFF3C3836).withOpacity(0.8),
+    ),
+  );
+
+  // Cobalt Theme
+  static final cobaltLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF0072C1)),
+      titleTextStyle: const TextStyle(color: Color(0xFF0072C1), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF0072C1)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF002240)),
+      bodyMedium: TextStyle(color: Color(0xFF0088FF)),
+      titleLarge: TextStyle(color: Color(0xFF0072C1), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue).copyWith(
+      primary: const Color(0xFF0072C1),
+      secondary: const Color(0xFF0088FF),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final cobaltDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFF002240), // Cobalt background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF193549),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF193549).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFF0088FF)),
+      titleTextStyle: const TextStyle(color: Color(0xFF0088FF), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFF0088FF)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFFFFFFF)),
+      bodyMedium: TextStyle(color: Color(0xFF0088FF)),
+      titleLarge: TextStyle(color: Color(0xFF0088FF), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFF0088FF),
+      secondary: const Color(0xFF80FFBB),
+      surface: const Color(0xFF193549).withOpacity(0.8),
+    ),
+  );
+
+  // Synthwave Theme
+  static final synthwaveLightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: Colors.pink,
+    scaffoldBackgroundColor: const Color(0xFFFFFAFF),
+    fontFamily: 'Baloo',
+    cardColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFFF1493)),
+      titleTextStyle: const TextStyle(color: Color(0xFFFF1493), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFFF1493)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF2A0E61)),
+      bodyMedium: TextStyle(color: Color(0xFF7B68EE)),
+      titleLarge: TextStyle(color: Color(0xFFFF1493), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.pink).copyWith(
+      primary: const Color(0xFFFF1493),
+      secondary: const Color(0xFF00FFFF),
+      surface: Colors.white.withOpacity(0.8),
+    ),
+  );
+
+  static final synthwaveDarkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primarySwatch: Colors.pink,
+    scaffoldBackgroundColor: const Color(0xFF2A0E61), // Synthwave dark background
+    fontFamily: 'Baloo',
+    cardColor: const Color(0xFF41146D),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF41146D).withOpacity(0.8),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Color(0xFFFF1493)),
+      titleTextStyle: const TextStyle(color: Color(0xFFFF1493), fontWeight: FontWeight.bold, fontSize: 22),
+    ),
+    iconTheme: const IconThemeData(color: Color(0xFFFF1493)),
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFFFFFFF)),
+      bodyMedium: TextStyle(color: Color(0xFF7B68EE)),
+      titleLarge: TextStyle(color: Color(0xFFFF1493), fontWeight: FontWeight.bold),
+    ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.pink, brightness: Brightness.dark).copyWith(
+      primary: const Color(0xFFFF1493),
+      secondary: const Color(0xFF00FFFF),
+      surface: const Color(0xFF41146D).withOpacity(0.8),
+    ),
+  );
+
   // Theme selector methods
   static ThemeData getLightTheme(AppThemeType themeType) {
     switch (themeType) {
@@ -1438,6 +2324,39 @@ class AppThemes {
         return coralLightTheme;
       case AppThemeType.mint:
         return mintLightTheme;
+      // VS Code themes
+      case AppThemeType.dracula:
+        return draculaLightTheme;
+      case AppThemeType.monokai:
+        return monokaiLightTheme;
+      case AppThemeType.solarizedDark:
+        return solarizedDarkLightTheme;
+      case AppThemeType.solarizedLight:
+        return solarizedLightLightTheme;
+      case AppThemeType.githubDark:
+        return githubDarkLightTheme;
+      case AppThemeType.githubLight:
+        return githubLightLightTheme;
+      case AppThemeType.oneDark:
+        return oneDarkLightTheme;
+      case AppThemeType.oneLight:
+        return oneLightLightTheme;
+      case AppThemeType.materialDark:
+        return materialDarkLightTheme;
+      case AppThemeType.materialLight:
+        return materialLightLightTheme;
+      case AppThemeType.tomorrow:
+        return tomorrowLightTheme;
+      case AppThemeType.nord:
+        return nordLightTheme;
+      case AppThemeType.ayu:
+        return ayuLightTheme;
+      case AppThemeType.gruvbox:
+        return gruvboxLightTheme;
+      case AppThemeType.cobalt:
+        return cobaltLightTheme;
+      case AppThemeType.synthwave:
+        return synthwaveLightTheme;
     }
   }
 
@@ -1493,6 +2412,39 @@ class AppThemes {
         return coralDarkTheme;
       case AppThemeType.mint:
         return mintDarkTheme;
+      // VS Code themes
+      case AppThemeType.dracula:
+        return draculaDarkTheme;
+      case AppThemeType.monokai:
+        return monokaiDarkTheme;
+      case AppThemeType.solarizedDark:
+        return solarizedDarkDarkTheme;
+      case AppThemeType.solarizedLight:
+        return solarizedLightDarkTheme;
+      case AppThemeType.githubDark:
+        return githubDarkDarkTheme;
+      case AppThemeType.githubLight:
+        return githubLightDarkTheme;
+      case AppThemeType.oneDark:
+        return oneDarkDarkTheme;
+      case AppThemeType.oneLight:
+        return oneLightDarkTheme;
+      case AppThemeType.materialDark:
+        return materialDarkDarkTheme;
+      case AppThemeType.materialLight:
+        return materialLightDarkTheme;
+      case AppThemeType.tomorrow:
+        return tomorrowDarkTheme;
+      case AppThemeType.nord:
+        return nordDarkTheme;
+      case AppThemeType.ayu:
+        return ayuDarkTheme;
+      case AppThemeType.gruvbox:
+        return gruvboxDarkTheme;
+      case AppThemeType.cobalt:
+        return cobaltDarkTheme;
+      case AppThemeType.synthwave:
+        return synthwaveDarkTheme;
     }
   }
 
@@ -1548,6 +2500,39 @@ class AppThemes {
         return 'Warm Coral';
       case AppThemeType.mint:
         return 'Fresh Mint';
+      // VS Code themes
+      case AppThemeType.dracula:
+        return 'Dracula';
+      case AppThemeType.monokai:
+        return 'Monokai';
+      case AppThemeType.solarizedDark:
+        return 'Solarized Dark';
+      case AppThemeType.solarizedLight:
+        return 'Solarized Light';
+      case AppThemeType.githubDark:
+        return 'GitHub Dark';
+      case AppThemeType.githubLight:
+        return 'GitHub Light';
+      case AppThemeType.oneDark:
+        return 'One Dark';
+      case AppThemeType.oneLight:
+        return 'One Light';
+      case AppThemeType.materialDark:
+        return 'Material Dark';
+      case AppThemeType.materialLight:
+        return 'Material Light';
+      case AppThemeType.tomorrow:
+        return 'Tomorrow';
+      case AppThemeType.nord:
+        return 'Nord';
+      case AppThemeType.ayu:
+        return 'Ayu';
+      case AppThemeType.gruvbox:
+        return 'Gruvbox';
+      case AppThemeType.cobalt:
+        return 'Cobalt';
+      case AppThemeType.synthwave:
+        return 'Synthwave';
     }
   }
 
@@ -1603,6 +2588,39 @@ class AppThemes {
         return const Color(0xFFFF5722);
       case AppThemeType.mint:
         return const Color(0xFF00E676);
+      // VS Code themes
+      case AppThemeType.dracula:
+        return const Color(0xFF6272A4);
+      case AppThemeType.monokai:
+        return const Color(0xFFA6E22E);
+      case AppThemeType.solarizedDark:
+        return const Color(0xFF268BD2);
+      case AppThemeType.solarizedLight:
+        return const Color(0xFFCB4B16);
+      case AppThemeType.githubDark:
+        return const Color(0xFF24292E);
+      case AppThemeType.githubLight:
+        return const Color(0xFF0969DA);
+      case AppThemeType.oneDark:
+        return const Color(0xFF61AFEF);
+      case AppThemeType.oneLight:
+        return const Color(0xFFA626A4);
+      case AppThemeType.materialDark:
+        return const Color(0xFF2196F3);
+      case AppThemeType.materialLight:
+        return const Color(0xFF1976D2);
+      case AppThemeType.tomorrow:
+        return const Color(0xFF4271AE);
+      case AppThemeType.nord:
+        return const Color(0xFF5E81AC);
+      case AppThemeType.ayu:
+        return const Color(0xFFFF9940);
+      case AppThemeType.gruvbox:
+        return const Color(0xFFD65D0E);
+      case AppThemeType.cobalt:
+        return const Color(0xFF0088FF);
+      case AppThemeType.synthwave:
+        return const Color(0xFFFF1493);
     }
   }
 
@@ -1659,6 +2677,39 @@ class AppThemes {
         return isDarkMode ? const Color(0xFFFF8A65) : const Color(0xFFFF5722);
       case AppThemeType.mint:
         return isDarkMode ? const Color(0xFF69F0AE) : const Color(0xFF00E676);
+      // VS Code themes
+      case AppThemeType.dracula:
+        return isDarkMode ? const Color(0xFFBD93F9) : const Color(0xFF6272A4);
+      case AppThemeType.monokai:
+        return isDarkMode ? const Color(0xFFA6E22E) : const Color(0xFF75715E);
+      case AppThemeType.solarizedDark:
+        return isDarkMode ? const Color(0xFF268BD2) : const Color(0xFF268BD2);
+      case AppThemeType.solarizedLight:
+        return isDarkMode ? const Color(0xFFCB4B16) : const Color(0xFFCB4B16);
+      case AppThemeType.githubDark:
+        return isDarkMode ? const Color(0xFF58A6FF) : const Color(0xFF24292E);
+      case AppThemeType.githubLight:
+        return isDarkMode ? const Color(0xFF0969DA) : const Color(0xFF0969DA);
+      case AppThemeType.oneDark:
+        return isDarkMode ? const Color(0xFF61AFEF) : const Color(0xFF4078F2);
+      case AppThemeType.oneLight:
+        return isDarkMode ? const Color(0xFFA626A4) : const Color(0xFFA626A4);
+      case AppThemeType.materialDark:
+        return isDarkMode ? const Color(0xFF2196F3) : const Color(0xFF2196F3);
+      case AppThemeType.materialLight:
+        return isDarkMode ? const Color(0xFF1976D2) : const Color(0xFF1976D2);
+      case AppThemeType.tomorrow:
+        return isDarkMode ? const Color(0xFF81A2BE) : const Color(0xFF4271AE);
+      case AppThemeType.nord:
+        return isDarkMode ? const Color(0xFF88C0D0) : const Color(0xFF5E81AC);
+      case AppThemeType.ayu:
+        return isDarkMode ? const Color(0xFFFF9940) : const Color(0xFFFF9940);
+      case AppThemeType.gruvbox:
+        return isDarkMode ? const Color(0xFFFE8019) : const Color(0xFFD65D0E);
+      case AppThemeType.cobalt:
+        return isDarkMode ? const Color(0xFF0088FF) : const Color(0xFF0072C1);
+      case AppThemeType.synthwave:
+        return isDarkMode ? const Color(0xFFFF1493) : const Color(0xFFFF1493);
     }
   }
 

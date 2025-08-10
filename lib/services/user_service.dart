@@ -16,7 +16,7 @@ class UserService {
       interests: ['Photography', 'Hiking', 'Art', 'Cooking'],
       bio: 'Adventure seeker and coffee enthusiast. Looking to meet new people!',
       isVerified: true,
-      subscriptionType: 'premium',
+     // subscriptionType: 'premium',
       socialMediaLinks: ['facebook.com/sarah', 'instagram.com/sarah_adventures'],
     ),
     User(
@@ -46,7 +46,7 @@ class UserService {
       profileImageUrl: 'https://i.pravatar.cc/500?img=25',
       interests: ['Reading', 'Writing', 'Theater', 'Yoga'],
       bio: 'Bookworm and aspiring novelist. Looking for someone to share deep conversations.',
-      subscriptionType: 'infinity',
+      //subscriptionType: 'infinity',
     ),
     User(
       id: '4',
@@ -91,7 +91,7 @@ class UserService {
     interests: ['Music', 'Travel', 'Food', 'Photography'],
     bio: 'Music lover and world explorer. Always up for new adventures!',
     isVerified: true,
-    subscriptionType: 'premium',
+    //subscriptionType: 'premium',
     socialMediaLinks: ['instagram.com/jeni_adventures', 'twitter.com/jeni_c'],
   );
 

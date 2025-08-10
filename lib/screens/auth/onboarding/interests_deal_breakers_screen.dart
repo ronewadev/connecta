@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/auth/onboarding/looking_for_screen.dart';
+import 'package:connecta/services/profile_data_service.dart';
+import 'package:connecta/models/user_model.dart';
 
 class InterestsDealbrakersScreen extends StatefulWidget {
   final String email;
@@ -13,6 +15,7 @@ class InterestsDealbrakersScreen extends StatefulWidget {
   final String nationality;
   final List<String> images;
   final String bio;
+  final UserLocation? userLocation;
 
   const InterestsDealbrakersScreen({
     super.key,
@@ -25,6 +28,7 @@ class InterestsDealbrakersScreen extends StatefulWidget {
     required this.nationality,
     required this.images,
     required this.bio,
+    this.userLocation,
   });
 
   @override
@@ -40,6 +44,13 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
   Set<String> _selectedHobbies = {};
   Set<String> _selectedDealBreakers = {};
 
+  // Dynamic data from Firestore
+  List<String> _interests = [];
+  List<String> _hobbies = [];
+  List<String> _dealBreakers = [];
+  bool _isLoading = true;
+
+  // Constants
   final int _minInterests = 2;
   final int _maxInterests = 5;
   final int _minHobbies = 2;
@@ -47,27 +58,10 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
   final int _minDealBreakers = 2;
   final int _maxDealBreakers = 3;
 
-  final List<String> _interests = [
-    'Photography', 'Travel', 'Music', 'Dancing', 'Reading', 'Movies', 'Art', 'Cooking',
-    'Sports', 'Gaming', 'Fashion', 'Technology', 'Nature', 'Animals', 'Cars', 'Food',
-    'Wine', 'Coffee', 'Yoga', 'Meditation', 'History', 'Science', 'Politics', 'Business'
-  ];
-
-  final List<String> _hobbies = [
-    'Hiking', 'Swimming', 'Cycling', 'Running', 'Gym', 'Rock Climbing', 'Surfing', 'Skiing',
-    'Painting', 'Drawing', 'Writing', 'Singing', 'Playing Guitar', 'Piano', 'Crafting', 'Gardening',
-    'Board Games', 'Video Games', 'Chess', 'Poker', 'Fishing', 'Camping', 'Astronomy', 'Collecting'
-  ];
-
-  final List<String> _dealBreakers = [
-    'Smoking', 'Heavy Drinking', 'Drug Use', 'Dishonesty', 'Rudeness', 'Poor Hygiene',
-    'Arrogance', 'Jealousy', 'Controlling Behavior', 'Lack of Ambition', 'Infidelity', 'Violence',
-    'Extreme Political Views', 'Religious Intolerance', 'Financial Irresponsibility', 'Laziness'
-  ];
-
   @override
   void initState() {
     super.initState();
+    _loadProfileData();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -92,6 +86,23 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
     _animationController.forward();
   }
 
+  Future<void> _loadProfileData() async {
+    try {
+      final profileData = await ProfileDataService.getAllProfileData();
+      setState(() {
+        _interests = profileData['interests'] ?? [];
+        _hobbies = profileData['hobbies'] ?? [];
+        _dealBreakers = profileData['deal_breakers'] ?? [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading profile data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,121 +125,131 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
             children: [
               _buildProgressBar(),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          ShaderMask(
-                            shaderCallback: (bounds) => LinearGradient(
-                              colors: [Colors.white, Colors.white.withOpacity(0.8)],
-                            ).createShader(bounds),
-                            child: const Text(
-                              'Interests & Preferences',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Help us find your perfect match',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.white.withOpacity(0.9),
-                              fontWeight: FontWeight.w300,
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-                          _buildSection(
-                            title: 'Interests',
-                            subtitle: 'Select 2-5 interests',
-                            icon: FontAwesomeIcons.heart,
-                            items: _interests,
-                            selectedItems: _selectedInterests,
-                            minSelection: _minInterests,
-                            maxSelection: _maxInterests,
-                            color: const Color(0xFFEC4899),
-                          ),
-                          const SizedBox(height: 32),
-                          _buildSection(
-                            title: 'Hobbies',
-                            subtitle: 'Select 2-5 hobbies',
-                            icon: FontAwesomeIcons.gamepad,
-                            items: _hobbies,
-                            selectedItems: _selectedHobbies,
-                            minSelection: _minHobbies,
-                            maxSelection: _maxHobbies,
-                            color: const Color(0xFF9333EA),
-                          ),
-                          const SizedBox(height: 32),
-                          _buildSection(
-                            title: 'Deal Breakers',
-                            subtitle: 'Select 2-3 deal breakers',
-                            icon: FontAwesomeIcons.ban,
-                            items: _dealBreakers,
-                            selectedItems: _selectedDealBreakers,
-                            minSelection: _minDealBreakers,
-                            maxSelection: _maxDealBreakers,
-                            color: const Color(0xFFDC2626),
-                          ),
-                          const SizedBox(height: 40),
-                          Container(
-                            width: double.infinity,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              gradient: _canContinue()
-                                  ? LinearGradient(
-                                      colors: [
-                                        const Color(0xFFEC4899),
-                                        const Color(0xFFBE185D),
-                                      ],
-                                    )
-                                  : LinearGradient(
-                                      colors: [
-                                        Colors.grey.withOpacity(0.5),
-                                        Colors.grey.withOpacity(0.3),
-                                      ],
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: SlideTransition(
+                            position: _slideAnimation,
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 20),
+                                ShaderMask(
+                                  shaderCallback: (bounds) => LinearGradient(
+                                    colors: [Colors.white, Colors.white.withOpacity(0.8)],
+                                  ).createShader(bounds),
+                                  child: const Text(
+                                    'Interests & Preferences',
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      letterSpacing: 1.2,
                                     ),
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: _canContinue()
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFFEC4899).withOpacity(0.4),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _canContinue() ? _continueToNext : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                'Continue',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: _canContinue() ? Colors.white : Colors.white.withOpacity(0.5),
-                                  letterSpacing: 1,
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Help us find your perfect match',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontWeight: FontWeight.w300,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 40),
+                                _buildSection(
+                                  title: 'Interests',
+                                  subtitle: 'Select 2-5 interests',
+                                  icon: FontAwesomeIcons.heart,
+                                  items: _interests,
+                                  selectedItems: _selectedInterests,
+                                  minSelection: _minInterests,
+                                  maxSelection: _maxInterests,
+                                  color: const Color(0xFFEC4899),
+                                ),
+                                const SizedBox(height: 32),
+                                _buildSection(
+                                  title: 'Hobbies',
+                                  subtitle: 'Select 2-5 hobbies',
+                                  icon: FontAwesomeIcons.gamepad,
+                                  items: _hobbies,
+                                  selectedItems: _selectedHobbies,
+                                  minSelection: _minHobbies,
+                                  maxSelection: _maxHobbies,
+                                  color: const Color(0xFF9333EA),
+                                ),
+                                const SizedBox(height: 32),
+                                _buildSection(
+                                  title: 'Deal Breakers',
+                                  subtitle: 'Select 2-3 deal breakers',
+                                  icon: FontAwesomeIcons.ban,
+                                  items: _dealBreakers,
+                                  selectedItems: _selectedDealBreakers,
+                                  minSelection: _minDealBreakers,
+                                  maxSelection: _maxDealBreakers,
+                                  color: const Color(0xFFDC2626),
+                                ),
+                                const SizedBox(height: 100), // Space for fixed button
+                              ],
                             ),
                           ),
-                        ],
+                        ),
+                      ),
+              ),
+              // Fixed Continue Button
+              Container(
+                padding: const EdgeInsets.all(24),
+                child: Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: _canContinue()
+                        ? LinearGradient(
+                            colors: [
+                              const Color(0xFFEC4899),
+                              const Color(0xFFBE185D),
+                            ],
+                          )
+                        : LinearGradient(
+                            colors: [
+                              Colors.grey.withOpacity(0.5),
+                              Colors.grey.withOpacity(0.3),
+                            ],
+                          ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: _canContinue()
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFEC4899).withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _canContinue() ? _continueToNext : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                    ),
+                    child: Text(
+                      'Continue',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: _canContinue() ? Colors.white : Colors.white.withOpacity(0.5),
+                        letterSpacing: 1,
                       ),
                     ),
                   ),
@@ -472,6 +493,7 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
           hobbies: _selectedHobbies.toList(),
           dealBreakers: _selectedDealBreakers.toList(),
           bio: widget.bio,
+          userLocation: widget.userLocation,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(

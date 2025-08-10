@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:connecta/screens/auth/onboarding/preferences_screen.dart';
+import 'package:connecta/services/profile_data_service.dart';
+import 'package:connecta/models/user_model.dart';
 
 class LookingForScreen extends StatefulWidget {
   final String email;
@@ -16,6 +18,7 @@ class LookingForScreen extends StatefulWidget {
   final List<String> hobbies;
   final List<String> dealBreakers;
   final String bio;
+  final UserLocation? userLocation;
 
   const LookingForScreen({
     super.key,
@@ -31,6 +34,7 @@ class LookingForScreen extends StatefulWidget {
     required this.hobbies,
     required this.dealBreakers,
     required this.bio,
+    this.userLocation,
   });
 
   @override
@@ -44,70 +48,33 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
 
   Map<String, Set<String>> _selectedByCategory = {
     'Relationship Type': {},
-    'Personality Traits': {},
+    'Personality': {},
     'Lifestyle': {},
     'Values': {},
   };
-  final int _maxPerCategory = 2;
-
-  final Map<String, List<String>> _lookingForCategories = {
-    'Relationship Type': [
-      'Serious Dating',
-      'Casual Dating',
-      'Marriage',
-      'Long-term Partner',
-      'Short-term Fun',
-      'Friendship',
-      'Networking',
-    ],
-    'Personality Traits': [
-      'Kind & Caring',
-      'Funny & Witty',
-      'Ambitious',
-      'Adventurous',
-      'Intellectual',
-      'Creative',
-      'Spiritual',
-      'Down to Earth',
-      'Confident',
-      'Romantic',
-    ],
-    'Lifestyle': [
-      'Active & Fitness-focused',
-      'Homebody',
-      'Social Butterfly',
-      'Travel Enthusiast',
-      'Career-focused',
-      'Family-oriented',
-      'Night Owl',
-      'Early Bird',
-      'Pet Lover',
-      'Foodie',
-    ],
-    'Values': [
-      'Honest & Trustworthy',
-      'Loyal',
-      'Independent',
-      'Supportive',
-      'Open-minded',
-      'Traditional',
-      'Progressive',
-      'Environmentally Conscious',
-      'Health-conscious',
-      'Financially Stable',
-    ],
+  
+  // Different max selections per category
+  final Map<String, int> _maxPerCategory = {
+    'Relationship Type': 2,
+    'Personality': 4,
+    'Lifestyle': 4,
+    'Values': 4,
   };
+
+  // Dynamic data from Firestore
+  Map<String, List<String>> _lookingForCategories = {};
+  bool _isLoading = true;
 
   final Map<String, IconData> _categoryIcons = {
     'Relationship Type': FontAwesomeIcons.heart,
-    'Personality Traits': FontAwesomeIcons.user,
+    'Personality': FontAwesomeIcons.user,
     'Lifestyle': FontAwesomeIcons.leaf,
     'Values': FontAwesomeIcons.star,
   };
 
   final Map<String, Color> _categoryColors = {
     'Relationship Type': const Color(0xFFEC4899),
-    'Personality Traits': const Color(0xFF9333EA),
+    'Personality': const Color(0xFF9333EA),
     'Lifestyle': const Color(0xFF06B6D4),
     'Values': const Color(0xFF10B981),
   };
@@ -115,6 +82,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
   @override
   void initState() {
     super.initState();
+    _loadProfileData();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -137,6 +105,26 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
     ));
 
     _animationController.forward();
+  }
+
+  Future<void> _loadProfileData() async {
+    try {
+      final profileData = await ProfileDataService.getAllProfileData();
+      setState(() {
+        _lookingForCategories = {
+          'Relationship Type': profileData['relationship_types'] ?? [],
+          'Personality': profileData['personality'] ?? [],
+          'Lifestyle': profileData['lifestyle'] ?? [],
+          'Values': profileData['values'] ?? [],
+        };
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading profile data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -163,13 +151,19 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
               _buildProgressBar(),
 
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: SlideTransition(
+                            position: _slideAnimation,
+                            child: Column(
                         children: [
                           const SizedBox(height: 20),
 
@@ -190,7 +184,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Select up to 2 from each category (minimum 6 total) to help us find your perfect match',
+                            'Help us find your perfect match by selecting your preferences',
                             style: TextStyle(
                               fontSize: 18,
                               color: Colors.white.withOpacity(0.9),
@@ -198,33 +192,34 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 16),
-
-                          // Selection Counter
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withOpacity(0.25),
-                                  Colors.white.withOpacity(0.15),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              'Select 2 from each category (${_getTotalSelected()}/8 selected, minimum 6 required)',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+                          // const SizedBox(height: 16),
+                          //
+                          // // Selection Counter
+                          // Container(
+                          //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          //   decoration: BoxDecoration(
+                          //     gradient: LinearGradient(
+                          //       colors: [
+                          //         Colors.white.withOpacity(0.25),
+                          //         Colors.white.withOpacity(0.15),
+                          //       ],
+                          //     ),
+                          //     borderRadius: BorderRadius.circular(20),
+                          //     border: Border.all(
+                          //       color: Colors.white.withOpacity(0.3),
+                          //       width: 1,
+                          //     ),
+                          //   ),
+                          //   // child: Text(
+                          //   //   'Selected tabs - ${_getTotalSelected()}/14 selected (min 6)',
+                          //   //   style: TextStyle(
+                          //   //     color: Colors.white.withOpacity(0.9),
+                          //   //     fontSize: 14,
+                          //   //     fontWeight: FontWeight.w600,
+                          //   //   ),
+                          //   //   textAlign: TextAlign.center,
+                          //   // ),
+                          // ),
                           const SizedBox(height: 32),
 
                           // Categories
@@ -236,64 +231,71 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                                   items: entry.value,
                                   icon: _categoryIcons[entry.key]!,
                                   color: _categoryColors[entry.key]!,
+                                  maxSelection: _maxPerCategory[entry.key]!,
                                 ),
                                 const SizedBox(height: 24),
                               ],
                             );
                           }).toList(),
 
-                          const SizedBox(height: 16),
-
-                          // Continue Button
-                          Container(
-                            width: double.infinity,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              gradient: _getTotalSelected() >= 6
-                                  ? const LinearGradient(
-                                colors: [
-                                  Color(0xFFEC4899),
-                                  Color(0xFFBE185D),
-                                ],
-                              )
-                                  : LinearGradient(
-                                colors: [
-                                  Colors.grey.withOpacity(0.5),
-                                  Colors.grey.withOpacity(0.3),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: _getTotalSelected() >= 6
-                                  ? [
-                                BoxShadow(
-                                  color: const Color(0xFFEC4899).withOpacity(0.4),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ]
-                                  : null,
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _getTotalSelected() >= 6 ? _continueToNext : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
-                                ),
-                              ),
-                              child: Text(
-                                'Continue',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: _getTotalSelected() >= 6 ? Colors.white : Colors.white.withOpacity(0.5),
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
-                          ),
+                          const SizedBox(height: 100), // Extra spacing for button clearance
                         ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Fixed Continue Button at bottom
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                decoration: const BoxDecoration(
+                  color: Colors.transparent, // Make the section transparent
+                ),
+                child: Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: _getTotalSelected() >= 6
+                        ? const LinearGradient(
+                      colors: [
+                        Color(0xFFEC4899),
+                        Color(0xFFBE185D),
+                      ],
+                    )
+                        : LinearGradient(
+                      colors: [
+                        Colors.grey.withOpacity(0.5),
+                        Colors.grey.withOpacity(0.3),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: _getTotalSelected() >= 6
+                        ? [
+                      BoxShadow(
+                        color: const Color(0xFFEC4899).withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                        : null,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _getTotalSelected() >= 6 ? _continueToNext : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                    ),
+                    child: Text(
+                      'Continue',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: _getTotalSelected() >= 6 ? Colors.white : Colors.white.withOpacity(0.5),
+                        letterSpacing: 1,
                       ),
                     ),
                   ),
@@ -350,6 +352,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
     required List<String> items,
     required IconData icon,
     required Color color,
+    required int maxSelection,
   }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -408,13 +411,25 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '${_selectedByCategory[title]?.length ?? 0}/$maxSelection selected',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -427,7 +442,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                   runSpacing: 12,
                   children: items.map((item) {
                     final isSelected = _selectedByCategory[title]?.contains(item) ?? false;
-                    final canSelect = (_selectedByCategory[title]?.length ?? 0) < _maxPerCategory;
+                    final canSelect = (_selectedByCategory[title]?.length ?? 0) < maxSelection;
 
                     return GestureDetector(
                       onTap: () {
@@ -522,6 +537,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
           dealBreakers: widget.dealBreakers,
           lookingFor: _getAllSelected(),
           bio: widget.bio,
+          userLocation: widget.userLocation,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
