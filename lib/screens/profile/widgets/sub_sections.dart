@@ -184,9 +184,9 @@ class SubSection extends StatelessWidget {
           selected: isSelected,
           onSelected: (selected) {
             if (selected) {
-              if (tempItems?.length ?? 0 < (maxItems ?? 0)) {
-                onAdd?.call(item);
-              }
+              // if (tempItems?.length ?? 0 < (maxItems ?? 0)) {
+              //   onAdd?.call(item);
+              // }
             } else {
               onRemove?.call(item);
             }
