@@ -1,6 +1,9 @@
+import 'dart:async';
+import 'package:connecta/models/user_model.dart';
+import 'package:connecta/database/user_database.dart';
 import 'package:connecta/screens/chat/chat_screen.dart';
 import 'package:connecta/screens/home/home_screen.dart';
-import 'package:connecta/screens/home/likes_screen.dart';
+import 'package:connecta/screens/likes/likes_screen.dart';
 import 'package:connecta/screens/plans/subscription_screen.dart';
 import 'package:connecta/screens/profile/profile_screen.dart';
 import 'package:connecta/screens/settings/settings_screen.dart';
@@ -9,6 +12,8 @@ import 'package:connecta/widgets/custom_bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:ui';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'live/live_screen.dart';
 
@@ -21,6 +26,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  User? _userData;
+  StreamSubscription<DocumentSnapshot>? _userSubscription;
 
   final List<Widget> _bottomNavScreens = [
     const HomeScreen(),         // 0: Home (Meet/Call)
@@ -45,6 +52,58 @@ class _MainScreenState extends State<MainScreen> {
     FontAwesomeIcons.solidHeart,
     FontAwesomeIcons.crown,
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeUserData();
+  }
+
+  void _initializeUserData() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Set up real-time listener for current user
+      _userSubscription = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists && snapshot.data() != null) {
+          setState(() {
+            _userData = User.fromMap(snapshot.data()!, user.uid);
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _userSubscription?.cancel();
+    super.dispose();
+  }
+
+  // Helper method to get the profile image
+  ImageProvider? _getProfileImage() {
+    if (_userData == null) return null;
+
+    // Check if profileImageUrl is available
+    if (_userData!.profileImageUrl != null && _userData!.profileImageUrl!.isNotEmpty) {
+      return NetworkImage(_userData!.profileImageUrl!);
+    }
+
+
+    // Check if profileImages array has items
+    if (_userData!.profileImages.isNotEmpty) {
+      final imageUrl = _userData!.profileImages.first;
+      if (imageUrl.isNotEmpty) {
+        return NetworkImage(imageUrl);
+      }
+    }
+    
+    // Return null to show the default icon
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -228,38 +287,27 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         // Profile icon with avatar-like styling
-        Container(
-          margin: const EdgeInsets.only(right: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                theme.colorScheme.primary,
-                theme.colorScheme.primary.withOpacity(0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(right: 16),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: theme.colorScheme.primary,
+              backgroundImage: _getProfileImage(),
+              child: _getProfileImage() == null
+                  ? FaIcon(
+                      FontAwesomeIcons.user,
+                      color: Colors.white,
+                      size: 20,
+                    )
+                  : null,
             ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: IconButton(
-            icon: const FaIcon(
-              FontAwesomeIcons.user,
-              color: Colors.white,
-              size: 20,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            },
           ),
         ),
       ])

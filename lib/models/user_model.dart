@@ -256,7 +256,7 @@ class User {
       nationality: map['nationality'] ?? '',
       location: map['location'] ?? '',
       currentCity: map['currentCity'],
-      userLocation: map['userLocation'] != null 
+      userLocation: map['userLocation'] != null
           ? UserLocation.fromMap(Map<String, dynamic>.from(map['userLocation']))
           : null,
       profileImageUrl: map['profileImageUrl'],
@@ -265,10 +265,10 @@ class User {
       hobbies: List<String>.from(map['hobbies'] ?? []),
       dealBreakers: List<String>.from(map['dealBreakers'] ?? []),
       bio: map['bio'],
-      subscription: map['subscription'] != null 
+      subscription: map['subscription'] != null
           ? UserSubscription.fromMap(Map<String, dynamic>.from(map['subscription']))
           : UserSubscription(),
-      userBalance: map['userBalance'] != null 
+      userBalance: map['userBalance'] != null
           ? UserBalance.fromMap(Map<String, dynamic>.from(map['userBalance']))
           : UserBalance(),
       preferences: Map<String, dynamic>.from(map['preferences'] ?? {}),

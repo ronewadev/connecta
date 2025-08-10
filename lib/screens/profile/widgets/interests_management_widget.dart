@@ -7,54 +7,53 @@ import 'package:connecta/functions/update_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class LookingForManagementWidget extends StatefulWidget {
-  final List<String> currentLookingFor;
+class InterestsManagementWidget extends StatefulWidget {
+  final List<String> currentInterests;
+  final List<String> currentHobbies;
+  final List<String> currentDealBreakers;
   final VoidCallback? onUpdate;
   final bool isExpanded;
   final VoidCallback? onToggleExpanded;
 
-  const LookingForManagementWidget({
+  const InterestsManagementWidget({
     super.key,
-    required this.currentLookingFor,
+    required this.currentInterests,
+    required this.currentHobbies,
+    required this.currentDealBreakers,
     this.onUpdate,
     this.isExpanded = false,
     this.onToggleExpanded,
   });
 
   @override
-  State<LookingForManagementWidget> createState() => _LookingForManagementWidgetState();
+  State<InterestsManagementWidget> createState() => _InterestsManagementWidgetState();
 }
 
-class _LookingForManagementWidgetState extends State<LookingForManagementWidget> 
+class _InterestsManagementWidgetState extends State<InterestsManagementWidget> 
     with TickerProviderStateMixin {
-  
+
   bool _isEditing = false;
-  Map<String, Set<String>> _selectedByCategory = {};
-  Map<String, List<String>> _lookingForCategories = {};
+
+  // Selected items during editing
+  Set<String> _selectedInterests = {};
+  Set<String> _selectedHobbies = {};
+  Set<String> _selectedDealBreakers = {};
+
+  // Available items from Firestore
+  List<String> _interests = [];
+  List<String> _hobbies = [];
+  List<String> _dealBreakers = [];
+
   bool _isLoading = true;
   bool _isUpdating = false;
-  
-  // Different max selections per category
-  final Map<String, int> _maxPerCategory = {
-    'Relationship Type': 2,
-    'Personality': 4,
-    'Lifestyle': 4,
-    'Values': 4,
-  };
 
-  final Map<String, IconData> _categoryIcons = {
-    'Relationship Type': FontAwesomeIcons.heart,
-    'Personality': FontAwesomeIcons.user,
-    'Lifestyle': FontAwesomeIcons.leaf,
-    'Values': FontAwesomeIcons.star,
-  };
-
-  final Map<String, Color> _categoryColors = {
-    'Relationship Type': const Color(0xFFEC4899),
-    'Personality': const Color(0xFF9333EA),
-    'Lifestyle': const Color(0xFF06B6D4),
-    'Values': const Color(0xFF10B981),
-  };
+  // Selection constraints
+  final int _minInterests = 2;
+  final int _maxInterests = 5;
+  final int _minHobbies = 2;
+  final int _maxHobbies = 5;
+  final int _minDealBreakers = 2;
+  final int _maxDealBreakers = 3;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -88,64 +87,11 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
   }
 
   void _initializeData() {
-    // Initialize selected items from current user data
-    _selectedByCategory = {
-      'Relationship Type': <String>{},
-      'Personality': <String>{},
-      'Lifestyle': <String>{},
-      'Values': <String>{},
-    };
+    _selectedInterests = Set.from(widget.currentInterests);
+    _selectedHobbies = Set.from(widget.currentHobbies);
+    _selectedDealBreakers = Set.from(widget.currentDealBreakers);
 
-    _loadCurrentSelections();
     _loadProfileData();
-  }
-
-  void _loadCurrentSelections() {
-    // Categorize current looking for items
-    for (String item in widget.currentLookingFor) {
-      bool found = false;
-      for (String category in _selectedByCategory.keys) {
-        final categoryItems = _lookingForCategories[category] ?? [];
-        if (categoryItems.contains(item)) {
-          _selectedByCategory[category]?.add(item);
-          found = true;
-          break;
-        }
-      }
-      
-      // If item not found in any category, try to match by common terms
-      if (!found) {
-        if (_isRelationshipType(item)) {
-          _selectedByCategory['Relationship Type']?.add(item);
-        } else if (_isPersonalityTrait(item)) {
-          _selectedByCategory['Personality']?.add(item);
-        } else if (_isLifestyleTrait(item)) {
-          _selectedByCategory['Lifestyle']?.add(item);
-        } else if (_isValueTrait(item)) {
-          _selectedByCategory['Values']?.add(item);
-        }
-      }
-    }
-  }
-
-  bool _isRelationshipType(String item) {
-    final relationshipTerms = ['relationship', 'dating', 'casual', 'serious', 'marriage', 'long-term', 'short-term'];
-    return relationshipTerms.any((term) => item.toLowerCase().contains(term));
-  }
-
-  bool _isPersonalityTrait(String item) {
-    final personalityTerms = ['funny', 'serious', 'adventurous', 'calm', 'outgoing', 'introvert', 'creative', 'logical'];
-    return personalityTerms.any((term) => item.toLowerCase().contains(term));
-  }
-
-  bool _isLifestyleTrait(String item) {
-    final lifestyleTerms = ['active', 'fitness', 'travel', 'home', 'party', 'quiet', 'outdoor', 'indoor'];
-    return lifestyleTerms.any((term) => item.toLowerCase().contains(term));
-  }
-
-  bool _isValueTrait(String item) {
-    final valueTerms = ['honest', 'loyal', 'family', 'career', 'spiritual', 'ambitious', 'kind', 'respect'];
-    return valueTerms.any((term) => item.toLowerCase().contains(term));
   }
 
   void _setupRealtimeListener() {
@@ -158,10 +104,20 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
           .listen((snapshot) {
         if (snapshot.exists && mounted) {
           final data = snapshot.data() as Map<String, dynamic>;
-          final lookingFor = List<String>.from(data['lookingFor'] ?? []);
-          if (lookingFor.toString() != widget.currentLookingFor.toString()) {
+
+          final interests = List<String>.from(data['interests'] ?? []);
+          final hobbies = List<String>.from(data['hobbies'] ?? []);
+          final dealBreakers = List<String>.from(data['dealBreakers'] ?? []);
+
+          // Update if data has changed
+          if (interests.toString() != widget.currentInterests.toString() ||
+              hobbies.toString() != widget.currentHobbies.toString() ||
+              dealBreakers.toString() !=
+                  widget.currentDealBreakers.toString()) {
             setState(() {
-              _loadCurrentSelections();
+              _selectedInterests = Set.from(interests);
+              _selectedHobbies = Set.from(hobbies);
+              _selectedDealBreakers = Set.from(dealBreakers);
             });
           }
         }
@@ -174,17 +130,11 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
       final profileData = await ProfileDataService.getAllProfileData();
       if (mounted) {
         setState(() {
-          _lookingForCategories = {
-            'Relationship Type': profileData['relationship_types'] ?? [],
-            'Personality': profileData['personality'] ?? [],
-            'Lifestyle': profileData['lifestyle'] ?? [],
-            'Values': profileData['values'] ?? [],
-          };
+          _interests = profileData['interests'] ?? [];
+          _hobbies = profileData['hobbies'] ?? [];
+          _dealBreakers = profileData['deal_breakers'] ?? [];
           _isLoading = false;
         });
-        
-        // Re-load current selections after categories are loaded
-        _loadCurrentSelections();
       }
     } catch (e) {
       print('Error loading profile data: $e');
@@ -197,9 +147,9 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
   }
 
   @override
-  void didUpdateWidget(LookingForManagementWidget oldWidget) {
+  void didUpdateWidget(InterestsManagementWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.isExpanded != oldWidget.isExpanded) {
       if (widget.isExpanded) {
         _animationController.forward();
@@ -207,9 +157,16 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
         _animationController.reverse();
       }
     }
-    
-    if (widget.currentLookingFor != oldWidget.currentLookingFor) {
-      _loadCurrentSelections();
+
+    // Update selected items if props changed
+    if (widget.currentInterests != oldWidget.currentInterests ||
+        widget.currentHobbies != oldWidget.currentHobbies ||
+        widget.currentDealBreakers != oldWidget.currentDealBreakers) {
+      setState(() {
+        _selectedInterests = Set.from(widget.currentInterests);
+        _selectedHobbies = Set.from(widget.currentHobbies);
+        _selectedDealBreakers = Set.from(widget.currentDealBreakers);
+      });
     }
   }
 
@@ -247,14 +204,14 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF9333EA).withOpacity(0.8),
-                          const Color(0xFF9333EA).withOpacity(0.6),
+                          const Color(0xFFEC4899).withOpacity(0.8),
+                          const Color(0xFFEC4899).withOpacity(0.6),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF9333EA).withOpacity(0.3),
+                          color: const Color(0xFFEC4899).withOpacity(0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -262,7 +219,7 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
                     ),
                     child: const Center(
                       child: FaIcon(
-                        FontAwesomeIcons.searchengin,
+                        FontAwesomeIcons.heart,
                         color: Colors.white,
                         size: 20,
                       ),
@@ -274,7 +231,7 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Looking For',
+                          'Interests & Preferences',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -282,7 +239,10 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
                           ),
                         ),
                         Text(
-                          '${_getTotalSelected()} preferences selected',
+                          '${widget.currentInterests
+                              .length} interests • ${widget.currentHobbies
+                              .length} hobbies • ${widget.currentDealBreakers
+                              .length} deal breakers',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.8),
                             fontSize: 14,
@@ -312,31 +272,32 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
                         ),
                         const SizedBox(width: 8),
                         GestureDetector(
-                          onTap: _isUpdating ? null : _saveLookingFor,
+                          onTap: _isUpdating ? null : _saveChanges,
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: _getTotalSelected() >= 3
+                              color: _canSave()
                                   ? Colors.green.withOpacity(0.3)
                                   : Colors.grey.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: _isUpdating
                                 ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                    ),
-                                  )
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white),
+                              ),
+                            )
                                 : FaIcon(
-                                    FontAwesomeIcons.check,
-                                    color: _getTotalSelected() >= 3
-                                        ? Colors.white
-                                        : Colors.white.withOpacity(0.5),
-                                    size: 16,
-                                  ),
+                              FontAwesomeIcons.check,
+                              color: _canSave()
+                                  ? Colors.white
+                                  : Colors.white.withOpacity(0.5),
+                              size: 16,
+                            ),
                           ),
                         ),
                       ],
@@ -345,12 +306,13 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
                     GestureDetector(
                       onTap: _startEditing,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF9333EA).withOpacity(0.3),
-                              const Color(0xFF9333EA).withOpacity(0.2),
+                              const Color(0xFFEC4899).withOpacity(0.3),
+                              const Color(0xFFEC4899).withOpacity(0.2),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(15),
@@ -383,35 +345,35 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
               ),
             ),
           ),
-          
+
           // Expandable Content
           AnimatedSize(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             child: widget.isExpanded
                 ? FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      child: _isLoading
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(20),
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              ),
-                            )
-                          : Column(
-                              children: [
-                                if (!_isEditing)
-                                  _buildCurrentSelections()
-                                else
-                                  _buildEditingInterface(),
-                              ],
-                            ),
+              opacity: _fadeAnimation,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: _isLoading
+                    ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
-                  )
+                  ),
+                )
+                    : Column(
+                  children: [
+                    if (!_isEditing)
+                      _buildCurrentSelections()
+                    else
+                      _buildEditingInterface(),
+                  ],
+                ),
+              ),
+            )
                 : const SizedBox.shrink(),
           ),
         ],
@@ -420,7 +382,9 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
   }
 
   Widget _buildCurrentSelections() {
-    if (widget.currentLookingFor.isEmpty) {
+    if (widget.currentInterests.isEmpty &&
+        widget.currentHobbies.isEmpty &&
+        widget.currentDealBreakers.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -434,7 +398,7 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
         child: Column(
           children: [
             FaIcon(
-              FontAwesomeIcons.searchengin,
+              FontAwesomeIcons.heart,
               color: Colors.white.withOpacity(0.6),
               size: 32,
             ),
@@ -449,7 +413,7 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
             ),
             const SizedBox(height: 8),
             Text(
-              'Tap Edit to add your dating preferences',
+              'Tap Edit to add your interests and preferences',
               style: TextStyle(
                 color: Colors.white.withOpacity(0.6),
                 fontSize: 14,
@@ -464,13 +428,68 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (widget.currentInterests.isNotEmpty) ...[
+          _buildCurrentSection(
+            title: 'Interests',
+            items: widget.currentInterests,
+            color: const Color(0xFFEC4899),
+            icon: FontAwesomeIcons.heart,
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (widget.currentHobbies.isNotEmpty) ...[
+          _buildCurrentSection(
+            title: 'Hobbies',
+            items: widget.currentHobbies,
+            color: const Color(0xFF9333EA),
+            icon: FontAwesomeIcons.gamepad,
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (widget.currentDealBreakers.isNotEmpty) ...[
+          _buildCurrentSection(
+            title: 'Deal Breakers',
+            items: widget.currentDealBreakers,
+            color: const Color(0xFFDC2626),
+            icon: FontAwesomeIcons.ban,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCurrentSection({
+    required String title,
+    required List<String> items,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            FaIcon(
+              icon,
+              color: color.withOpacity(0.8),
+              size: 16,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: widget.currentLookingFor.map((item) {
-            final category = _getCategoryForItem(item);
-            final color = _categoryColors[category] ?? const Color(0xFF9333EA);
-            
+          children: items.map((item) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -504,19 +523,10 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
     );
   }
 
-  String _getCategoryForItem(String item) {
-    for (String category in _lookingForCategories.keys) {
-      if (_lookingForCategories[category]?.contains(item) ?? false) {
-        return category;
-      }
-    }
-    return 'Relationship Type'; // Default
-  }
-
   Widget _buildEditingInterface() {
     return Column(
       children: [
-        // Selection requirement info
+        // Requirements info
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           margin: const EdgeInsets.only(bottom: 20),
@@ -543,7 +553,7 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Select at least 3 preferences. Choose ${_getTotalSelected()}/14 total',
+                  'Select at least 2-5 interests, 2-5 hobbies, and 2-3 deal breakers',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
                     fontSize: 14,
@@ -554,32 +564,57 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
             ],
           ),
         ),
-        
-        // Categories
-        ..._lookingForCategories.entries.map((entry) {
-          return Column(
-            children: [
-              _buildCategorySection(
-                title: entry.key,
-                items: entry.value,
-                icon: _categoryIcons[entry.key]!,
-                color: _categoryColors[entry.key]!,
-                maxSelection: _maxPerCategory[entry.key]!,
-              ),
-              const SizedBox(height: 20),
-            ],
-          );
-        }).toList(),
+
+        // Interests Section
+        _buildEditSection(
+          title: 'Interests',
+          subtitle: 'Select 2-5 interests',
+          icon: FontAwesomeIcons.heart,
+          items: _interests,
+          selectedItems: _selectedInterests,
+          minSelection: _minInterests,
+          maxSelection: _maxInterests,
+          color: const Color(0xFFEC4899),
+        ),
+        const SizedBox(height: 20),
+
+        // Hobbies Section
+        _buildEditSection(
+          title: 'Hobbies',
+          subtitle: 'Select 2-5 hobbies',
+          icon: FontAwesomeIcons.gamepad,
+          items: _hobbies,
+          selectedItems: _selectedHobbies,
+          minSelection: _minHobbies,
+          maxSelection: _maxHobbies,
+          color: const Color(0xFF9333EA),
+        ),
+        const SizedBox(height: 20),
+
+        // Deal Breakers Section
+        _buildEditSection(
+          title: 'Deal Breakers',
+          subtitle: 'Select 2-3 deal breakers',
+          icon: FontAwesomeIcons.ban,
+          items: _dealBreakers,
+          selectedItems: _selectedDealBreakers,
+          minSelection: _minDealBreakers,
+          maxSelection: _maxDealBreakers,
+          color: const Color(0xFFDC2626),
+        ),
       ],
     );
   }
 
-  Widget _buildCategorySection({
+  Widget _buildEditSection({
     required String title,
-    required List<String> items,
+    required String subtitle,
     required IconData icon,
-    required Color color,
+    required List<String> items,
+    required Set<String> selectedItems,
+    required int minSelection,
     required int maxSelection,
+    required Color color,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -638,7 +673,7 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
                       ),
                     ),
                     Text(
-                      '${_selectedByCategory[title]?.length ?? 0}/$maxSelection selected',
+                      '$subtitle (${selectedItems.length}/$maxSelection)',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.8),
                         fontSize: 12,
@@ -656,16 +691,19 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
             spacing: 8,
             runSpacing: 8,
             children: items.map((item) {
-              final isSelected = _selectedByCategory[title]?.contains(item) ?? false;
-              final canSelect = (_selectedByCategory[title]?.length ?? 0) < maxSelection;
+              final isSelected = selectedItems.contains(item);
+              final canSelect = selectedItems.length < maxSelection;
+              final disable = !isSelected && !canSelect;
 
               return GestureDetector(
-                onTap: () {
+                onTap: disable
+                    ? null
+                    : () {
                   setState(() {
                     if (isSelected) {
-                      _selectedByCategory[title]?.remove(item);
+                      selectedItems.remove(item);
                     } else if (canSelect) {
-                      _selectedByCategory[title]?.add(item);
+                      selectedItems.add(item);
                     }
                   });
                 },
@@ -678,31 +716,32 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? LinearGradient(
-                            colors: [
-                              color.withOpacity(0.8),
-                              color.withOpacity(0.6),
-                            ],
-                          )
+                      colors: [
+                        color.withOpacity(0.8),
+                        color.withOpacity(0.6),
+                      ],
+                    )
                         : LinearGradient(
-                            colors: [
-                              Colors.white.withOpacity(canSelect ? 0.2 : 0.1),
-                              Colors.white.withOpacity(canSelect ? 0.1 : 0.05),
-                            ],
-                          ),
+                      colors: [
+                        Colors.white.withOpacity(disable ? 0.1 : 0.2),
+                        Colors.white.withOpacity(disable ? 0.05 : 0.1),
+                      ],
+                    ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected
                           ? color.withOpacity(0.8)
-                          : Colors.white.withOpacity(canSelect ? 0.3 : 0.15),
+                          : Colors.white.withOpacity(disable ? 0.15 : 0.3),
                       width: isSelected ? 2 : 1,
                     ),
                   ),
                   child: Text(
                     item,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(canSelect || isSelected ? 1.0 : 0.5),
+                      color: Colors.white.withOpacity(disable ? 0.5 : 1.0),
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight
+                          .w500,
                     ),
                   ),
                 ),
@@ -714,12 +753,13 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
     );
   }
 
-  int _getTotalSelected() {
-    return _selectedByCategory.values.fold(0, (sum, set) => sum + set.length);
-  }
-
-  List<String> _getAllSelected() {
-    return _selectedByCategory.values.expand((set) => set).toList();
+  bool _canSave() {
+    return _selectedInterests.length >= _minInterests &&
+        _selectedInterests.length <= _maxInterests &&
+        _selectedHobbies.length >= _minHobbies &&
+        _selectedHobbies.length <= _maxHobbies &&
+        _selectedDealBreakers.length >= _minDealBreakers &&
+        _selectedDealBreakers.length <= _maxDealBreakers;
   }
 
   void _startEditing() {
@@ -731,29 +771,44 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
   void _cancelEditing() {
     setState(() {
       _isEditing = false;
-      // Reset selections to current user data
-      _loadCurrentSelections();
+      // Reset to current user data
+      _selectedInterests = Set.from(widget.currentInterests);
+      _selectedHobbies = Set.from(widget.currentHobbies);
+      _selectedDealBreakers = Set.from(widget.currentDealBreakers);
     });
   }
 
-  Future<void> _saveLookingFor() async {
-    if (_getTotalSelected() < 3) {
+  Future<void> _saveChanges() async {
+    if (!_canSave()) {
+      String message = 'Please ensure:\n';
+      if (_selectedInterests.length < _minInterests) {
+        message += '• Select at least $_minInterests interests\n';
+      }
+      if (_selectedHobbies.length < _minHobbies) {
+        message += '• Select at least $_minHobbies hobbies\n';
+      }
+      if (_selectedDealBreakers.length < _minDealBreakers) {
+        message += '• Select at least $_minDealBreakers deal breakers';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              FaIcon(
+              const FaIcon(
                 FontAwesomeIcons.exclamationTriangle,
                 color: Colors.white,
                 size: 16,
               ),
-              SizedBox(width: 8),
-              Text('Please select at least 3 preferences'),
+              const SizedBox(width: 8),
+              Expanded(child: Text(message)),
             ],
           ),
           backgroundColor: const Color(0xFFEC4899),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 4),
         ),
       );
       return;
@@ -764,10 +819,16 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
     });
 
     try {
-      final selectedItems = _getAllSelected();
-      final success = await ProfileUpdateService.updateLookingFor(selectedItems as Map<String, List<String>>);
-      
-      if (success && mounted) {
+      // Update all three simultaneously
+      final results = await Future.wait([
+        ProfileUpdateService.updateInterests(_selectedInterests.toList()),
+        ProfileUpdateService.updateHobbies(_selectedHobbies.toList()),
+        ProfileUpdateService.updateDealBreakers(_selectedDealBreakers.toList()),
+      ]);
+
+      final allSuccess = results.every((result) => result);
+
+      if (allSuccess && mounted) {
         setState(() {
           _isEditing = false;
           _isUpdating = false;
@@ -783,12 +844,13 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
                   size: 16,
                 ),
                 SizedBox(width: 8),
-                Text('Looking for preferences updated successfully!'),
+                Text('Interests and preferences updated successfully!'),
               ],
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
           ),
         );
 
@@ -798,7 +860,7 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
         setState(() {
           _isUpdating = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Row(
@@ -814,7 +876,8 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
             ),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -823,7 +886,7 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
         setState(() {
           _isUpdating = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -839,7 +902,8 @@ class _LookingForManagementWidgetState extends State<LookingForManagementWidget>
             ),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
             duration: const Duration(seconds: 4),
           ),
         );

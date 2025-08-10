@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:connecta/models/user_model.dart';
 import 'package:connecta/utils/text_strings.dart';
 import 'package:connecta/screens/home/widgets/user_card.dart';
+import 'package:connecta/functions/match_users.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
@@ -23,6 +24,8 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   bool _showSuperLikeFeedback = false;
   bool _isGridView = false;
   bool _showFilters = false;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   // Filter options
   RangeValues _ageRange = const RangeValues(18, 35);
@@ -45,9 +48,8 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _loadDummyUsers();
     _setupAnimations();
-    _applyFilters();
+    _loadMatches();
   }
 
   void _setupAnimations() {
@@ -79,185 +81,121 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void _loadDummyUsers() {
-    setState(() {
-      _users.addAll([
-      User(
-      id: '1',
-      username: 'Jessica',
-      name: 'Jessica',
-      email: 'jessica@email.com',
-      age: 24,
-      gender: 'Female',
-      nationality: 'USA',
-      location: 'New York',
-      profileImageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      profileImages: [
-      'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      ],
-      bio: 'Adventure seeker and coffee lover ☕ Love exploring new places and meeting interesting people! 🌍✈️',
-      interests: ['Hiking', 'Photography', 'Travel', 'Coffee', 'Art'],
-      isOnline: true,
-      lastActive: DateTime.now(),
-      isVerified: true,
-      hobbies: ['Photography', 'Traveling', 'Coffee tasting'],
-      socialMediaLinks: [
-        'instagram:@jessica_adventures',
-        'facebook:jessica.nyc',
-        'whatsapp:+1555123456',
-        'tiktok:@jessicanyc',
-        'spotify:jessica-playlist'
-      ],
-      ),
+  /// Load real user matches from Firestore
+  Future<void> _loadMatches() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
 
-      User(
-      id: '2',
-      username: 'Alex',
-      name: 'Alex',
-      email: 'alex@email.com',
-      age: 28,
-      gender: 'Male',
-      nationality: 'Canada',
-      location: 'Toronto',
-      profileImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      profileImages: [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      ],
-      bio: 'Musician by night, developer by day 🎸💻 Looking for someone to share adventures with!',
-      interests: ['Music', 'Coding', 'Gaming', 'Movies', 'Food'],
-      isOnline: false,
-      lastActive: DateTime.now().subtract(const Duration(hours: 3)),
-      socialMediaLinks: [
-        'facebook:alex.music',
-        'whatsapp:+1234567890',
-        'instagram:@alex_codes'
-      ],
-      ),
+      print('DEBUG: Starting to load matches...');
+      print('DEBUG: Filter parameters - Distance: $_distance, Age: ${_ageRange.start.round()}-${_ageRange.end.round()}');
 
-      User(
-      id: '3',
-      username: 'Sofia',
-      name: 'Sofia',
-      email: 'sofia@email.com',
-      age: 26,
-      gender: 'Female',
-      nationality: 'Spain',
-      location: 'Barcelona',
-      profileImageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      profileImages: [
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      ],
-      bio: 'Yoga instructor and mindfulness coach 🧘‍♀️ Spreading positive vibes everywhere I go ✨',
-      interests: ['Yoga', 'Meditation', 'Wellness', 'Nature', 'Books'],
-      isOnline: false,
-      lastActive: DateTime.now().subtract(const Duration(hours: 36)),
-      socialMediaLinks: [
-        'instagram:@sofia_yoga',
-        'facebook:sofia.barcelona',
-        'whatsapp:+34666777888',
-        'youtube:@SofiaWellness',
-        'linkedin:sofia-martinez'
-      ],
-      ),
+      // Get matches using the matching service
+      final matches = await MatchUsersService.findMatches();
 
-      User(
-      id: '4',
-      username: 'David',
-      name: 'David',
-      email: 'david@email.com',
-      age: 30,
-      gender: 'Male',
-      nationality: 'Australia',
-      location: 'Sydney',
-      profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      profileImages: [
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      ],
-      bio: 'Fitness enthusiast and outdoor lover 🏋️‍♂️🏖️ Life is better with good company!',
-      interests: ['Fitness', 'Surfing', 'Cooking', 'Travel', 'Dogs'],
-      isOnline: false,
-      lastActive: DateTime.now().subtract(const Duration(hours: 12)),
-      socialMediaLinks: [
-        'instagram:@david_fitness',
-        'facebook:david.sydney',
-        'whatsapp:+61400123456',
-        'strava:david-sydney',
-        'twitter:@davidfitness'
-      ],
-      ),
-      User(
-      id: '5',
-      username: 'Emma',
-      name: 'Emma',
-      email: 'emma@email.com',
-      age: 25,
-      gender: 'Female',
-      nationality: 'UK',
-      location: 'London',
-      profileImageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      profileImages: [
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1488716820095-cbe80883c496?ixlib=rb-4.0.3&auto=format&fit=crop&w=687&h=1000',
-      ],
-      bio: 'Artist and creative soul 🎨 Always looking for inspiration in everyday moments',
-      interests: ['Art', 'Painting', 'Museums', 'Wine', 'Culture'],
-      isOnline: true,
-      lastActive: DateTime.now(),
-      socialMediaLinks: [
-        'instagram:@emma_art',
-        'facebook:emma.london',
-        'whatsapp:+447700123456',
-        'behance:emma-designs',
-        'pinterest:emma-creative'
-      ],
-      ),
-      ]);
-    });
+      print('DEBUG: Found ${matches.length} matches from service');
+      for (var match in matches) {
+        print('DEBUG: Match - ${match.name}, Age: ${match.age}, Gender: ${match.gender}');
+      }
+
+      setState(() {
+        _users.clear();
+        _users.addAll(matches);
+        _isLoading = false;
+      });
+
+      // Apply any active filters
+      _applyFilters();
+
+      // If still no matches after all attempts, create some debug info
+      if (_filteredUsers.isEmpty) {
+        print('DEBUG: No filtered users found. Total users: ${_users.length}');
+        print('DEBUG: Current filters - Age: ${_ageRange.start}-${_ageRange.end}, Gender: $_selectedGender, Online: $_onlineOnly');
+        
+        // Show all users if no filters are restrictive
+        if (_selectedGender == 'Everyone' && !_onlineOnly) {
+          setState(() {
+            _filteredUsers.addAll(_users);
+          });
+          print('DEBUG: Added all users to filtered list as fallback');
+        }
+      }
+
+      print('DEBUG: Final result - ${_filteredUsers.length} users ready to display');
+
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load matches: ${e.toString()}';
+      });
+      
+      print('Error loading matches: $e');
+      
+      // Show error message to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load matches. Please try again.'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _loadMatches,
+            ),
+          ),
+        );
+      }
+    }
   }
 
+  /// Refresh matches with current filters
+
+
   void _applyFilters() {
+    if (_users.isEmpty) {
+      setState(() {
+        _filteredUsers.clear();
+      });
+      return;
+    }
+
     setState(() {
       _filteredUsers.clear();
       _filteredUsers.addAll(_users.where((user) {
-        // Age filter
-        if (user.age! < _ageRange.start || user.age! > _ageRange.end) return false;
+        // Age filter - be more lenient with +/- 2 years
+        if (user.age < (_ageRange.start - 2) || user.age > (_ageRange.end + 2)) return false;
 
-        // Gender filter
+        // Gender filter - ALWAYS respect this (non-negotiable)
         if (_selectedGender != 'Everyone' && user.gender != _selectedGender) return false;
 
-        // Location filter
-        if (_selectedLocation != 'All Locations' && user.location != _selectedLocation) return false;
-
-        // Online filter
+        // Online filter - only apply if explicitly requested
         if (_onlineOnly && !user.isOnline) return false;
 
-        // Interests filter
+        // Interests filter - be more lenient, don't filter out completely
+        // Let the scoring handle interest compatibility instead
         if (_selectedInterests.isNotEmpty) {
-          bool hasMatchingInterest = false;
-          for (String interest in _selectedInterests) {
-            if (user.interests?.contains(interest) == true) {
-              hasMatchingInterest = true;
-              break;
-            }
-          }
-          if (!hasMatchingInterest) return false;
+          // Still check but don't reject based on this alone
+          final hasMatchingInterest = _selectedInterests.any((interest) =>
+              user.interests.any((userInterest) => 
+                  userInterest.toLowerCase().contains(interest.toLowerCase()) ||
+                  interest.toLowerCase().contains(userInterest.toLowerCase()))
+          );
+          // We'll sort by compatibility in the UI instead of filtering out
         }
 
         return true;
       }));
+
+      // If we have no filtered users but have original users, show all users except gender mismatches
+      if (_filteredUsers.isEmpty && _users.isNotEmpty) {
+        print('DEBUG: No users passed filters, applying only gender filter');
+        _filteredUsers.addAll(_users.where((user) {
+          // Only apply gender filter as absolute requirement
+          return _selectedGender == 'Everyone' || user.gender == _selectedGender;
+        }));
+      }
     });
   }
 

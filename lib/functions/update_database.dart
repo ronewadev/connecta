@@ -95,6 +95,85 @@ class ProfileUpdateService {
     }
   }
 
+  // Update profile image URL
+  static Future<bool> updateProfileImage(String imageUrl) async {
+    try {
+      if (_currentUserId == null) return false;
+      
+      await _firestore.collection('users').doc(_currentUserId).update(
+        _withTimestamp({'profileImageUrl': imageUrl})
+      );
+      return true;
+    } catch (e) {
+      print('Error updating profile image: $e');
+      return false;
+    }
+  }
+
+  // Update profile images list (multiple images)
+  static Future<bool> updateProfileImages(List<String> imageUrls) async {
+    try {
+      if (_currentUserId == null) return false;
+      
+      await _firestore.collection('users').doc(_currentUserId).update(
+        _withTimestamp({'profileImages': imageUrls})
+      );
+      return true;
+    } catch (e) {
+      print('Error updating profile images: $e');
+      return false;
+    }
+  }
+
+  // Add a single image to profile images list
+  static Future<bool> addProfileImage(String imageUrl) async {
+    try {
+      if (_currentUserId == null) return false;
+      
+      await _firestore.collection('users').doc(_currentUserId).update(
+        _withTimestamp({
+          'profileImages': FieldValue.arrayUnion([imageUrl])
+        })
+      );
+      return true;
+    } catch (e) {
+      print('Error adding profile image: $e');
+      return false;
+    }
+  }
+
+  // Remove a single image from profile images list
+  static Future<bool> removeProfileImage(String imageUrl) async {
+    try {
+      if (_currentUserId == null) return false;
+      
+      await _firestore.collection('users').doc(_currentUserId).update(
+        _withTimestamp({
+          'profileImages': FieldValue.arrayRemove([imageUrl])
+        })
+      );
+      return true;
+    } catch (e) {
+      print('Error removing profile image: $e');
+      return false;
+    }
+  }
+
+  // Update user location
+  static Future<bool> updateUserLocation(Map<String, dynamic> locationData) async {
+    try {
+      if (_currentUserId == null) return false;
+      
+      await _firestore.collection('users').doc(_currentUserId).update(
+        _withTimestamp({'userLocation': locationData})
+      );
+      return true;
+    } catch (e) {
+      print('Error updating user location: $e');
+      return false;
+    }
+  }
+
   // Update bio
   static Future<bool> updateBio(String bio) async {
     try {
