@@ -14,7 +14,7 @@ import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/user_model.dart';
-import 'likes/likes_screen.dart';
+import 'likes/likes_screen.dart' hide User;
 import 'live/live_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -33,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),         // 0: Home (Meet/Call)
     const LiveScreen(),         // 1: Live
     const ChatScreen(),         // 2: Chat
-    const LikesScreen(likedByUsers: [],),      // 3: Likes
+    const LikesScreen(likedByUserIds: [], superLikedByUserIds: [], lovedByUserIds: [],),      // 3: Likes
     const SubscriptionScreen(),        // 4: Plans
   ];
 
