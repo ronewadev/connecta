@@ -41,7 +41,7 @@ class MatchUsersService {
         _currentUserId!,
       );
 
-      print('DEBUG: Current user loaded - ${currentUser.name}, ${currentUser.age} years old');
+      print('DEBUG: Current user loaded - ${currentUser.username}, ${currentUser.age} years old');
 
       // Get all potential matches with basic filtering
       final potentialMatches = await _getPotentialMatches(
@@ -58,7 +58,7 @@ class MatchUsersService {
 
       for (final user in potentialMatches) {
         final score = _calculateMatchScore(currentUser, user);
-        print('DEBUG: Match score for ${user.name}: $score');
+        print('DEBUG: Match score for ${user.username}: $score');
         // Lower the threshold to 0.1 to ensure we find matches
         if (score > 0.1) { 
           scoredMatches.add(MapEntry(user, score));
@@ -114,7 +114,7 @@ class MatchUsersService {
     int maxAge,
   ) async {
     try {
-      print('DEBUG: Getting potential matches for ${currentUser.name}');
+      print('DEBUG: Getting potential matches for ${currentUser.username}');
       
       // Build query based on preferences
       Query query = _firestore.collection('users');
@@ -174,14 +174,14 @@ class MatchUsersService {
             doc.data() as Map<String, dynamic>,
             doc.id,
           );
-          print('DEBUG: Loaded user: ${user.name}, age ${user.age}, gender ${user.gender}');
+          print('DEBUG: Loaded user: ${user.username}, age ${user.age}, gender ${user.gender}');
 
           // Additional filtering
           if (_passesBasicFilters(currentUser, user)) {
             users.add(user);
-            print('DEBUG: User ${user.name} passed basic filters');
+            print('DEBUG: User ${user.username} passed basic filters');
           } else {
-            print('DEBUG: User ${user.name} did not pass basic filters');
+            print('DEBUG: User ${user.username} did not pass basic filters');
           }
         }
       }
@@ -196,11 +196,11 @@ class MatchUsersService {
 
   /// Check if user passes basic compatibility filters
   static bool _passesBasicFilters(UserModel.User currentUser, UserModel.User potentialMatch) {
-    print('DEBUG: Checking basic filters for ${potentialMatch.name}');
+    print('DEBUG: Checking basic filters for ${potentialMatch.username}');
     
     // ALWAYS respect gender preferences - this is non-negotiable
     if (!_areMutuallyCompatible(currentUser, potentialMatch)) {
-      print('DEBUG: User ${potentialMatch.name} rejected - gender preference mismatch');
+      print('DEBUG: User ${potentialMatch.username} rejected - gender preference mismatch');
       return false;
     }
 
@@ -211,7 +211,7 @@ class MatchUsersService {
       
       print('DEBUG: Distance check - ${distance}km vs ${maxDistance}km max (2x tolerance)');
       if (distance > maxDistance) {
-        print('DEBUG: User ${potentialMatch.name} rejected - too far (${distance}km)');
+        print('DEBUG: User ${potentialMatch.username} rejected - too far (${distance}km)');
         return false;
       }
     } else {
@@ -220,14 +220,14 @@ class MatchUsersService {
 
     // Relax deal breaker checking - only reject if it's a major conflict
     if (_hasCriticalDealBreakers(currentUser, potentialMatch)) {
-      print('DEBUG: User ${potentialMatch.name} rejected - critical deal breaker');
+      print('DEBUG: User ${potentialMatch.username} rejected - critical deal breaker');
       return false;
     }
 
     // Check if user has been previously rejected/liked (avoid showing again)
     // This would require tracking user interactions
     
-    print('DEBUG: User ${potentialMatch.name} passed all basic filters');
+    print('DEBUG: User ${potentialMatch.username} passed all basic filters');
     return true;
   }
 
@@ -481,8 +481,8 @@ class MatchUsersService {
     final user2PreferredGender = user2.preferences['preferredGender'] as String?;
     
     print('DEBUG: Checking gender compatibility:');
-    print('DEBUG: ${user1.name} (${user1.gender}) prefers: ${user1PreferredGender ?? "not set"}');
-    print('DEBUG: ${user2.name} (${user2.gender}) prefers: ${user2PreferredGender ?? "not set"}');
+    print('DEBUG: ${user1.username} (${user1.gender}) prefers: ${user1PreferredGender ?? "not set"}');
+    print('DEBUG: ${user2.username} (${user2.gender}) prefers: ${user2PreferredGender ?? "not set"}');
     
     // If either has no preference, assume compatible
     if (user1PreferredGender == null || user2PreferredGender == null) {

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -15,6 +16,7 @@ class InterestsDealbrakersScreen extends StatefulWidget {
   final String nationality;
   final List<String> images;
   final String bio;
+  final File profileImage;
   final UserLocation? userLocation;
 
   const InterestsDealbrakersScreen({
@@ -29,6 +31,7 @@ class InterestsDealbrakersScreen extends StatefulWidget {
     required this.images,
     required this.bio,
     this.userLocation,
+    required  this.profileImage,
   });
 
   @override
@@ -489,6 +492,7 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
           mobile: widget.mobile,
           nationality: widget.nationality,
           images: widget.images,
+          profileImage: widget.profileImage,
           interests: _selectedInterests.toList(),
           hobbies: _selectedHobbies.toList(),
           dealBreakers: _selectedDealBreakers.toList(),

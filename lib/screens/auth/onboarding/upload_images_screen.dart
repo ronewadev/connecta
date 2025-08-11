@@ -15,7 +15,7 @@ class UploadImagesScreen extends StatefulWidget {
   final String mobile;
   final String nationality;
   final String bio;
-  final File? profileImage;
+  final File profileImage;
   final UserLocation? userLocation;
 
   const UploadImagesScreen({
@@ -28,7 +28,7 @@ class UploadImagesScreen extends StatefulWidget {
     required this.mobile,
     required this.nationality,
     required this.bio,
-    this.profileImage,
+    required this.profileImage,
     this.userLocation,
   });
 
@@ -560,6 +560,7 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
           age: widget.age,
           gender: widget.gender,
           mobile: widget.mobile,
+          profileImage: widget.profileImage,
           nationality: widget.nationality,
           images: _images.where((img) => img != null).map((img) => img!.path).toList(),
           bio: widget.bio,

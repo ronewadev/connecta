@@ -194,7 +194,7 @@ class _UserCardState extends State<UserCard> {
                   Row(
                     children: [
                       Text(
-                        '${widget.user.name}, ${widget.user.age}',
+                        '${widget.user.username}, ${widget.user.age}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 26,

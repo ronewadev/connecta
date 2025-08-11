@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'package:connecta/models/user_model.dart';
-import 'package:connecta/database/user_database.dart';
+
 import 'package:connecta/screens/chat/chat_screen.dart';
 import 'package:connecta/screens/home/home_screen.dart';
-import 'package:connecta/screens/likes/likes_screen.dart';
 import 'package:connecta/screens/plans/subscription_screen.dart';
 import 'package:connecta/screens/profile/profile_screen.dart';
 import 'package:connecta/screens/settings/settings_screen.dart';
@@ -15,6 +13,8 @@ import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../models/user_model.dart';
+import 'likes/likes_screen.dart';
 import 'live/live_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -33,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),         // 0: Home (Meet/Call)
     const LiveScreen(),         // 1: Live
     const ChatScreen(),         // 2: Chat
-    const LikesScreen(),      // 3: Likes
+    const LikesScreen(likedByUsers: [],),      // 3: Likes
     const SubscriptionScreen(),        // 4: Plans
   ];
 
@@ -100,7 +100,7 @@ class _MainScreenState extends State<MainScreen> {
         return NetworkImage(imageUrl);
       }
     }
-    
+
     // Return null to show the default icon
     return null;
   }

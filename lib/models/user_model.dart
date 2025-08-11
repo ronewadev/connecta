@@ -167,7 +167,6 @@ class UserBalance {
 class User {
   final String id;
   final String username;
-  final String name;
   final String email;
   final String? phone;
   final int age;
@@ -176,7 +175,7 @@ class User {
   final String location; // Deprecated - use userLocation instead
   final String? currentCity; // Deprecated - use userLocation instead
   final UserLocation? userLocation; // New location field
-  final String? profileImageUrl;
+  final String profileImageUrl;
   final List<String> profileImages;
   final List<String> interests;
   final List<String> hobbies;
@@ -201,7 +200,6 @@ class User {
   User({
     required this.id,
     required this.username,
-    required this.name,
     required this.email,
     this.phone,
     this.age = 18,
@@ -210,7 +208,7 @@ class User {
     this.location = 'Not specified',
     this.currentCity,
     this.userLocation,
-    this.profileImageUrl,
+    required this.profileImageUrl,
     this.profileImages = const [],
     this.interests = const [],
     this.hobbies = const [],
@@ -248,7 +246,6 @@ class User {
     return User(
       id: documentId,
       username: map['username'] ?? '',
-      name: map['name'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'],
       age: map['age'] ?? 0,
@@ -290,7 +287,6 @@ class User {
   Map<String, dynamic> toMap() {
     return {
       'username': username,
-      'name': name,
       'email': email,
       'phone': phone,
       'age': age,

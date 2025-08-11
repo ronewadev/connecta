@@ -5,7 +5,9 @@ import 'package:connecta/utils/text_strings.dart';
 import 'package:connecta/widgets/custom_button.dart';
 
 class LikesScreen extends StatefulWidget {
-  const LikesScreen({super.key});
+  final List<User> likedByUsers;
+
+  const LikesScreen({super.key, required this.likedByUsers});
 
   @override
   State<LikesScreen> createState() => _LikesScreenState();
@@ -14,55 +16,6 @@ class LikesScreen extends StatefulWidget {
 class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin {
   late AnimationController _shimmerController;
   late Animation<double> _shimmerAnimation;
-  
-  // Demo data - users who liked you
-  final List<User> _likedByUsers = [
-    User(
-      id: '1',
-      name: 'Emma Watson',
-      age: 25,
-      profileImageUrl: 'https://i.pravatar.cc/300?img=1',
-      bio: 'Love traveling and photography',
-      location: 'New York',
-      interests: ['Photography', 'Travel', 'Books'], username: '', email: '', gender: '', nationality: '',
-    ),
-    User(
-      id: '2',
-      name: 'Sophie Turner',
-      age: 27,
-      profileImageUrl: 'https://i.pravatar.cc/300?img=2',
-      bio: 'Artist and coffee lover',
-      location: 'Los Angeles',
-      interests: ['Art', 'Coffee', 'Music'], username: '', email: '', gender: '', nationality: '',
-    ),
-    User(
-      id: '3',
-      name: 'Zendaya',
-      age: 24,
-      profileImageUrl: 'https://i.pravatar.cc/300?img=3',
-      bio: 'Dancer and actress',
-      location: 'Hollywood',
-      interests: ['Dancing', 'Acting', 'Fashion'], username: '', email: '', gender: '', nationality: '',
-    ),
-    User(
-      id: '4',
-      name: 'Taylor Swift',
-      age: 28,
-      profileImageUrl: 'https://i.pravatar.cc/300?img=4',
-      bio: 'Music is my passion',
-      location: 'Nashville',
-      interests: ['Music', 'Writing', 'Cats'], username: '', email: '', gender: '', nationality: '',
-    ),
-    User(
-      id: '5',
-      name: 'Ariana Grande',
-      age: 26,
-      profileImageUrl: 'https://i.pravatar.cc/300?img=5',
-      bio: 'Singer and animal lover',
-      location: 'Miami',
-      interests: ['Singing', 'Animals', 'Yoga'], username: '', email: '', gender: '', nationality: '',
-    ),
-  ];
 
   @override
   void initState() {
@@ -94,7 +47,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return CustomScrollView(
       slivers: [
         // Header Section
@@ -137,7 +90,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${_likedByUsers.length} people liked you',
+                  '${widget.likedByUsers.length} people liked you',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
@@ -185,11 +138,11 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
               mainAxisSpacing: 12,
             ),
             delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final user = _likedByUsers[index];
+                  (context, index) {
+                final user = widget.likedByUsers[index];
                 return _buildLikeCard(context, user, index);
               },
-              childCount: _likedByUsers.length,
+              childCount: widget.likedByUsers.length,
             ),
           ),
         ),
@@ -264,7 +217,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
   Widget _buildLikeCard(BuildContext context, User user, int index) {
     final theme = Theme.of(context);
     final isBlurred = index >= 2; // Show first 2 clearly, blur the rest
-    
+
     return GestureDetector(
       onTap: () => _handleCardTap(context, user, isBlurred),
       child: Container(
@@ -285,7 +238,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
             children: [
               // Profile Image
               Image.network(
-                user.profileImageUrl!,
+                user.profileImageUrl ?? 'https://i.pravatar.cc/300?u=${user.id}',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
@@ -392,7 +345,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        user.name,
+                        user.username,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -457,7 +410,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
 
   void _showPremiumDialog(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -507,8 +460,8 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
           ],
         ),
         actions: [
-          SecondaryButton(
-            text: 'Maybe Later',
+          TextButton(
+            child: Text('Maybe Later'),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
@@ -556,7 +509,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
 
   void _showMatchDialog(BuildContext context, User user) {
     final theme = Theme.of(context);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -569,7 +522,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
             ClipRRect(
               borderRadius: BorderRadius.circular(60),
               child: Image.network(
-                user.profileImageUrl!,
+                user.profileImageUrl,
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,
@@ -577,7 +530,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
             ),
             const SizedBox(height: 16),
             Text(
-              user.name,
+              user.username,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -594,9 +547,8 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Expanded(
-                  child: SecondaryButton(
-                    text: 'Pass',
-                    icon: FontAwesomeIcons.xmark,
+                  child: TextButton(
+                    child: Text('Pass'),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -623,7 +575,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
 
   void _showMatchSuccess(BuildContext context, User user) {
     final theme = Theme.of(context);
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -657,7 +609,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
             ),
             const SizedBox(height: 8),
             Text(
-              'You and ${user.name} liked each other',
+              'You and ${user.username} liked each other',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: Colors.pink.shade700,
               ),
@@ -678,8 +630,8 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
               },
             ),
             const SizedBox(height: 8),
-            SecondaryButton(
-              text: 'Keep Swiping',
+            TextButton(
+              child: Text('Keep Swiping'),
               onPressed: () => Navigator.pop(context),
             ),
           ],

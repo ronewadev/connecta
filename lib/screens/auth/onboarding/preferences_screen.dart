@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -20,6 +21,7 @@ class PreferencesScreen extends StatefulWidget {
   final List<String> lookingFor;
   final String bio;
   final UserLocation? userLocation;
+  final File profileImage;
 
   const PreferencesScreen({
     super.key,
@@ -37,6 +39,7 @@ class PreferencesScreen extends StatefulWidget {
     required this.lookingFor,
     required this.bio,
     this.userLocation,
+    required  this.profileImage,
   });
 
   @override
@@ -764,6 +767,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
           lookingFor: widget.lookingFor,
           bio: widget.bio,
           userLocation: widget.userLocation,
+          profileImage: widget.profileImage,
           // Pass the selected preferences as lists
           ageRange: [_ageRange.start.round(), _ageRange.end.round()],
           maxDistance: _maxDistance.round(),

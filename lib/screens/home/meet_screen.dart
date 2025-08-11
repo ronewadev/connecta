@@ -97,7 +97,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
 
       print('DEBUG: Found ${matches.length} matches from service');
       for (var match in matches) {
-        print('DEBUG: Match - ${match.name}, Age: ${match.age}, Gender: ${match.gender}');
+        print('DEBUG: Match - ${match.username}, Age: ${match.age}, Gender: ${match.gender}');
       }
 
       setState(() {
@@ -291,21 +291,21 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   void _onUserLiked(int index) {
     if (index < _users.length) {
       final user = _users[index];
-      print('Liked: ${user.name}');
+      print('Liked: ${user.username}');
     }
   }
 
   void _onUserDisliked(int index) {
     if (index < _users.length) {
       final user = _users[index];
-      print('Disliked: ${user.name}');
+      print('Disliked: ${user.username}');
     }
   }
 
   void _onUserSuperLiked(int index) {
     if (index < _users.length) {
       final user = _users[index];
-      print('Super Liked: ${user.name}');
+      print('Super Liked: ${user.username}');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -313,7 +313,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
             children: [
               const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
               const SizedBox(width: 8),
-              Text('Super Liked ${user.name}!'),
+              Text('Super Liked ${user.username}!'),
             ],
           ),
           backgroundColor: Colors.blue,
@@ -877,7 +877,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${user.name}, ${user.age}',
+                        '${user.username}, ${user.age}',
                         style: TextStyle(
                           color: theme.colorScheme.surface,
                           fontSize: 16,
@@ -1256,7 +1256,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                           Row(
                             children: [
                               Text(
-                                '${user.name}, ${user.age}',
+                                '${user.username}, ${user.age}',
                                 style: theme.textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -1728,7 +1728,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Report User'),
-        content: Text('Report ${user.name} for inappropriate behavior?'),
+        content: Text('Report ${user.username} for inappropriate behavior?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -1738,7 +1738,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${user.name} has been reported')),
+                SnackBar(content: Text('${user.username} has been reported')),
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),

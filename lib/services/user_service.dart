@@ -6,7 +6,6 @@ class UserService {
     User(
       id: '1',
       username: 'sarah_j',
-      name: 'Sarah',
       email: 'sarah@connecta.com',
       age: 27,
       gender: 'Female',
@@ -22,7 +21,6 @@ class UserService {
     User(
       id: '2',
       username: 'michael_t',
-      name: 'Michael',
       email: 'michael@connecta.com',
       age: 29,
       gender: 'Male',
@@ -37,7 +35,6 @@ class UserService {
     User(
       id: '3',
       username: 'emma_w',
-      name: 'Emma',
       email: 'emma@connecta.com',
       age: 24,
       gender: 'Female',
@@ -51,7 +48,6 @@ class UserService {
     User(
       id: '4',
       username: 'david_h',
-      name: 'David',
       email: 'david@connecta.com',
       age: 31,
       gender: 'Male',
@@ -64,7 +60,6 @@ class UserService {
     User(
       id: '5',
       username: 'sophia_k',
-      name: 'Sophia',
       email: 'sophia@connecta.com',
       age: 26,
       gender: 'Female',
@@ -81,7 +76,6 @@ class UserService {
   User get currentUser => User(
     id: 'current',
     username: 'jeniffer_c',
-    name: 'Jeniffer Chil',
     email: 'jeniffer@connecta.com',
     age: 23,
     gender: 'Female',

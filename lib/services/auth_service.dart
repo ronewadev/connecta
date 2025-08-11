@@ -59,7 +59,6 @@ class AuthService with ChangeNotifier {
   Future<Map<String, dynamic>> signUp({
     required String email,
     required String password,
-    required String name,
     required String username,
   }) async {
     try {
@@ -85,12 +84,12 @@ class AuthService with ChangeNotifier {
         User newUser = User(
           id: userCredential.user!.uid,
           username: username,
-          name: name,
           email: email,
           age: 18, // Default age, will be updated in onboarding
           gender: 'Not specified',
           nationality: 'Not specified',
           location: 'Not specified',
+          profileImageUrl: '',
         );
 
         await _firestore.collection('users').doc(userCredential.user!.uid).set(newUser.toMap());
@@ -335,7 +334,6 @@ class AuthService with ChangeNotifier {
     await signUp(
       email: newUser.email,
       password: password,
-      name: newUser.name,
       username: newUser.username,
     );
   }

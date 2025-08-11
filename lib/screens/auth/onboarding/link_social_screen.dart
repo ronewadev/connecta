@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -32,6 +33,7 @@ class LinkSocialScreen extends StatefulWidget {
   final bool showOnline;
   final bool verifiedOnly;
   final bool photoRequired;
+  final File profileImage;
 
   const LinkSocialScreen({
     super.key,
@@ -58,6 +60,7 @@ class LinkSocialScreen extends StatefulWidget {
     required this.showOnline,
     required this.verifiedOnly,
     required this.photoRequired,
+    required this.profileImage,
   });
 
   @override
@@ -1131,13 +1134,13 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
       final completeUser = User(
         id: '', // Will be set by Firebase
         username: widget.username,
-        name: widget.username, // Using username as name initially
         email: widget.email,
         phone: widget.mobile.isNotEmpty ? widget.mobile : null,
         age: widget.age,
         gender: widget.gender,
         nationality: widget.nationality,
-        location: widget.userLocation?.city ?? widget.nationality, // Use location city or nationality as fallback
+        location: widget.userLocation?.city ?? widget.nationality,
+        profileImageUrl: widget.profileImage.toString(), // Use location city or nationality as fallback
         userLocation: widget.userLocation, // Add the user location data
         profileImages: widget.images,
         interests: widget.interests,
@@ -1167,7 +1170,6 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
       Map<String, dynamic> result = await authService.signUp(
         email: widget.email,
         password: widget.password,
-        name: completeUser.name,
         username: completeUser.username,
       );
 

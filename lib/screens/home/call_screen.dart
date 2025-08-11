@@ -166,15 +166,14 @@ class _CallScreenState extends State<CallScreen> {
     setState(() {
       _isCalling = true;
       _matchedUser = User(
-        id: 'call-1',
-        username: 'Ron',
-        age: 26,
-        gender: 'Male',
-        nationality: 'RSA',
-        profileImageUrl: 'https://i.pravatar.cc/300?img=32',
-        email: 'ro@gmail.com',
-        name: 'Ronewa Lovers Muthivhi',
-        location: 'Gondeni',
+        id: _matchedUser!.id,
+        username: _matchedUser!.username,
+        age: _matchedUser!.age,
+        gender: _matchedUser!.gender,
+        nationality: _matchedUser!.nationality,
+        profileImageUrl: _matchedUser!.profileImageUrl,
+        email: _matchedUser!.email,
+        location: _matchedUser!.location, //gotta re adjust this later
       );
     });
   }

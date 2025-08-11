@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -19,6 +20,7 @@ class LookingForScreen extends StatefulWidget {
   final List<String> dealBreakers;
   final String bio;
   final UserLocation? userLocation;
+  final  File profileImage;
 
   const LookingForScreen({
     super.key,
@@ -35,6 +37,7 @@ class LookingForScreen extends StatefulWidget {
     required this.dealBreakers,
     required this.bio,
     this.userLocation,
+    required this.profileImage,
   });
 
   @override
@@ -532,6 +535,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
           mobile: widget.mobile,
           nationality: widget.nationality,
           images: widget.images,
+          profileImage: widget.profileImage,
           interests: widget.interests,
           hobbies: widget.hobbies,
           dealBreakers: widget.dealBreakers,
