@@ -112,8 +112,9 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
       // If still no matches after all attempts, create some debug info
       if (_filteredUsers.isEmpty) {
         print('DEBUG: No filtered users found. Total users: ${_users.length}');
+        print('DEBUG: No filtered users found. Total users: ${_users.length}');
         print('DEBUG: Current filters - Age: ${_ageRange.start}-${_ageRange.end}, Gender: $_selectedGender, Online: $_onlineOnly');
-        
+
         // Show all users if no filters are restrictive
         if (_selectedGender == 'Everyone' && !_onlineOnly) {
           setState(() {
@@ -130,9 +131,9 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
         _isLoading = false;
         _errorMessage = 'Failed to load matches: ${e.toString()}';
       });
-      
+
       print('Error loading matches: $e');
-      
+
       // Show error message to user
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -178,7 +179,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
         if (_selectedInterests.isNotEmpty) {
           // Still check but don't reject based on this alone
           final hasMatchingInterest = _selectedInterests.any((interest) =>
-              user.interests.any((userInterest) => 
+              user.interests.any((userInterest) =>
                   userInterest.toLowerCase().contains(interest.toLowerCase()) ||
                   interest.toLowerCase().contains(userInterest.toLowerCase()))
           );
@@ -769,8 +770,8 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: theme.colorScheme.surface,
                     child: Icon(
-                      Icons.person, 
-                      size: 50, 
+                      Icons.person,
+                      size: 50,
                       color: theme.colorScheme.onSurface.withOpacity(0.5)
                     ),
                   ),
@@ -833,7 +834,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                           color: Colors.green,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: theme.colorScheme.surface, 
+                            color: theme.colorScheme.surface,
                             width: 2
                           ),
                         ),
@@ -853,7 +854,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                       color: theme.colorScheme.primary,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: theme.colorScheme.surface, 
+                        color: theme.colorScheme.surface,
                         width: 1
                       ),
                     ),
@@ -865,7 +866,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                   ),
                 ),
 
-           
+
               Positioned(
                 bottom: 55, // Adjusted for social media bar
                 left: 0,
@@ -1874,7 +1875,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   // Get social media brand color for circles
   Color _getSocialMediaColor(String socialLink) {
     final platform = socialLink.split(':')[0].toLowerCase();
-    
+
     switch (platform) {
       case 'instagram':
         return const Color(0xFFE4405F);
@@ -1951,9 +1952,9 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     final parts = socialLink.split(':');
     final platform = parts[0].toLowerCase();
     final username = parts.length > 1 ? parts[1] : '';
-    
+
     final icon = _getSocialMediaIcon(socialLink);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(

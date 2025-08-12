@@ -34,6 +34,10 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
     super.initState();
     _setupAnimations();
     _fetchUsers();
+    debugPrint('Initializing LikesScreen with data:');
+    debugPrint('Likes: ${widget.likedByUserIds}');
+    debugPrint('SuperLikes: ${widget.superLikedByUserIds}');
+    debugPrint('Loves: ${widget.lovedByUserIds}');
   }
 
   void _setupAnimations() {
@@ -51,28 +55,32 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
 
   Future<void> _fetchUsers() async {
     try {
-      // Combine all unique user IDs from all three lists
+      debugPrint('Fetching users...');
       final allUserIds = [
         ...widget.likedByUserIds,
         ...widget.superLikedByUserIds,
         ...widget.lovedByUserIds,
       ].toSet().toList();
 
+      debugPrint('Combined unique user IDs: $allUserIds');
+
       if (allUserIds.isEmpty) {
+        debugPrint('No user IDs found in any like arrays');
         setState(() {
           isLoading = false;
         });
         return;
       }
 
-      // Fetch all users in a single query
       final usersSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .where(FieldPath.documentId, whereIn: allUserIds)
           .get();
 
-      // Map documents to User objects
+      debugPrint('Found ${usersSnapshot.docs.length} users in Firestore');
+
       final users = usersSnapshot.docs.map((doc) {
+        debugPrint('Processing user: ${doc.id}');
         return User.fromMap(doc.data(), doc.id);
       }).toList();
 
@@ -81,11 +89,11 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
         isLoading = false;
       });
     } catch (e) {
+      debugPrint('Error fetching users: $e');
       setState(() {
         isLoading = false;
         errorMessage = 'Failed to load likes. Please try again.';
       });
-      debugPrint('Error fetching users: $e');
     }
   }
 
@@ -111,6 +119,8 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -131,245 +141,244 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
       );
     }
 
-    // Counts for each type
     final likedCount = widget.likedByUserIds.length;
     final superLikedCount = widget.superLikedByUserIds.length;
     final lovedCount = widget.lovedByUserIds.length;
 
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // Likes
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const FaIcon(
-                        FontAwesomeIcons.star,
-                        size: 35,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    // Loves
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.pink.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const FaIcon(
-                        FontAwesomeIcons.heart,
-                        size: 50,
-                        color: Colors.pink,
-                      ),
-                    ),
-                    // Super likes
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const FaIcon(
-                        FontAwesomeIcons.bolt,
-                        size: 35,
-                        color: Colors.purple,
-                      ),
-                    ),
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary.withOpacity(0.1),
+                    theme.colorScheme.secondary.withOpacity(0.1),
                   ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Likes You',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$likedCount people liked you\n'
-                      '$superLikedCount people super liked you\n'
-                      '$lovedCount people loved you',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      const FaIcon(
-                        FontAwesomeIcons.crown,
-                        size: 16,
-                        color: Colors.amber,
+                      // Likes
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const FaIcon(
+                          FontAwesomeIcons.star,
+                          size: 35,
+                          color: Colors.blue,
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Upgrade to see who likes you',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.amber.shade700,
-                          fontWeight: FontWeight.w600,
+                      // Loves
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.pink.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const FaIcon(
+                          FontAwesomeIcons.heart,
+                          size: 50,
+                          color: Colors.pink,
+                        ),
+                      ),
+                      // Super likes
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const FaIcon(
+                          FontAwesomeIcons.bolt,
+                          size: 35,
+                          color: Colors.purple,
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // Display users grid if we have users
-        if (allUsers.isNotEmpty)
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                  final user = allUsers[index];
-                  return _buildLikeCard(context, user, index);
-                },
-                childCount: allUsers.length,
-              ),
-            ),
-          )
-        else
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                children: [
-                  Icon(Icons.favorite_border, size: 64, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
                   Text(
-                    'No likes yet',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.grey.shade600,
+                    'Likes You',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Keep using the app to get more likes!',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade500,
+                    '$likedCount people liked you\n'
+                        '$superLikedCount people super liked you\n'
+                        '$lovedCount people loved you',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
-                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const FaIcon(
+                          FontAwesomeIcons.crown,
+                          size: 16,
+                          color: Colors.amber,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Upgrade to see who likes you',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.amber.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
 
-        // Upgrade section
-        SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.amber.withOpacity(0.1),
-                  Colors.orange.withOpacity(0.1),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.amber.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                const FaIcon(
-                  FontAwesomeIcons.crown,
-                  size: 48,
-                  color: Colors.amber,
+          if (allUsers.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.75,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Unlock Likes',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'See who likes you and get unlimited likes',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.amber.shade600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                CustomButton(
-                  text: 'Get Premium',
-                  backgroundColor: Colors.amber,
-                  textColor: Colors.white,
-                  width: double.infinity,
-                  icon: FontAwesomeIcons.crown,
-                  isGradient: true,
-                  gradientColors: const [Colors.amber, Colors.orange],
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SubscriptionScreen(),
-                      ),
-                    );
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    final user = allUsers[index];
+                    return _buildLikeCard(context, user, index);
                   },
+                  childCount: allUsers.length,
                 ),
-              ],
+              ),
+            )
+          else
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  children: [
+                    Icon(Icons.favorite_border, size: 64, color: Colors.grey.shade400),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No likes yet',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Keep using the app to get more likes!',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.amber.withOpacity(0.1),
+                    Colors.orange.withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.amber.withOpacity(0.3)),
+              ),
+              child: Column(
+                children: [
+                  const FaIcon(
+                    FontAwesomeIcons.crown,
+                    size: 48,
+                    color: Colors.amber,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Unlock Likes',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'See who likes you and get unlimited likes',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.amber.shade600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  CustomButton(
+                    text: 'Get Premium',
+                    backgroundColor: Colors.amber,
+                    textColor: Colors.white,
+                    width: double.infinity,
+                    icon: FontAwesomeIcons.crown,
+                    isGradient: true,
+                    gradientColors: const [Colors.amber, Colors.orange],
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SubscriptionScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 16),
-        ),
-      ],
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 16),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildLikeCard(BuildContext context, User user, int index) {
-    final bool isSuperLike = _isSuperLiked(user.id);
-    final bool isLove = _isLoved(user.id);
-    final bool isLike = _isLiked(user.id);
+    final theme = Theme.of(context);
+    final isSuperLike = _isSuperLiked(user.id);
+    final isLove = _isLoved(user.id);
+    final isLike = _isLiked(user.id);
 
-    // Set colors based on like type
     final Color borderColor = isSuperLike
         ? Colors.purple
         : isLove
@@ -382,13 +391,12 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
         ? FontAwesomeIcons.heart
         : FontAwesomeIcons.star;
 
-    // Blur logic - only show first 2 of each type clearly
-    final int userIndex = isSuperLike
+    final userIndex = isSuperLike
         ? widget.superLikedByUserIds.indexOf(user.id)
         : isLove
         ? widget.lovedByUserIds.indexOf(user.id)
         : widget.likedByUserIds.indexOf(user.id);
-    final bool isBlurred = userIndex >= 2;
+    final isBlurred = userIndex >= 2;
 
     return GestureDetector(
       onTap: () => _handleCardTap(context, user, isBlurred),
@@ -409,17 +417,16 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Profile Image
               Image.network(
                 user.profileImageUrl ?? 'https://i.pravatar.cc/300?u=${user.id}',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    color: Theme.of(context).colorScheme.surfaceVariant,
+                    color: theme.colorScheme.surfaceVariant,
                     child: Center(
                       child: FaIcon(
                         FontAwesomeIcons.user,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: theme.colorScheme.onSurfaceVariant,
                         size: 40,
                       ),
                     ),
@@ -427,7 +434,6 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                 },
               ),
 
-              // Blur overlay for premium cards
               if (isBlurred)
                 Container(
                   decoration: BoxDecoration(
@@ -435,7 +441,6 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                   ),
                   child: Stack(
                     children: [
-                      // Shimmer effect
                       AnimatedBuilder(
                         animation: _shimmerAnimation,
                         builder: (context, child) {
@@ -459,7 +464,6 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                           );
                         },
                       ),
-                      // Blur content
                       Center(
                         child: Container(
                           padding: const EdgeInsets.all(12),
@@ -478,7 +482,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                               const SizedBox(height: 8),
                               Text(
                                 'Premium',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                style: theme.textTheme.bodySmall?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -491,7 +495,6 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                   ),
                 ),
 
-              // Gradient overlay
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -506,7 +509,6 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                 ),
               ),
 
-              // User info
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -519,7 +521,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                     children: [
                       Text(
                         user.username ?? 'Unknown',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: theme.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -529,7 +531,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                       const SizedBox(height: 2),
                       Text(
                         '${user.age ?? ''} • ${user.location ?? ''}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.white.withOpacity(0.9),
                         ),
                         maxLines: 1,
@@ -540,7 +542,6 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                 ),
               ),
 
-              // Like indicator
               Positioned(
                 top: 8,
                 right: 8,
@@ -580,6 +581,8 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
   }
 
   void _showPremiumDialog(BuildContext context) {
+    final theme = Theme.of(context);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -598,7 +601,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
               'Premium Required',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+                color: theme.colorScheme.primary,
               ),
             ),
           ],
@@ -608,7 +611,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
           children: [
             Text(
               'Upgrade to Premium to see who likes you and unlock unlimited features!',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
             Container(
@@ -680,6 +683,8 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
   }
 
   void _showMatchDialog(BuildContext context, User user) {
+    final theme = Theme.of(context);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -700,11 +705,11 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                   return Container(
                     width: 120,
                     height: 120,
-                    color: Theme.of(context).colorScheme.surfaceVariant,
+                    color: theme.colorScheme.surfaceVariant,
                     child: Center(
                       child: FaIcon(
                         FontAwesomeIcons.user,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: theme.colorScheme.onSurfaceVariant,
                         size: 40,
                       ),
                     ),
@@ -715,15 +720,15 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
             const SizedBox(height: 16),
             Text(
               user.username ?? 'Unknown',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               '${user.age ?? ''} • ${user.location ?? ''}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 16),
@@ -758,6 +763,8 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
   }
 
   void _showMatchSuccess(BuildContext context, User user) {
+    final theme = Theme.of(context);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -784,7 +791,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
             const SizedBox(height: 20),
             Text(
               'It\'s a Match!',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.pink,
               ),
@@ -792,7 +799,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
             const SizedBox(height: 8),
             Text(
               'You and ${user.username ?? 'Unknown'} liked each other',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.bodyMedium?.copyWith(
                 color: Colors.pink.shade700,
               ),
               textAlign: TextAlign.center,
