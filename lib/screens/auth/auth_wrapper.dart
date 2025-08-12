@@ -1,18 +1,28 @@
-import 'package:connecta/database/user_database.dart';
-import 'package:connecta/screens/auth/welcome_screen.dart';
-import 'package:connecta/screens/main_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'welcome_screen.dart';
+import 'login_screen.dart';
+import '../main_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
+  Future<Map<String, dynamic>> _getAuthPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'remember_me': prefs.getBool('remember_me') ?? false,
+      'has_seen_welcome': prefs.getBool('has_seen_welcome') ?? false,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _getAuthPreferences(),
+      builder: (context, prefSnapshot) {
+        // Show loading while getting preferences
+        if (prefSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -20,12 +30,26 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        if (snapshot.hasData && snapshot.data != null) {
-          // User is logged in, now check the rememberMe flag
-          return FutureBuilder<UserData?>(
-            future: UserDatabase().fetchCurrentUserData(),
-            builder: (context, userSnapshot) {
-              if (userSnapshot.connectionState == ConnectionState.waiting) {
+        // If we have preferences data
+        if (prefSnapshot.hasData) {
+          final preferences = prefSnapshot.data!;
+          final bool rememberMe = preferences['remember_me'];
+          final bool hasSeenWelcome = preferences['has_seen_welcome'];
+
+          debugPrint('Remember me: $rememberMe');
+          debugPrint('Has seen welcome: $hasSeenWelcome');
+
+          // If user hasn't seen welcome screen yet, show it
+          if (!hasSeenWelcome) {
+            return const WelcomeScreen();
+          }
+
+          // Check auth state regardless of rememberMe setting
+          return StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, authSnapshot) {
+              // Show loading while checking auth state
+              if (authSnapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
                   body: Center(
                     child: CircularProgressIndicator(),
@@ -33,19 +57,19 @@ class AuthWrapper extends StatelessWidget {
                 );
               }
 
-              if (userSnapshot.hasData && userSnapshot.data != null && userSnapshot.data!.rememberMe) {
+              // User is logged in - go to main screen
+              if (authSnapshot.hasData) {
                 return const MainScreen();
-              } else {
-                // If rememberMe is false or user data is not available, log them out
-                FirebaseAuth.instance.signOut();
-                return const WelcomeScreen();
               }
+
+              // User not logged in - check rememberMe to decide which screen to show
+              return rememberMe ? const LoginScreen() : const WelcomeScreen();
             },
           );
-        } else {
-          // User is not logged in
-          return const WelcomeScreen();
         }
+
+        // Fallback if we don't have preferences data
+        return const WelcomeScreen();
       },
     );
   }
