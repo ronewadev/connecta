@@ -4,6 +4,7 @@ import 'package:connecta/services/subscriptions/subscription_services.dart';
 import 'package:connecta/services/auth_service.dart';
 import 'package:connecta/utils/app_themes.dart';
 import 'package:connecta/firebase_options.dart';
+import 'package:connecta/screens/auth/auth_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';

@@ -635,7 +635,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         if (result['success']) {
           // Save remember me preference to Firestore
           await UserDatabase().updateUserData({'rememberMe': _rememberMe});
-          
+          print('remember me is $_rememberMe');
           // Navigate to main screen directly (email verification removed)
           Navigator.pushReplacement(
             context,
