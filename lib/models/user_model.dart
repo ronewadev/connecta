@@ -252,7 +252,7 @@ class User {
       gender: map['gender'] ?? '',
       nationality: map['nationality'] ?? '',
       location: map['location'] ?? '',
-      currentCity: map['currentCity'],
+      currentCity: map['city'],
       userLocation: map['userLocation'] != null
           ? UserLocation.fromMap(Map<String, dynamic>.from(map['userLocation']))
           : null,

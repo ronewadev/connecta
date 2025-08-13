@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:connecta/models/user_model.dart' as UserModel;
 import 'dart:math' as Math;
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connecta/models/user_model.dart' as UserModel;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MatchUsersService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;

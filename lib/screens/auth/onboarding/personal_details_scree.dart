@@ -1,9 +1,11 @@
-import 'dart:ui';
 import 'dart:io';
+import 'dart:ui';
+
+import 'package:connecta/functions/location_picker.dart';
+import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
+import 'package:connecta/services/my_location.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
-import 'package:connecta/functions/location_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../models/user_model.dart';
@@ -977,54 +979,66 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> with Tick
     );
   }
 
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isGettingLocation = true;
-    });
+        Future<void> _getCurrentLocation() async {
+          setState(() => _isGettingLocation = true);
 
-    try {
-      final locationData = await LocationService.getCurrentLocation();
-      if (locationData != null) {
-        setState(() {
-          _userLocation = locationData;
-          _isGettingLocation = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const FaIcon(
-                  FontAwesomeIcons.checkCircle,
-                  color: Colors.white,
-                  size: 16,
+          try {
+            // Navigate to MyLocation to get coordinates & address
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyLocation()),
+            );
+
+            if (result != null) {
+              // Create LocationData from MyLocation result
+              final locationData = LocationData(
+                latitude: result['location'].latitude,
+                longitude: result['location'].longitude,
+                address: result['address'],
+                city: result['city'],
+                country: result['country'],
+                ipAddress: result['ipAddress'],
+                timestamp: DateTime.now(),
+              );
+
+              setState(() {
+                _userLocation = _locationDataToUserLocation(locationData) as LocationData?;
+                _isGettingLocation = false;
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.checkCircle,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Location updated: ${locationData.city}, ${locationData.country}',
+                        ),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('Location updated: ${locationData.city}, ${locationData.country}'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      } else {
-        setState(() {
-          _isGettingLocation = false;
-        });
-        
-        _showLocationErrorDialog();
-      }
-    } catch (e) {
-      setState(() {
-        _isGettingLocation = false;
-      });
-      
-      _showLocationErrorDialog();
-    }
-  }
+              );
+            } else {
+              setState(() => _isGettingLocation = false);
+              _showLocationErrorDialog();
+            }
+          } catch (e) {
+            setState(() => _isGettingLocation = false);
+            _showLocationErrorDialog();
+          }
+        }
 
   void _showLocationErrorDialog() {
     showDialog(
