@@ -1,25 +1,24 @@
 import 'dart:ui';
 import 'package:connecta/models/user_model.dart';
-import 'package:connecta/screens/home/widgets/action_button.dart';
+import 'package:connecta/screens/home/widgets/user_card.dart';
+import 'package:connecta/screens/home/widgets/view_header.dart'; // Add this import
+import 'package:connecta/services/match_service.dart';
 import 'package:connecta/screens/home/widgets/action_buttons.dart';
 import 'package:connecta/screens/home/widgets/compact_user_card.dart';
 import 'package:connecta/screens/home/widgets/feedback_overlay.dart';
-import 'package:connecta/screens/home/widgets/filter_interests.dart';
 import 'package:connecta/screens/home/widgets/filter_panel.dart';
 import 'package:connecta/screens/home/widgets/more_options_item.dart';
 import 'package:connecta/screens/home/widgets/profile_image_carousel.dart';
-import 'package:connecta/screens/home/widgets/social_chips.dart';
-import 'package:connecta/screens/home/widgets/theme_data.dart';
+import 'package:connecta/screens/home/widgets/theme_data.dart' hide ViewHeader;
 import 'package:connecta/screens/home/widgets/user_details_modal.dart';
 import 'package:connecta/utils/text_strings.dart';
-import 'package:connecta/screens/home/widgets/user_card.dart';
-import 'package:connecta/functions/match_users.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../services/profile_data_service.dart';
+import '../../models/match_score_model.dart';
 
 class MeetScreen extends StatefulWidget {
   const MeetScreen({super.key});
@@ -30,8 +29,8 @@ class MeetScreen extends StatefulWidget {
 
 class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   final CardSwiperController _swiperController = CardSwiperController();
-  final List<User> _users = [];
-  final List<User> _filteredUsers = [];
+  final List<UserModelInfo> _users = [];
+  final List<UserModelInfo> _filteredUsers = [];
   bool _showLikeFeedback = false;
   bool _showDislikeFeedback = false;
   bool _showSuperLikeFeedback = false;
@@ -39,6 +38,11 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   bool _showFilters = false;
   bool _isLoading = true;
   String? _errorMessage;
+  String? _currentUserId;
+  int _currentCardIndex = 0; // Track current card index manually
+
+  // Animation controllers
+  late AnimationController _feedbackController;
 
   // Filter options
   RangeValues _ageRange = const RangeValues(18, 35);
@@ -48,44 +52,52 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   List<String> _selectedInterests = [];
   bool _onlineOnly = false;
 
-  // Expandable filter sections
-  bool _isAgeFilterExpanded = false;
-  bool _isLocationFilterExpanded = false;
-  bool _isPreferencesFilterExpanded = false;
-  bool _isInterestsFilterExpanded = false;
-
-  late AnimationController _feedbackController;
-  late Animation<double> _feedbackScale;
-  late Animation<double> _feedbackOpacity;
-
   @override
   void initState() {
     super.initState();
-    _setupAnimations();
-    _loadMatches();
-  }
-
-  void _setupAnimations() {
+    _currentUserId = FirebaseAuth.instance.currentUser?.uid;
     _feedbackController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
+    _setupRealtimeMatches();
+  }
 
-    _feedbackScale = Tween<double>(
-      begin: 0.5,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _feedbackController,
-      curve: Curves.elasticOut,
-    ));
-
-    _feedbackOpacity = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _feedbackController,
-      curve: const Interval(0.6, 1.0),
-    ));
+  /// Set up real-time matches stream
+  void _setupRealtimeMatches() {
+    print('🚀 MeetScreen: Setting up realtime matches...');
+    print('👤 Current user ID: $_currentUserId');
+    
+    MatchService.getPotentialMatchesStream(limit: 50).listen(
+      (matches) {
+        print('📊 MeetScreen: Received ${matches.length} matches from stream');
+        matches.forEach((match) {
+          // Fix: Use correct property names for UserModelInfo
+          print('   🎯 Match: ${match.username} (${match.id}) - Age: ${match.age}');
+        });
+        
+        if (mounted) {
+          setState(() {
+            _users.clear();
+            _users.addAll(matches);  // Remove the incorrect casting
+            _isLoading = false;
+            _errorMessage = null;
+            _currentCardIndex = 0; // Reset index when new users load
+          });
+          print('✅ MeetScreen: State updated with ${_users.length} users');
+          _applyFilters();
+        }
+      },
+      onError: (error) {
+        print('💥 MeetScreen: Stream error - $error');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Failed to load matches: ${error.toString()}';
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -94,79 +106,14 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  /// Load real user matches from Firestore
-  Future<void> _loadMatches() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      print('DEBUG: Starting to load matches...');
-      print('DEBUG: Filter parameters - Distance: $_distance, Age: ${_ageRange.start.round()}-${_ageRange.end.round()}');
-
-      // Get matches using the matching service
-      final matches = await MatchUsersService.findMatches();
-
-      print('DEBUG: Found ${matches.length} matches from service');
-      for (var match in matches) {
-        print('DEBUG: Match - ${match.username}, Age: ${match.age}, Gender: ${match.gender}');
-      }
-
-      setState(() {
-        _users.clear();
-        _users.addAll(matches);
-        _isLoading = false;
-      });
-
-      // Apply any active filters
-      _applyFilters();
-
-      // If still no matches after all attempts, create some debug info
-      if (_filteredUsers.isEmpty) {
-        print('DEBUG: No filtered users found. Total users: ${_users.length}');
-        print('DEBUG: No filtered users found. Total users: ${_users.length}');
-        print('DEBUG: Current filters - Age: ${_ageRange.start}-${_ageRange.end}, Gender: $_selectedGender, Online: $_onlineOnly');
-
-        // Show all users if no filters are restrictive
-        if (_selectedGender == 'Everyone' && !_onlineOnly) {
-          setState(() {
-            _filteredUsers.addAll(_users);
-          });
-          print('DEBUG: Added all users to filtered list as fallback');
-        }
-      }
-
-      print('DEBUG: Final result - ${_filteredUsers.length} users ready to display');
-
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Failed to load matches: ${e.toString()}';
-      });
-
-      print('Error loading matches: $e');
-
-      // Show error message to user
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load matches. Please try again.'),
-            backgroundColor: Colors.red,
-            action: SnackBarAction(
-              label: 'Retry',
-              textColor: Colors.white,
-              onPressed: _loadMatches,
-            ),
-          ),
-        );
-      }
-    }
-  }
-
   /// Refresh matches with current filters
   void _applyFilters() {
+    print('🔍 MeetScreen: Applying filters...');
+    print('📊 Original users count: ${_users.length}');
+    print('🎚️ Filters - Age: $_ageRange, Gender: $_selectedGender, Online: $_onlineOnly');
+    
     if (_users.isEmpty) {
+      print('❌ No users to filter');
       setState(() {
         _filteredUsers.clear();
       });
@@ -176,63 +123,138 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     setState(() {
       _filteredUsers.clear();
       _filteredUsers.addAll(_users.where((user) {
+        print('🧪 Testing user ${user.username}:');
+        print('   Age: ${user.age} (range: ${_ageRange.start}-${_ageRange.end})');
+        print('   Gender: ${user.gender} (filter: $_selectedGender)');
+        print('   Online: ${user.isOnline} (filter: $_onlineOnly)');
+        
         // Age filter - be more lenient with +/- 2 years
-        if (user.age < (_ageRange.start - 2) || user.age > (_ageRange.end + 2)) return false;
-
-        // Gender filter - ALWAYS respect this (non-negotiable)
-        if (_selectedGender != 'Everyone' && user.gender != _selectedGender) return false;
-
-        // Online filter - only apply if explicitly requested
-        if (_onlineOnly && !user.isOnline) return false;
-
-        // Interests filter - be more lenient, don't filter out completely
-        // Let the scoring handle interest compatibility instead
-        if (_selectedInterests.isNotEmpty) {
-          // Still check but don't reject based on this alone
-          final hasMatchingInterest = _selectedInterests.any((interest) =>
-              user.interests.any((userInterest) =>
-                  userInterest.toLowerCase().contains(interest.toLowerCase()) ||
-                  interest.toLowerCase().contains(userInterest.toLowerCase()))
-          );
-          // We'll sort by compatibility in the UI instead of filtering out
+        if (user.age < (_ageRange.start - 2) || user.age > (_ageRange.end + 2)) {
+          print('   ❌ Failed age filter');
+          return false;
         }
 
+        // Gender filter - ALWAYS respect this (non-negotiable)
+        if (_selectedGender != 'Everyone' && user.gender != _selectedGender) {
+          print('   ❌ Failed gender filter');
+          return false;
+        }
+
+        // Online filter - only apply if explicitly requested
+        if (_onlineOnly && !user.isOnline) {
+          print('   ❌ Failed online filter');
+          return false;
+        }
+
+        print('   ✅ Passed all filters');
         return true;
       }));
 
+      print('📊 Filtered users count: ${_filteredUsers.length}');
+
       // If we have no filtered users but have original users, show all users except gender mismatches
       if (_filteredUsers.isEmpty && _users.isNotEmpty) {
-        print('DEBUG: No users passed filters, applying only gender filter');
+        print('🔄 No users passed filters, applying only gender filter');
         _filteredUsers.addAll(_users.where((user) {
           // Only apply gender filter as absolute requirement
-          return _selectedGender == 'Everyone' || user.gender == _selectedGender;
+          final passes = _selectedGender == 'Everyone' || user.gender == _selectedGender;
+          print('   ${user.username}: ${passes ? "✅" : "❌"} gender filter');
+          return passes;
         }));
+        print('📊 After relaxed filtering: ${_filteredUsers.length} users');
       }
+
+      // Reset card index when filters change
+      _currentCardIndex = 0;
     });
+    
+    print('✅ Filter application complete');
   }
 
-  void _handleLike() {
-    if (_users.isEmpty) return;
+  /// Handle like action with real-time update
+  void _handleLike() async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (currentUsers.isEmpty || _currentCardIndex >= currentUsers.length) return;
+    
     HapticFeedback.lightImpact();
+    
+    final user = currentUsers[_currentCardIndex];
+    final success = await MatchService.recordInteraction(
+      toUserId: user.id,
+      type: InteractionType.like,
+    );
+    
+    if (success) {
+      _showFeedback('LIKE', Colors.green, FontAwesomeIcons.heart);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Liked ${user.username}!')),
+      );
+    }
+    
     _swiperController.swipe(CardSwiperDirection.right);
   }
 
-  void _handleDislike() {
-    if (_users.isEmpty) return;
+  /// Handle dislike action
+  void _handleDislike() async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (currentUsers.isEmpty || _currentCardIndex >= currentUsers.length) return;
+    
     HapticFeedback.lightImpact();
+    
+    final user = currentUsers[_currentCardIndex];
+    await MatchService.recordInteraction(
+      toUserId: user.id,
+      type: InteractionType.dislike,
+    );
+    _showFeedback('NOPE', Colors.red, FontAwesomeIcons.heartCrack);
+    
     _swiperController.swipe(CardSwiperDirection.left);
   }
 
-  void _handleSuperLike() {
-    if (_users.isEmpty) return;
+  /// Handle super like action
+  void _handleSuperLike() async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (currentUsers.isEmpty || _currentCardIndex >= currentUsers.length) return;
+    
     HapticFeedback.mediumImpact();
+    
+    final user = currentUsers[_currentCardIndex];
+    final success = await MatchService.recordInteraction(
+      toUserId: user.id,
+      type: InteractionType.superLike,
+    );
+    
+    if (success) {
+      _showFeedback('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
+              const SizedBox(width: 8),
+              Text('Super Liked ${user.username}!'),
+            ],
+          ),
+          backgroundColor: Colors.blue,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+    
     _swiperController.swipe(CardSwiperDirection.top);
   }
 
+  /// Handle undo action
   void _handleUndo() {
     HapticFeedback.lightImpact();
     try {
       _swiperController.undo();
+      // Decrease the current index when undoing
+      if (_currentCardIndex > 0) {
+        setState(() {
+          _currentCardIndex--;
+        });
+      }
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -273,22 +295,61 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   bool _onSwipe(int previousIndex, int? currentIndex, CardSwiperDirection direction) {
     HapticFeedback.selectionClick();
 
+    // Update our manual index tracking
+    setState(() {
+      _currentCardIndex = currentIndex ?? _currentCardIndex + 1;
+    });
+
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (previousIndex >= currentUsers.length) return true;
+
+    final user = currentUsers[previousIndex];
+
     // Handle different swipe directions
     switch (direction) {
       case CardSwiperDirection.left:
+        MatchService.recordInteraction(
+          toUserId: user.id,
+          type: InteractionType.dislike,
+        );
         _showFeedback('NOPE', Colors.red, FontAwesomeIcons.heartCrack);
-        _onUserDisliked(previousIndex);
         break;
       case CardSwiperDirection.right:
+        MatchService.recordInteraction(
+          toUserId: user.id,
+          type: InteractionType.like,
+        ).then((success) {
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Liked ${user.username}!')),
+            );
+          }
+        });
         _showFeedback('LIKE', Colors.green, FontAwesomeIcons.heart);
-        _onUserLiked(previousIndex);
         break;
       case CardSwiperDirection.top:
+        MatchService.recordInteraction(
+          toUserId: user.id,
+          type: InteractionType.superLike,
+        ).then((success) {
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
+                    const SizedBox(width: 8),
+                    Text('Super Liked ${user.username}!'),
+                  ],
+                ),
+                backgroundColor: Colors.blue,
+              ),
+            );
+          }
+        });
         _showFeedback('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star);
-        _onUserSuperLiked(previousIndex);
         break;
       case CardSwiperDirection.bottom:
-      // Optional: Handle bottom swipe (maybe for reporting)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppText.comingSoon)),
         );
@@ -300,44 +361,8 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     return true;
   }
 
-  void _onUserLiked(int index) {
-    if (index < _users.length) {
-      final user = _users[index];
-      print('Liked: ${user.username}');
-    }
-  }
-
-  void _onUserDisliked(int index) {
-    if (index < _users.length) {
-      final user = _users[index];
-      print('Disliked: ${user.username}');
-    }
-  }
-
-  void _onUserSuperLiked(int index) {
-    if (index < _users.length) {
-      final user = _users[index];
-      print('Super Liked: ${user.username}');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
-              const SizedBox(width: 8),
-              Text('Super Liked ${user.username}!'),
-            ],
-          ),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-
   //grid view tabs
-  Widget _buildGridView(List<User> users) {
+  Widget _buildGridView(List<UserModelInfo> users) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -363,7 +388,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildCardView(List<User> users) {
+  Widget _buildCardView(List<UserModelInfo> users) {
     return CardSwiper(
       controller: _swiperController,
       cardsCount: users.length,
@@ -380,7 +405,10 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
       cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
         return Stack(
           children: [
-            UserCard(user: users[index]),
+            UserCard(
+              user: users[index], 
+              currentUserId: _currentUserId,
+            ),
 
             // Swipe direction indicators
             if (percentThresholdX > 0.1) // Swiping right (like)
@@ -438,7 +466,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      FaIcon(FontAwesomeIcons.xmark, color: Colors.white, size: 16),
+                      FaIcon(FontAwesomeIcons.heartCrack, color: Colors.white, size: 16),
                       SizedBox(width: 8),
                       Text(
                         'NOPE',
@@ -455,7 +483,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
 
             if (percentThresholdY < -0.1) // Swiping up (super like)
               Positioned(
-                bottom: 50,
+                top: 100,
                 left: 0,
                 right: 0,
                 child: Center(
@@ -496,7 +524,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _showUserDetailModal(User user) {
+  void _showUserDetailModal(UserModelInfo user) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -518,8 +546,51 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     );
   }
 
+  void _onUserLiked(int index) async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (index < currentUsers.length) {
+      final user = currentUsers[index];
+      await MatchService.recordInteraction(
+        toUserId: user.id,
+        type: InteractionType.like,
+      );
+      print('Liked: ${user.username}');
+    }
+  }
+
+  void _onUserDisliked(int index) async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (index < currentUsers.length) {
+      final user = currentUsers[index];
+      await MatchService.recordInteraction(
+        toUserId: user.id,
+        type: InteractionType.dislike,
+      );
+      print('Disliked: ${user.username}');
+    }
+  }
+
+  void _onUserSuperLiked(int index) async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (index < currentUsers.length) {
+      final user = currentUsers[index];
+      await MatchService.recordInteraction(
+        toUserId: user.id,
+        type: InteractionType.superLike,
+      );
+      print('Super Liked: ${user.username}');
+    }
+  }
+
+  void _removeUserFromGrid(UserModelInfo user) {
+    setState(() {
+      _users.remove(user);
+      _filteredUsers.remove(user);
+    });
+  }
+
   //grid view details of user
-  void _showMoreOptions(User user, int index) {
+  void _showMoreOptions(UserModelInfo user, int index) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -578,6 +649,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                   color: const Color(0xFF6B7280),
                   onTap: () {
                     Navigator.pop(context);
+                    // Fixed: removed the incorrect casting
                     _removeUserFromGrid(user);
                   },
                 ),
@@ -590,7 +662,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _showReportDialog(User user) {
+  void _showReportDialog(UserModelInfo user) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -616,13 +688,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _removeUserFromGrid(User user) {
-    setState(() {
-      _users.remove(user);
-      _filteredUsers.remove(user);
-    });
-  }
-
+  //grid view interest chips
   Widget _buildInterestChip(String interest, ThemeData theme) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -644,7 +710,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: theme.colorScheme.primary.withOpacity(0.2),
+              color: theme.colorScheme.primary.withOpacity(0.3),
               width: 1,
             ),
           ),
@@ -652,6 +718,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
             interest,
             style: TextStyle(
               color: theme.colorScheme.primary,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -662,32 +729,31 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 120,
-            height: 120,
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(60),
+              shape: BoxShape.circle,
             ),
-            child: Center(
-              child: FaIcon(
-                FontAwesomeIcons.heartCrack,
-                size: 60,
-                color: theme.colorScheme.primary.withOpacity(0.5),
-              ),
+            child: Icon(
+              Icons.favorite_outline,
+              size: 50,
+              color: theme.colorScheme.primary.withOpacity(0.5),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Text(
             AppText.noMoreCards,
-            style: theme.textTheme.titleLarge?.copyWith(
+            style: theme.textTheme.headlineMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.6),
+              fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Text(
@@ -710,7 +776,31 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
         _onlineOnly ||
         _selectedInterests.isNotEmpty;
 
-    final List<User> currentUsers = filtersActive ? _filteredUsers : _users;
+    final List<UserModelInfo> currentUsers = filtersActive ? _filteredUsers : _users;
+
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(_errorMessage!),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _setupRealtimeMatches,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -735,7 +825,15 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
               required onlineOnly,
               required interests,
             }) {
-              // Handle updated filters here
+              setState(() {
+                _ageRange = ageRange;
+                _distance = distance;
+                _selectedGender = gender;
+                _selectedLocation = location;
+                _onlineOnly = onlineOnly;
+                _selectedInterests = interests;
+              });
+              _applyFilters();
             },
           ),
 

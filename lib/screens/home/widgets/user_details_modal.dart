@@ -3,9 +3,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../models/user_model.dart';
 
 class UserDetailModal extends StatelessWidget {
-  final User user;
+  final UserModelInfo user;
 
-  final Widget Function(User) profileImagesCarouselBuilder;
+  final Widget Function(UserModelInfo) profileImagesCarouselBuilder;
   final Widget Function(String, ThemeData) interestChipBuilder;
 
   final VoidCallback onDislike;

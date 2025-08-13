@@ -20,7 +20,7 @@ class TokensScreen extends StatefulWidget {
 }
 
 class _TokensScreenState extends State<TokensScreen> {
-  UserModel.User? _userData;
+  UserModel.UserModelInfo? _userData;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
   
   // Token packages from Firestore
@@ -50,7 +50,7 @@ class _TokensScreenState extends State<TokensScreen> {
           .listen((snapshot) {
         if (snapshot.exists && snapshot.data() != null) {
           setState(() {
-            _userData = UserModel.User.fromMap(snapshot.data()!, user.uid);
+            _userData = UserModel.UserModelInfo.fromMap(snapshot.data()!, user.uid);
           });
         }
       });

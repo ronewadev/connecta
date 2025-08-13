@@ -5,7 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../models/user_model.dart';
 
 class CompactUserCard extends StatelessWidget {
-  final User user;
+  final UserModelInfo user;
   final int index;
 
   final VoidCallback onTap;

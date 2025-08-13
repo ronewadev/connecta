@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../models/user_model.dart';
 
 class ProfileImagesCarousel extends StatelessWidget {
-  final User user;
+  final UserModelInfo user;
   final double height;
 
   const ProfileImagesCarousel({
