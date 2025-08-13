@@ -175,7 +175,7 @@ class _MainScreenState extends State<MainScreen> {
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 5),
                 ShaderMask(
                   shaderCallback: (Rect bounds) {
                     return LinearGradient(

@@ -1,7 +1,8 @@
 import 'dart:ui';
 
+import 'package:connecta/screens/auth/welcome_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:connecta/widgets/auth_wrapper.dart';
+import 'package:connecta/screens/auth/auth_wrapper.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -90,6 +91,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => const AuthWrapper(),
+          //pageBuilder: (context, animation, secondaryAnimation) => const WelcomeScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
