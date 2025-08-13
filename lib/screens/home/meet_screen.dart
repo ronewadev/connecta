@@ -9,7 +9,6 @@ import 'package:connecta/screens/home/widgets/feedback_overlay.dart';
 import 'package:connecta/screens/home/widgets/filter_panel.dart';
 import 'package:connecta/screens/home/widgets/more_options_item.dart';
 import 'package:connecta/screens/home/widgets/profile_image_carousel.dart';
-import 'package:connecta/screens/home/widgets/theme_data.dart' hide ViewHeader;
 import 'package:connecta/screens/home/widgets/user_details_modal.dart';
 import 'package:connecta/utils/text_strings.dart';
 import 'package:flutter/material.dart';

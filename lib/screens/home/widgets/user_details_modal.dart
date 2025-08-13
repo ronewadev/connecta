@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../models/user_model.dart';
+import 'action_button.dart';
 
 class UserDetailModal extends StatelessWidget {
   final UserModelInfo user;
@@ -48,6 +49,8 @@ class UserDetailModal extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(child: Container(width: 120,height: 5, decoration: BoxDecoration(borderRadius: BorderRadius.circular(30),color: Colors.grey.withAlpha(70)),),),
+                    SizedBox(height: 10,),
                     profileImagesCarouselBuilder(user),
                     Padding(
                       padding: const EdgeInsets.all(20),
@@ -76,6 +79,42 @@ class UserDetailModal extends StatelessWidget {
                                 .toList() ??
                                 [],
                           ),
+                          const SizedBox(height: 20),
+                          _buildSectionTitle('Hobbies', theme),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: user.hobbies
+                                ?.map((interest) =>
+                                interestChipBuilder(interest, theme))
+                                .toList() ??
+                                [],
+                          ),
+                          const SizedBox(height: 20),
+                          _buildSectionTitle('Deal breakers', theme),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: user.dealBreakers
+                                ?.map((interest) =>
+                                interestChipBuilder(interest, theme))
+                                .toList() ??
+                                [],
+                          ),
+                          const SizedBox(height: 20),
+                          _buildSectionTitle('Interests', theme),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: user.interests
+                                ?.map((interest) =>
+                                interestChipBuilder(interest, theme))
+                                .toList() ??
+                                [],
+                          )
                         ],
                       ),
                     ),
@@ -85,6 +124,7 @@ class UserDetailModal extends StatelessWidget {
             ),
 
             _buildActionButtons(theme, context),
+            SizedBox(height: 30,)
           ],
         ),
       ),
@@ -151,7 +191,7 @@ class UserDetailModal extends StatelessWidget {
 
   Widget _buildActionButtons(ThemeData theme, BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
         color: theme.cardColor,
         boxShadow: [
@@ -163,69 +203,43 @@ class UserDetailModal extends StatelessWidget {
         ],
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Expanded(
-            child: _buildModalActionButton(
-              icon: FontAwesomeIcons.xmark,
-              color: theme.colorScheme.error,
-              onPressed: () {
-                Navigator.pop(context);
-                onDislike();
-              },
-            ),
+          ActionButton(
+            icon: FontAwesomeIcons.xmark,
+            color: Colors.red,
+            onPressed: () {
+              Navigator.pop(context);
+              onDislike();
+            },
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildModalActionButton(
-              icon: FontAwesomeIcons.star,
-              color: Colors.blue,
-              onPressed: () {
-                Navigator.pop(context);
-                onSuperLike();
-              },
-            ),
+          ActionButton(
+            icon: FontAwesomeIcons.star,
+            color: Colors.blue,
+            size: 65, // big like the main view
+            onPressed: () {
+              Navigator.pop(context);
+              onSuperLike();
+            },
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildModalActionButton(
-              icon: FontAwesomeIcons.heart,
-              color: Colors.green,
-              onPressed: () {
-                Navigator.pop(context);
-                onLike();
-              },
-            ),
+          ActionButton(
+            icon: FontAwesomeIcons.heart,
+            color: Colors.green,
+            onPressed: () {
+              Navigator.pop(context);
+              onLike();
+            },
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildModalActionButton(
-              icon: FontAwesomeIcons.bolt,
-              color: Colors.purple,
-              onPressed: () {
-                Navigator.pop(context);
-                onBoost();
-              },
-            ),
+          ActionButton(
+            icon: FontAwesomeIcons.bolt,
+            color: Colors.purple,
+            onPressed: () {
+              Navigator.pop(context);
+              onBoost();
+            },
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildModalActionButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onPressed,
-  }) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.15),
-        foregroundColor: color,
-        shape: const CircleBorder(),
-        padding: const EdgeInsets.all(14),
-      ),
-      child: FaIcon(icon, size: 20),
     );
   }
 }
