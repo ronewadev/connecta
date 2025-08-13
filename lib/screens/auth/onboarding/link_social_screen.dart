@@ -1131,7 +1131,7 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
           .toList();
 
       // Create complete user model with all collected data
-      final completeUser = User(
+      final completeUser = UserModelInfo(
         id: '', // Will be set by Firebase
         username: widget.username,
         email: widget.email,

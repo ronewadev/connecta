@@ -164,7 +164,7 @@ class UserBalance {
   }
 }
 
-class User {
+class UserModelInfo {
   final String id;
   final String username;
   final String email;
@@ -197,7 +197,7 @@ class User {
   final List<String> superLikesMe; // Users who super-liked this user
   final List<String> lovesMe; // Users who loved this user
 
-  User({
+  UserModelInfo({
     required this.id,
     required this.username,
     required this.email,
@@ -242,29 +242,31 @@ class User {
   DateTime? get eliteExpiryDate => subscription.type == 'elite' ? subscription.expiryDate : null;
   DateTime? get infinityExpiryDate => subscription.type == 'infinity' ? subscription.expiryDate : null;
 
-  factory User.fromMap(Map<String, dynamic> map, String documentId) {
-    return User(
+  factory UserModelInfo.fromMap(Map<String, dynamic> map, String documentId) {
+    return UserModelInfo(
       id: documentId,
       username: map['username'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'],
-      age: map['age'] ?? 0,
-      gender: map['gender'] ?? '',
-      nationality: map['nationality'] ?? '',
-      location: map['location'] ?? '',
+      age: map['age'] ?? 18,
+      gender: map['gender'] ?? 'Not specified',
+      nationality: map['nationality'] ?? 'Not specified',
+      location: map['location'] ?? 'Not specified',
       currentCity: map['currentCity'],
-      userLocation: map['userLocation'] != null
+      userLocation: map['userLocation'] != null 
           ? UserLocation.fromMap(Map<String, dynamic>.from(map['userLocation']))
           : null,
-      profileImageUrl: map['profileImageUrl'],
+      profileImageUrl: map['profileImageUrl'] ?? '',
       profileImages: List<String>.from(map['profileImages'] ?? []),
       interests: List<String>.from(map['interests'] ?? []),
       hobbies: List<String>.from(map['hobbies'] ?? []),
       dealBreakers: List<String>.from(map['dealBreakers'] ?? []),
       bio: map['bio'],
-      subscription: map['subscription'] != null
+      // Fix: Properly handle subscription object vs string
+      subscription: map['subscription'] is Map<String, dynamic>
           ? UserSubscription.fromMap(Map<String, dynamic>.from(map['subscription']))
-          : UserSubscription(),
+          : UserSubscription(type: map['subscription'] ?? 'basic'), // Handle legacy string format
+      // Fix: Properly handle userBalance
       userBalance: map['userBalance'] != null
           ? UserBalance.fromMap(Map<String, dynamic>.from(map['userBalance']))
           : UserBalance(),
@@ -288,29 +290,19 @@ class User {
     return {
       'username': username,
       'email': email,
-      'phone': phone,
       'age': age,
       'gender': gender,
       'nationality': nationality,
       'location': location,
-      'currentCity': currentCity,
-      'userLocation': userLocation?.toMap(),
       'profileImageUrl': profileImageUrl,
-      'profileImages': profileImages,
       'interests': interests,
       'hobbies': hobbies,
       'dealBreakers': dealBreakers,
-      'bio': bio,
-      'subscription': subscription.toMap(),
-      'userBalance': userBalance.toMap(),
       'preferences': preferences,
+      'bio': bio,
       'isVerified': isVerified,
-      'isOnline': isOnline,
-      'lastActive': lastActive,
+      'subscription': subscription,
       'socialMediaLinks': socialMediaLinks,
-      'rememberMe': rememberMe,
-      'allowDirectContact': allowDirectContact,
-      'allowDirectInAppContact': allowDirectInAppContact,
       'likesMe': likesMe,
       'superLikesMe': superLikesMe,
       'lovesMe': lovesMe,

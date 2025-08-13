@@ -11,7 +11,7 @@ class LiveScreen extends StatefulWidget {
 }
 
 class _LiveScreenState extends State<LiveScreen> {
-  User? currentUser;
+  UserModelInfo? currentUser;
   int currentPageIndex = 0;
   final PageController pageController = PageController();
 

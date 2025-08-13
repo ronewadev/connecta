@@ -13,7 +13,7 @@ class CallScreen extends StatefulWidget {
 
 class _CallScreenState extends State<CallScreen> {
   bool _isCalling = false;
-  User? _matchedUser;
+  UserModelInfo? _matchedUser;
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +165,7 @@ class _CallScreenState extends State<CallScreen> {
   void _startRandomCall() {
     setState(() {
       _isCalling = true;
-      _matchedUser = User(
+      _matchedUser = UserModelInfo(
         id: _matchedUser!.id,
         username: _matchedUser!.username,
         age: _matchedUser!.age,

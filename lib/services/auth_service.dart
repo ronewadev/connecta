@@ -12,10 +12,10 @@ class AuthService with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final UserDatabase _userDatabase = UserDatabase();
   
-  User? _currentUser;
+  UserModelInfo? _currentUser;
   bool _isAuthenticated = false;
 
-  User? get currentUser => _currentUser;
+  UserModelInfo? get currentUser => _currentUser;
   bool get isAuthenticated => _isAuthenticated;
   firebase_auth.User? get firebaseUser => _firebaseAuth.currentUser;
 
@@ -26,10 +26,10 @@ class AuthService with ChangeNotifier {
     // Listen to auth state changes
     _firebaseAuth.authStateChanges().listen((firebase_auth.User? firebaseUser) async {
       if (firebaseUser != null) {
-        // User is signed in, fetch user data from Firestore
+        // UserModelInfo is signed in, fetch user data from Firestore
         await _loadUserFromFirestore(firebaseUser.uid);
       } else {
-        // User is signed out
+        // UserModelInfo is signed out
         _currentUser = null;
         _isAuthenticated = false;
         notifyListeners();
@@ -42,7 +42,7 @@ class AuthService with ChangeNotifier {
     try {
       DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
       if (doc.exists) {
-        _currentUser = User.fromMap(doc.data() as Map<String, dynamic>, uid);
+        _currentUser = UserModelInfo.fromMap(doc.data() as Map<String, dynamic>, uid);
         _isAuthenticated = true;
         
         // Also initialize UserDatabase for the profile screen
@@ -81,7 +81,7 @@ class AuthService with ChangeNotifier {
 
       if (userCredential.user != null) {
         // Create user document in Firestore with basic info
-        User newUser = User(
+        UserModelInfo newUser = UserModelInfo(
           id: userCredential.user!.uid,
           username: username,
           email: email,
@@ -328,7 +328,7 @@ class AuthService with ChangeNotifier {
     await signOut(context);
   }
 
-  Future<void> register(User newUser, String password) async {
+  Future<void> register(UserModelInfo newUser, String password) async {
     // This method is kept for backward compatibility
     // In practice, we should use signUp method
     await signUp(
