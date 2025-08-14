@@ -14,7 +14,7 @@ class PreferencesScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final List<String> images;
+  final List<File> images; // Change from List<String> to List<File>
   final List<String> interests;
   final List<String> hobbies;
   final List<String> dealBreakers;
@@ -32,14 +32,14 @@ class PreferencesScreen extends StatefulWidget {
     required this.gender,
     required this.mobile,
     required this.nationality,
-    required this.images,
+    required this.images, // This is now List<File>
     required this.interests,
     required this.hobbies,
     required this.dealBreakers,
     required this.lookingFor,
     required this.bio,
     this.userLocation,
-    required  this.profileImage,
+    required this.profileImage,
   });
 
   @override
@@ -669,8 +669,8 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
             ),
           ),
         ),
-      ),
-    );
+       ),
+      );
   }
 
   Widget _buildPreferenceCard({

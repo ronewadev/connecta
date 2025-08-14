@@ -14,7 +14,7 @@ class InterestsDealbrakersScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final List<String> images;
+  final List<File> images;
   final String bio;
   final File profileImage;
   final UserLocation? userLocation;

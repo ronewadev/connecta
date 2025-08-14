@@ -8,6 +8,8 @@ import 'package:connecta/models/user_model.dart';
 import 'package:connecta/database/user_database.dart';
 import 'package:provider/provider.dart';
 
+import '../../../services/upload_images.dart';
+
 class LinkSocialScreen extends StatefulWidget {
   final String email;
   final String password;
@@ -16,7 +18,7 @@ class LinkSocialScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final List<String> images;
+  final List<File> images; // Change from List<String> to List<File>
   final List<String> interests;
   final List<String> hobbies;
   final List<String> dealBreakers;
@@ -33,7 +35,7 @@ class LinkSocialScreen extends StatefulWidget {
   final bool showOnline;
   final bool verifiedOnly;
   final bool photoRequired;
-  final File profileImage;
+  final File profileImage; // Add this
 
   const LinkSocialScreen({
     super.key,
@@ -60,7 +62,7 @@ class LinkSocialScreen extends StatefulWidget {
     required this.showOnline,
     required this.verifiedOnly,
     required this.photoRequired,
-    required this.profileImage,
+    required this.profileImage, // Add this
   });
 
   @override
@@ -94,6 +96,9 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
 
   bool _allowDirectContact = false;
   bool _isCreatingProfile = false;
+
+  // Add this as a class variable
+  double _uploadProgress = 0.0;
 
   final Map<String, IconData> _platformIcons = {
     'Instagram': FontAwesomeIcons.instagram,
@@ -1098,159 +1103,306 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
             ],
           ),
         ),
-      ),
+      )
     );
   }
 
-  Future<void> _completeProfile() async {
-    setState(() {
-      _isCreatingProfile = true;
-    });
+Future<void> _completeProfile() async {
+  setState(() {
+    _isCreatingProfile = true;
+  });
 
+  try {
+    print('🚀 Starting complete profile creation process...');
+
+    // Show progress message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Creating your account...'),
+          ],
+        ),
+        backgroundColor: const Color(0xFF6B46C1),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 10),
+      ),
+    );
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+
+    // Step 1: Create Firebase user account FIRST
+    print('📤 Step 1: Creating Firebase user account...');
+    
+    Map<String, dynamic> result;
+    
     try {
-      // Create LinkedSocials object with the collected data
-      final linkedSocials = LinkedSocials(
-        whatsapp: _linkedPlatforms['WhatsApp']!,
-        facebook: _linkedPlatforms['Facebook']!,
-        x: _linkedPlatforms['X']!,
-        tiktok: _linkedPlatforms['TikTok']!,
-        instagram: _linkedPlatforms['Instagram']!,
-        snapchat: _linkedPlatforms['Snapchat']!,
-        whatsappLink: _platformLinks['WhatsApp']?.isNotEmpty == true ? _platformLinks['WhatsApp'] : null,
-        facebookLink: _platformLinks['Facebook']?.isNotEmpty == true ? _platformLinks['Facebook'] : null,
-        xLink: _platformLinks['X']?.isNotEmpty == true ? _platformLinks['X'] : null,
-        tiktokLink: _platformLinks['TikTok']?.isNotEmpty == true ? _platformLinks['TikTok'] : null,
-        instagramLink: _platformLinks['Instagram']?.isNotEmpty == true ? _platformLinks['Instagram'] : null,
-        snapchatLink: _platformLinks['Snapchat']?.isNotEmpty == true ? _platformLinks['Snapchat'] : null,
-      );
-
-      // Get linked social platforms (for backward compatibility)
-      List<String> linkedSocialsList = _linkedPlatforms.entries
-          .where((entry) => entry.value)
-          .map((entry) => entry.key)
-          .toList();
-
-      // Create complete user model with all collected data
-      final completeUser = UserModelInfo(
-        id: '', // Will be set by Firebase
-        username: widget.username,
-        email: widget.email,
-        phone: widget.mobile.isNotEmpty ? widget.mobile : null,
-        age: widget.age,
-        gender: widget.gender,
-        nationality: widget.nationality,
-        location: widget.userLocation?.city ?? widget.nationality,
-        profileImageUrl: widget.profileImage.toString(), // Use location city or nationality as fallback
-        userLocation: widget.userLocation, // Add the user location data
-        profileImages: widget.images,
-        interests: widget.interests,
-        hobbies: widget.hobbies,
-        dealBreakers: widget.dealBreakers,
-        bio: widget.bio,
-        socialMediaLinks: linkedSocialsList,
-        allowDirectContact: _allowDirectContact, // Add this line
-        preferences: {
-          'ageRange': widget.ageRange,
-          'maxDistance': widget.maxDistance,
-          'interestedIn': widget.interestedIn,
-          'relationshipType': widget.relationshipType,
-          'education': widget.education,
-          'lifestyle': widget.lifestyle,
-          'showOnline': widget.showOnline,
-          'verifiedOnly': widget.verifiedOnly,
-          'photoRequired': widget.photoRequired,
-          'dealBreakers': widget.dealBreakers,
-          'allowDirectContact': _allowDirectContact,
-        },
-      );
-
-      // Create the Firebase user with all the complete data
-      final authService = Provider.of<AuthService>(context, listen: false);
-      
-      Map<String, dynamic> result = await authService.signUp(
+      result = await authService.signUp(
         email: widget.email,
         password: widget.password,
-        username: completeUser.username,
+        username: widget.username,
       );
-
-      if (result['success']) {
-        // Send email verification
-        await authService.sendEmailVerification();
-        
-        // Update the user profile with complete data including linkedSocials
-        Map<String, dynamic> userMap = completeUser.toMap();
-        userMap['linkedSocials'] = linkedSocials.toMap(); // Add linkedSocials to the user data
-        
-        await authService.updateUserProfile(userMap);
-
-        setState(() {
-          _isCreatingProfile = false;
-        });
-
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const FaIcon(FontAwesomeIcons.checkCircle, color: Colors.white),
-                const SizedBox(width: 12),
-                const Text('Profile created successfully! \nWelcome to Connecta!'),
-              ],
-            ),
-            backgroundColor: const Color(0xFF4CAF50),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-
-        // Navigate to main screen
-        Navigator.pushAndRemoveUntil(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
-                  child: child,
-                ),
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 800),
-          ),
-          (route) => false,
+    } catch (e) {
+      String errorMessage = e.toString().toLowerCase();
+      if (errorMessage.contains('email address is already in use') || 
+          errorMessage.contains('already exists')) {
+        // If user already exists, try to sign in instead
+        print('👤 User already exists, attempting to sign in...');
+        result = await authService.signIn(
+          email: widget.email,
+          password: widget.password,
         );
       } else {
-        setState(() {
-          _isCreatingProfile = false;
-        });
-
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create account: ${result['message']}'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+        rethrow;
       }
-    } catch (e) {
-      setState(() {
-        _isCreatingProfile = false;
-      });
+    }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error creating profile: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    if (!result['success']) {
+      throw Exception('Failed to authenticate: ${result['message']}');
+    }
+    print('✅ Firebase user authenticated');
+
+    // Step 2: Send email verification
+    try {
+      print('📤 Step 2: Sending email verification...');
+      await authService.sendEmailVerification();
+      print('✅ Email verification sent');
+    } catch (e) {
+      print('⚠️  Email verification already sent or failed: $e');
+      // Don't fail the whole process if email verification fails
+    }
+
+    // Update progress message
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                value: _uploadProgress, // Show actual progress
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text('Uploading photos... ${(_uploadProgress * 100).toStringAsFixed(0)}%'),
+          ],
         ),
+        backgroundColor: const Color(0xFF6B46C1),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 30), // Longer duration for upload
+      ),
+    );
+
+    // Step 3: Upload profile image (now user is authenticated)
+    print('📤 Step 3: Uploading profile image...');
+    final profileImageUrl = await ImageUploadService.uploadProfileImage(widget.profileImage);
+    
+    if (profileImageUrl == null) {
+      throw Exception('Failed to upload profile image');
+    }
+    print('✅ Profile image uploaded: $profileImageUrl');
+
+    // Step 4: Upload gallery images
+    print('📤 Step 4: Uploading gallery images...');
+    setState(() {
+      _uploadProgress = 0.0;
+    });
+
+    final List<String> galleryImageUrls = await ImageUploadService.uploadGalleryImages(
+      widget.images,
+      onProgress: (progress) {
+        setState(() {
+          _uploadProgress = progress;
+        });
+        print('🔄 Gallery upload progress: ${(progress * 100).toStringAsFixed(1)}%');
+      },
+    );
+    print('✅ Gallery images uploaded: ${galleryImageUrls.length} images');
+
+    // Update progress message
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Finalizing your profile...'),
+          ],
+        ),
+        backgroundColor: const Color(0xFF6B46C1),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 10),
+      ),
+    );
+
+    // Step 5: Create LinkedSocials object
+    final linkedSocials = LinkedSocials(
+      whatsapp: _linkedPlatforms['WhatsApp']!,
+      facebook: _linkedPlatforms['Facebook']!,
+      x: _linkedPlatforms['X']!,
+      tiktok: _linkedPlatforms['TikTok']!,
+      instagram: _linkedPlatforms['Instagram']!,
+      snapchat: _linkedPlatforms['Snapchat']!,
+      whatsappLink: _platformLinks['WhatsApp']?.isNotEmpty == true ? _platformLinks['WhatsApp'] : null,
+      facebookLink: _platformLinks['Facebook']?.isNotEmpty == true ? _platformLinks['Facebook'] : null,
+      xLink: _platformLinks['X']?.isNotEmpty == true ? _platformLinks['X'] : null,
+      tiktokLink: _platformLinks['TikTok']?.isNotEmpty == true ? _platformLinks['TikTok'] : null,
+      instagramLink: _platformLinks['Instagram']?.isNotEmpty == true ? _platformLinks['Instagram'] : null,
+      snapchatLink: _platformLinks['Snapchat']?.isNotEmpty == true ? _platformLinks['Snapchat'] : null,
+    );
+
+    // Get linked social platforms (for backward compatibility)
+    List<String> linkedSocialsList = _linkedPlatforms.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
+
+    // Step 6: Create complete user profile
+    print('📤 Step 6: Creating complete user profile...');
+
+    // Create complete user model with all collected data
+    final completeUser = UserModelInfo(
+      id: '', // Will be set by Firebase
+      username: widget.username,
+      email: widget.email,
+      phone: widget.mobile.isNotEmpty ? widget.mobile : null,
+      age: widget.age,
+      gender: widget.gender,
+      nationality: widget.nationality,
+      location: widget.userLocation?.city ?? widget.nationality,
+      userLocation: widget.userLocation,
+      profileImageUrl: profileImageUrl, // Use uploaded URL
+      profileImages: galleryImageUrls, // Use uploaded URLs
+      interests: widget.interests,
+      hobbies: widget.hobbies,
+      dealBreakers: widget.dealBreakers,
+      bio: widget.bio,
+      socialMediaLinks: linkedSocialsList,
+      allowDirectContact: _allowDirectContact,
+      subscription: UserSubscription(type: 'basic', status: 'active'), // Create proper UserSubscription
+      userBalance: UserBalance(), // Create proper UserBalance
+      preferences: {
+        'ageRange': widget.ageRange,
+        'maxDistance': widget.maxDistance,
+        'interestedIn': widget.interestedIn,
+        'relationshipType': widget.relationshipType,
+        'education': widget.education,
+        'lifestyle': widget.lifestyle,
+        'showOnline': widget.showOnline,
+        'verifiedOnly': widget.verifiedOnly,
+        'photoRequired': widget.photoRequired,
+        'dealBreakers': widget.dealBreakers,
+        'allowDirectContact': _allowDirectContact,
+      },
+    );
+
+    // Create the map and add linkedSocials
+    Map<String, dynamic> userMap = completeUser.toMap();
+    userMap['linkedSocials'] = linkedSocials.toMap();
+    
+    print('📊 User data prepared. Map keys: ${userMap.keys.toList()}');
+    
+    // Update the user profile with complete data
+    await authService.updateUserProfile(userMap);
+    print('✅ Complete user profile created');
+
+    setState(() {
+      _isCreatingProfile = false;
+    });
+
+    // Show success message
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const FaIcon(FontAwesomeIcons.checkCircle, color: Colors.white),
+            const SizedBox(width: 12),
+            const Text('Profile created successfully! \nWelcome to Connecta!'),
+          ],
+        ),
+        backgroundColor: const Color(0xFF4CAF50),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    // Wait a moment before navigating
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    // Navigate to main screen
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 800),
+        ),
+        (route) => false,
       );
     }
+
+  } catch (e) {
+    setState(() {
+      _isCreatingProfile = false;
+    });
+
+    print('💥 Error creating profile: $e');
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text('Error creating profile: ${e.toString()}'),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 5),
+      ),
+    );
   }
+}
 
   @override
   void dispose() {
