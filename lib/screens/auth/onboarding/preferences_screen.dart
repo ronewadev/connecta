@@ -14,7 +14,7 @@ class PreferencesScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final List<File> images; // Change from List<String> to List<File>
+  final List<File> images;
   final List<String> interests;
   final List<String> hobbies;
   final List<String> dealBreakers;
@@ -32,7 +32,7 @@ class PreferencesScreen extends StatefulWidget {
     required this.gender,
     required this.mobile,
     required this.nationality,
-    required this.images, // This is now List<File>
+    required this.images,
     required this.interests,
     required this.hobbies,
     required this.dealBreakers,
@@ -55,9 +55,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
   RangeValues _ageRange = const RangeValues(18, 35);
   double _maxDistance = 25.0;
   Set<String> _selectedInterestedIn = <String>{};
-  //Set<String> _selectedRelationshipType = <String>{};
+  Set<String> _selectedRelationshipType = <String>{};
   Set<String> _selectedEducation = <String>{};
- // Set<String> _selectedLifestyle = <String>{};
+  Set<String> _selectedLifestyle = <String>{};
   bool _showOnline = false;
   bool _verifiedOnly = false;
   bool _photoRequired = false;
@@ -129,9 +129,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
   bool get _canContinue {
     // Require at least one selection in each category
     return _selectedInterestedIn.isNotEmpty &&
-         //  _selectedRelationshipType.isNotEmpty &&
+          _selectedRelationshipType.isNotEmpty &&
            _selectedEducation.isNotEmpty;// &&
-          // _selectedLifestyle.isNotEmpty;
+          _selectedLifestyle.isNotEmpty;
   }
 
   @override
@@ -282,16 +282,16 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
                           
                           const SizedBox(height: 20),
                           
-                          // Relationship Type
-                          // _buildSelectionSection(
-                          //   title: 'Looking For',
-                          //   subtitle: 'Select 1-2 preferences',
-                          //   icon: FontAwesomeIcons.users,
-                          //   items: _relationshipOptions,
-                          //   selectedItems: _selectedRelationshipType,
-                          //   maxSelection: _maxSelectionPerCategory,
-                          //   color: const Color(0xFF9333EA),
-                          // ),
+                          //Relationship Type
+                          _buildSelectionSection(
+                            title: 'Looking For',
+                            subtitle: 'Select 1-2 preferences',
+                            icon: FontAwesomeIcons.users,
+                            items: _relationshipOptions,
+                            selectedItems: _selectedRelationshipType,
+                            maxSelection: _maxSelectionPerCategory,
+                            color: const Color(0xFF9333EA),
+                          ),
                           
                           //const SizedBox(height: 20),
                           
@@ -308,16 +308,16 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
                           
                           const SizedBox(height: 20),
                           
-                          // Lifestyle Preferences
-                          // _buildSelectionSection(
-                          //   title: 'Lifestyle',
-                          //   subtitle: 'Select 1-2 preferences',
-                          //   icon: FontAwesomeIcons.leaf,
-                          //   items: _lifestyleOptions,
-                          //   selectedItems: _selectedLifestyle,
-                          //   maxSelection: _maxSelectionPerCategory,
-                          //   color: const Color(0xFF10B981),
-                          // ),
+                          //Lifestyle Preferences
+                          _buildSelectionSection(
+                            title: 'Lifestyle',
+                            subtitle: 'Select 1-2 preferences',
+                            icon: FontAwesomeIcons.leaf,
+                            items: _lifestyleOptions,
+                            selectedItems: _selectedLifestyle,
+                            maxSelection: _maxSelectionPerCategory,
+                            color: const Color(0xFF10B981),
+                          ),
                           
                           const SizedBox(height: 20),
                           
