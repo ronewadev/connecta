@@ -7,11 +7,12 @@ import '../../../models/user_model.dart';
 class CompactUserCard extends StatelessWidget {
   final UserModelInfo user;
   final int index;
-
   final VoidCallback onTap;
   final VoidCallback onDislike;
   final VoidCallback onSuperLike;
   final VoidCallback onLike;
+  final VoidCallback onLove; // Add love action
+  final VoidCallback onUndo; // Add undo action
   final VoidCallback onMoreOptions;
 
   const CompactUserCard({
@@ -22,6 +23,8 @@ class CompactUserCard extends StatelessWidget {
     required this.onDislike,
     required this.onSuperLike,
     required this.onLike,
+    required this.onLove, // Add love parameter
+    required this.onUndo, // Add undo parameter
     required this.onMoreOptions,
   }) : super(key: key);
 
@@ -103,18 +106,18 @@ class CompactUserCard extends StatelessWidget {
 
               // User details
               Positioned(
-                bottom: 55,
+                bottom: 75, // Increased to accommodate new buttons
                 left: 0,
                 right: 0,
                 child: _buildUserInfo(theme),
               ),
 
-              // Bottom action bar
+              // Enhanced bottom action bar with all controls
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
-                child: _buildBottomActions(theme),
+                child: _buildEnhancedBottomActions(theme),
               ),
             ],
           ),
@@ -274,7 +277,7 @@ class CompactUserCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomActions(ThemeData theme) {
+  Widget _buildEnhancedBottomActions(ThemeData theme) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         bottomLeft: Radius.circular(16),
@@ -283,7 +286,7 @@ class CompactUserCard extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          height: 50,
+          height: 75, // Increased height for two rows
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -298,39 +301,88 @@ class CompactUserCard extends StatelessWidget {
               ),
             ),
           ),
-          child: Row(
+          child: Column(
             children: [
-              _buildEnhancedActionButton(
-                icon: FontAwesomeIcons.xmark,
-                color: theme.colorScheme.error,
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  onDislike();
-                },
+              // Top row - main actions
+              Expanded(
+                child: Row(
+                  children: [
+                    // Dislike Button
+                    _buildEnhancedActionButton(
+                      icon: FontAwesomeIcons.xmark,
+                      color: Colors.red,
+                      size: 16,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        onDislike();
+                      },
+                    ),
+                    _divider(theme),
+                    
+                    // Super Like Button
+                    _buildEnhancedActionButton(
+                      icon: FontAwesomeIcons.star,
+                      color: Colors.blue,
+                      size: 18,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        onSuperLike();
+                      },
+                    ),
+                    _divider(theme),
+                    
+                    // Like Button
+                    _buildEnhancedActionButton(
+                      icon: FontAwesomeIcons.heart,
+                      color: Colors.green,
+                      size: 16,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        onLike();
+                      },
+                    ),
+                    _divider(theme),
+                    
+                    // Love Button
+                    _buildEnhancedActionButton(
+                      icon: FontAwesomeIcons.heart,
+                      color: Colors.pink,
+                      size: 16,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        onLove();
+                      },
+                    ),
+                  ],
+                ),
               ),
-              _divider(theme),
-              _buildEnhancedActionButton(
-                icon: FontAwesomeIcons.star,
-                color: theme.colorScheme.primary,
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  onSuperLike();
-                },
-              ),
-              _divider(theme),
-              _buildEnhancedActionButton(
-                icon: FontAwesomeIcons.heart,
-                color: theme.colorScheme.secondary,
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  onLike();
-                },
-              ),
-              _divider(theme),
-              _buildEnhancedActionButton(
-                icon: FontAwesomeIcons.ellipsis,
-                color: theme.colorScheme.onSurface,
-                onPressed: onMoreOptions,
+              // Bottom row - secondary actions
+              Container(
+                height: 35,
+                child: Row(
+                  children: [
+                    // Undo Button
+                    _buildSmallActionButton(
+                      icon: FontAwesomeIcons.rotateLeft,
+                      color: Colors.amber,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        onUndo();
+                      },
+                    ),
+                    _divider(theme),
+                    
+                    // More Options Button
+                    _buildSmallActionButton(
+                      icon: FontAwesomeIcons.ellipsis,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        onMoreOptions();
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -348,18 +400,65 @@ class CompactUserCard extends StatelessWidget {
   Widget _buildEnhancedActionButton({
     required IconData icon,
     required Color color,
+    required double size,
     required VoidCallback onPressed,
   }) {
     return Expanded(
-      child: IconButton(
-        icon: FaIcon(icon, color: color, size: 18),
-        onPressed: onPressed,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: FaIcon(
+                    icon, 
+                    color: color, 
+                    size: size,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            child: Center(
+              child: FaIcon(
+                icon, 
+                color: color, 
+                size: 14,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _getSocialMediaIcon(String link) {
-    // Implement based on your mapping of links to icons
     return const Icon(Icons.link, size: 14);
   }
 }
