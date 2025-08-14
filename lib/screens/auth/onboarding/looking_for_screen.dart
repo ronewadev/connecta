@@ -14,13 +14,13 @@ class LookingForScreen extends StatefulWidget {
   final String gender;
   final String mobile;
   final String nationality;
-  final List<String> images;
+  final List<File> images; // Change to List<File>
+  final File profileImage;
   final List<String> interests;
   final List<String> hobbies;
   final List<String> dealBreakers;
   final String bio;
   final UserLocation? userLocation;
-  final  File profileImage;
 
   const LookingForScreen({
     super.key,
@@ -31,13 +31,13 @@ class LookingForScreen extends StatefulWidget {
     required this.gender,
     required this.mobile,
     required this.nationality,
-    required this.images,
+    required this.images, // Now List<File>
+    required this.profileImage,
     required this.interests,
     required this.hobbies,
     required this.dealBreakers,
     required this.bio,
     this.userLocation,
-    required this.profileImage,
   });
 
   @override
@@ -195,34 +195,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          // const SizedBox(height: 16),
-                          //
-                          // // Selection Counter
-                          // Container(
-                          //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          //   decoration: BoxDecoration(
-                          //     gradient: LinearGradient(
-                          //       colors: [
-                          //         Colors.white.withOpacity(0.25),
-                          //         Colors.white.withOpacity(0.15),
-                          //       ],
-                          //     ),
-                          //     borderRadius: BorderRadius.circular(20),
-                          //     border: Border.all(
-                          //       color: Colors.white.withOpacity(0.3),
-                          //       width: 1,
-                          //     ),
-                          //   ),
-                          //   // child: Text(
-                          //   //   'Selected tabs - ${_getTotalSelected()}/14 selected (min 6)',
-                          //   //   style: TextStyle(
-                          //   //     color: Colors.white.withOpacity(0.9),
-                          //   //     fontSize: 14,
-                          //   //     fontWeight: FontWeight.w600,
-                          //   //   ),
-                          //   //   textAlign: TextAlign.center,
-                          //   // ),
-                          // ),
+                  
                           const SizedBox(height: 32),
 
                           // Categories
@@ -511,7 +484,7 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
           ),
         ),
       ),
-    );
+      );
   }
 
   int _getTotalSelected() {
@@ -535,13 +508,13 @@ class _LookingForScreenState extends State<LookingForScreen> with TickerProvider
           mobile: widget.mobile,
           nationality: widget.nationality,
           images: widget.images,
-          profileImage: widget.profileImage,
           interests: widget.interests,
           hobbies: widget.hobbies,
           dealBreakers: widget.dealBreakers,
           lookingFor: _getAllSelected(),
           bio: widget.bio,
           userLocation: widget.userLocation,
+          profileImage: widget.profileImage,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(

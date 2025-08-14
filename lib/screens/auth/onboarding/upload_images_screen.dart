@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:connecta/screens/auth/onboarding/interests_deal_breakers_screen.dart';
 import 'package:connecta/models/user_model.dart';
 
+import '../../../services/upload_images.dart';
+
 class UploadImagesScreen extends StatefulWidget {
   final String email;
   final String password;
@@ -15,7 +17,7 @@ class UploadImagesScreen extends StatefulWidget {
   final String mobile;
   final String nationality;
   final String bio;
-  final File profileImage;
+  final File profileImage; // Keep as File
   final UserLocation? userLocation;
 
   const UploadImagesScreen({
@@ -40,6 +42,8 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
   final ImagePicker _picker = ImagePicker();
   List<XFile?> _images = List.filled(5, null);
   bool _isUploading = false;
+  bool _showProgress = false;
+  double _uploadProgress = 0.0;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -266,6 +270,31 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
                   ),
                 ),
               ),
+              
+              // Upload Progress Indicator (conditionally visible)
+              if (_showProgress)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Column(
+                    children: [
+                      LinearProgressIndicator(
+                        value: _uploadProgress,
+                        backgroundColor: Colors.white.withOpacity(0.2),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFEC4899)),
+                        minHeight: 6,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Uploading... ${(_uploadProgress * 100).toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -539,17 +568,15 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
       return;
     }
 
-    setState(() {
-      _isUploading = true;
-    });
+    // Convert XFile to File for passing to next screen
+    final List<File> imagesToPass = _images
+        .where((image) => image != null)
+        .map((image) => File(image!.path))
+        .toList();
 
-    // Simulate image processing/upload
-    await Future.delayed(const Duration(seconds: 2));
+    print('📊 Passing ${imagesToPass.length} local images to next screen...');
 
-    setState(() {
-      _isUploading = false;
-    });
-
+    // Navigate to the next screen with LOCAL files (not uploaded URLs)
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -562,7 +589,7 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> with TickerProv
           mobile: widget.mobile,
           profileImage: widget.profileImage,
           nationality: widget.nationality,
-          images: _images.where((img) => img != null).map((img) => img!.path).toList(),
+          images: imagesToPass, // Pass local File objects
           bio: widget.bio,
           userLocation: widget.userLocation,
         ),
