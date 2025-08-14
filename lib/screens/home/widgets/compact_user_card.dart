@@ -64,7 +64,6 @@ class CompactUserCard extends StatelessWidget {
                   ),
                 ),
               ),
-
               // Gradient overlay
               Positioned.fill(
                 child: Container(
@@ -326,7 +325,7 @@ class CompactUserCard extends StatelessWidget {
                       size: 18,
                       onPressed: () {
                         HapticFeedback.mediumImpact();
-                        onSuperLike();
+                        onLike();
                       },
                     ),
                     _divider(theme),
@@ -338,51 +337,40 @@ class CompactUserCard extends StatelessWidget {
                       size: 16,
                       onPressed: () {
                         HapticFeedback.lightImpact();
-                        onLike();
+                        onLove();
                       },
                     ),
                     _divider(theme),
                     
                     // Love Button
                     _buildEnhancedActionButton(
-                      icon: FontAwesomeIcons.heart,
-                      color: Colors.pink,
+                      icon: FontAwesomeIcons.bolt,
+                      color: Colors.purple,
                       size: 16,
                       onPressed: () {
                         HapticFeedback.mediumImpact();
-                        onLove();
+                        onSuperLike();
                       },
                     ),
                   ],
                 ),
               ),
               // Bottom row - secondary actions
-              Container(
-                height: 35,
-                child: Row(
-                  children: [
-                    // Undo Button
-                    _buildSmallActionButton(
-                      icon: FontAwesomeIcons.rotateLeft,
-                      color: Colors.amber,
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        onUndo();
-                      },
-                    ),
-                    _divider(theme),
-                    
-                    // More Options Button
-                    _buildSmallActionButton(
-                      icon: FontAwesomeIcons.ellipsis,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      onPressed: () {
-                        HapticFeedback.selectionClick();
-                        onMoreOptions();
-                      },
-                    ),
-                  ],
-                ),
+              Row(
+                children: [
+
+                  _divider(theme),
+
+                  // More Options Button
+                  _buildSmallActionButton(
+                    icon: FontAwesomeIcons.ellipsis,
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      onMoreOptions();
+                    },
+                  ),
+                ],
               ),
             ],
           ),

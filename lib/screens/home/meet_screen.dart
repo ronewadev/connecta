@@ -615,8 +615,8 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
           onSuperLike: () => _onUserSuperLiked(index),
           onLike: () => _onUserLiked(index),
           onLove: () => _onUserLoved(index),
-          onUndo: () => _onUserUndo(index),
           onMoreOptions: () => _showMoreOptions(users[index], index),
+          onUndo: () => _handleUndo(),
         );
       },
     );
@@ -1272,27 +1272,33 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
             // Action buttons (only show in card view) - positioned above everything with highest z-index
             if (!_isGridView && currentUsers.isNotEmpty)
               Positioned(
-                bottom: 0,
+                bottom: 2, // Add more space from the bottom
                 left: 0,
                 right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: ActionButtonsRow(
-                    onUndo: _handleUndo,
-                    onDislike: _handleDislike,
-                    onSuperLike: _handleSuperLike,
-                    onLike: _handleLike,
-                    onBoost: _handleLove,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(30),
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 18,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ActionButtonsRow(
+                      onUndo: _handleUndo,
+                      onDislike: _handleDislike,
+                      onSuperLike: _handleSuperLike,
+                      onLike: _handleLike,
+                      onBoost: _handleLove,
+                      iconSize: 32, // Pass a smaller icon size
+                      buttonSize: 54, // Pass a smaller button size
+                      spacing: 18, // Add spacing between buttons
+                    ),
                   ),
                 ),
               ),

@@ -243,8 +243,8 @@ class UserDetailModal extends StatelessWidget {
               
               // Love Button (boost)
               _buildActionButton(
-                icon: FontAwesomeIcons.heart,
-                color: Colors.pink,
+                icon: FontAwesomeIcons.bolt,
+                color: Colors.purple,
                 size: 50,
                 onPressed: () {
                   HapticFeedback.mediumImpact();
@@ -254,27 +254,7 @@ class UserDetailModal extends StatelessWidget {
               ),
             ],
           ),
-          
-          // Secondary actions row
-          if (onUndo != null) ...[
-            const SizedBox(height: 15),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Undo Button
-                _buildActionButton(
-                  icon: FontAwesomeIcons.rotateLeft,
-                  color: Colors.amber,
-                  size: 40,
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.pop(context);
-                    onUndo!();
-                  },
-                ),
-              ],
-            ),
-          ],
+
         ],
       ),
     );
