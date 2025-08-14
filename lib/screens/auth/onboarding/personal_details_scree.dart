@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:connecta/functions/location_picker.dart';
+import 'package:connecta/services/location_picker.dart';
 import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
 import 'package:connecta/services/my_location.dart';
 import 'package:connecta/models/user_model.dart';

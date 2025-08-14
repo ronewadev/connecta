@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../models/user_model.dart';
-import 'action_button.dart';
+import 'action_button_grid.dart';
 
 class UserDetailModal extends StatelessWidget {
   final UserModelInfo user;
@@ -205,7 +205,7 @@ class UserDetailModal extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          ActionButton(
+          ActionButton2(
             icon: FontAwesomeIcons.xmark,
             color: Colors.red,
             onPressed: () {
@@ -213,7 +213,7 @@ class UserDetailModal extends StatelessWidget {
               onDislike();
             },
           ),
-          ActionButton(
+          ActionButton2(
             icon: FontAwesomeIcons.star,
             color: Colors.blue,
             size: 65, // big like the main view
@@ -222,7 +222,7 @@ class UserDetailModal extends StatelessWidget {
               onSuperLike();
             },
           ),
-          ActionButton(
+          ActionButton2(
             icon: FontAwesomeIcons.heart,
             color: Colors.green,
             onPressed: () {
@@ -230,7 +230,7 @@ class UserDetailModal extends StatelessWidget {
               onLike();
             },
           ),
-          ActionButton(
+          ActionButton2(
             icon: FontAwesomeIcons.bolt,
             color: Colors.purple,
             onPressed: () {

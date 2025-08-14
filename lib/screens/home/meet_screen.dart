@@ -1,8 +1,10 @@
 import 'dart:ui';
 import 'package:connecta/models/user_model.dart';
 import 'package:connecta/screens/home/widgets/user_card.dart';
-import 'package:connecta/screens/home/widgets/view_header.dart'; // Add this import
+import 'package:connecta/screens/home/widgets/interactive_user_card.dart'; // Add this import
+import 'package:connecta/screens/home/widgets/view_header.dart';
 import 'package:connecta/services/match_service.dart';
+import 'package:connecta/services/like_service.dart'; // Add this import
 import 'package:connecta/screens/home/widgets/action_buttons.dart';
 import 'package:connecta/screens/home/widgets/compact_user_card.dart';
 import 'package:connecta/screens/home/widgets/feedback_overlay.dart';
@@ -27,18 +29,20 @@ class MeetScreen extends StatefulWidget {
 }
 
 class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
-  final CardSwiperController _swiperController = CardSwiperController();
-  final List<UserModelInfo> _users = [];
-  final List<UserModelInfo> _filteredUsers = [];
-  bool _showLikeFeedback = false;
-  bool _showDislikeFeedback = false;
-  bool _showSuperLikeFeedback = false;
+  late CardSwiperController _swiperController;
+  List<UserModelInfo> _users = [];
+  List<UserModelInfo> _filteredUsers = [];
+  int _currentCardIndex = 0; // Remove the duplicate declaration
   bool _isGridView = false;
-  bool _showFilters = false;
   bool _isLoading = true;
   String? _errorMessage;
   String? _currentUserId;
-  int _currentCardIndex = 0; // Track current card index manually
+  
+  // Add these missing variables:
+  bool _showFilters = false;
+  bool _showLikeFeedback = false;
+  bool _showDislikeFeedback = false;
+  bool _showSuperLikeFeedback = false;
 
   // Animation controllers
   late AnimationController _feedbackController;
@@ -55,6 +59,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    _swiperController = CardSwiperController(); // Add this line
     _feedbackController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -178,15 +183,39 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     HapticFeedback.lightImpact();
     
     final user = currentUsers[_currentCardIndex];
-    final success = await MatchService.recordInteraction(
-      toUserId: user.id,
-      type: InteractionType.like,
-    );
+    print('👍 Handling like for user: ${user.username} (${user.id})');
+    
+    // Send like using LikeService
+    final success = await LikeService.sendLike(user.id, LikeType.like);
     
     if (success) {
       _showFeedback('LIKE', Colors.green, FontAwesomeIcons.heart);
+      
+      // Check if it's a match
+      final isMatch = await LikeService.isMatch(user.id);
+      if (isMatch) {
+        _showMatchDialog(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.favorite, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Liked ${user.username}!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Liked ${user.username}!')),
+        const SnackBar(
+          content: Text('Failed to send like. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
     
@@ -194,19 +223,13 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   }
 
   /// Handle dislike action
-  void _handleDislike() async {
+  void _handleDislike() {
     final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
     if (currentUsers.isEmpty || _currentCardIndex >= currentUsers.length) return;
     
     HapticFeedback.lightImpact();
     
-    final user = currentUsers[_currentCardIndex];
-    await MatchService.recordInteraction(
-      toUserId: user.id,
-      type: InteractionType.dislike,
-    );
     _showFeedback('NOPE', Colors.red, FontAwesomeIcons.heartCrack);
-    
     _swiperController.swipe(CardSwiperDirection.left);
   }
 
@@ -218,24 +241,38 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     HapticFeedback.mediumImpact();
     
     final user = currentUsers[_currentCardIndex];
-    final success = await MatchService.recordInteraction(
-      toUserId: user.id,
-      type: InteractionType.superLike,
-    );
+    print('⭐ Handling super like for user: ${user.username} (${user.id})');
+    
+    // Send super like using LikeService
+    final success = await LikeService.sendLike(user.id, LikeType.superLike);
     
     if (success) {
       _showFeedback('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
-              const SizedBox(width: 8),
-              Text('Super Liked ${user.username}!'),
-            ],
+      
+      // Check if it's a match
+      final isMatch = await LikeService.isMatch(user.id);
+      if (isMatch) {
+        _showMatchDialog(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Super Liked ${user.username}!'),
+              ],
+            ),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 2),
           ),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to send super like. Please try again.'),
+          backgroundColor: Colors.red,
         ),
       );
     }
@@ -243,121 +280,126 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     _swiperController.swipe(CardSwiperDirection.top);
   }
 
-  /// Handle undo action
-  void _handleUndo() {
-    HapticFeedback.lightImpact();
-    try {
-      _swiperController.undo();
-      // Decrease the current index when undoing
-      if (_currentCardIndex > 0) {
-        setState(() {
-          _currentCardIndex--;
-        });
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
+  /// Handle love action (add this new method)
+  void _handleLove() async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (currentUsers.isEmpty || _currentCardIndex >= currentUsers.length) return;
+    
+    HapticFeedback.mediumImpact();
+    
+    final user = currentUsers[_currentCardIndex];
+    print('❤️ Handling love for user: ${user.username} (${user.id})');
+    
+    // Send love using LikeService
+    final success = await LikeService.sendLike(user.id, LikeType.love);
+    
+    if (success) {
+      _showFeedback('LOVE', Colors.pink, FontAwesomeIcons.heart);
+      
+      // Check if it's a match
+      final isMatch = await LikeService.isMatch(user.id);
+      if (isMatch) {
+        _showMatchDialog(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const FaIcon(FontAwesomeIcons.rotateLeft, color: Colors.white, size: 16),
+                const FaIcon(FontAwesomeIcons.heart, color: Colors.white, size: 16),
                 const SizedBox(width: 8),
-                Text(AppText.returnUndo),
+                Text('Loved ${user.username}!'),
               ],
             ),
-            backgroundColor: Colors.amber,
-            duration: const Duration(seconds: 1),
-          ));
-
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No more actions to undo')),
+            backgroundColor: Colors.pink,
+            duration: const Duration(seconds: 2),
+          ),
         );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to send love. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-
-  void _showFeedback(String text, Color color, IconData icon) {
-    setState(() {
-      _showLikeFeedback = text == 'LIKE';
-      _showDislikeFeedback = text == 'NOPE';
-      _showSuperLikeFeedback = text == 'SUPER\nLIKE';
-    });
-
-    _feedbackController.forward().then((_) {
-      _feedbackController.reset();
-      setState(() {
-        _showLikeFeedback = false;
-        _showDislikeFeedback = false;
-        _showSuperLikeFeedback = false;
-      });
-    });
+    
+    // For love, you might want to swipe in a specific direction or show a special animation
+    _swiperController.swipe(CardSwiperDirection.right);
   }
 
-  bool _onSwipe(int previousIndex, int? currentIndex, CardSwiperDirection direction) {
-    HapticFeedback.selectionClick();
-
-    // Update our manual index tracking
-    setState(() {
-      _currentCardIndex = currentIndex ?? _currentCardIndex + 1;
-    });
-
-    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
-    if (previousIndex >= currentUsers.length) return true;
-
-    final user = currentUsers[previousIndex];
-
-    // Handle different swipe directions
-    switch (direction) {
-      case CardSwiperDirection.left:
-        MatchService.recordInteraction(
-          toUserId: user.id,
-          type: InteractionType.dislike,
-        );
-        _showFeedback('NOPE', Colors.red, FontAwesomeIcons.heartCrack);
-        break;
-      case CardSwiperDirection.right:
-        MatchService.recordInteraction(
-          toUserId: user.id,
-          type: InteractionType.like,
-        ).then((success) {
-          if (success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Liked ${user.username}!')),
-            );
-          }
-        });
-        _showFeedback('LIKE', Colors.green, FontAwesomeIcons.heart);
-        break;
-      case CardSwiperDirection.top:
-        MatchService.recordInteraction(
-          toUserId: user.id,
-          type: InteractionType.superLike,
-        ).then((success) {
-          if (success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    Text('Super Liked ${user.username}!'),
-                  ],
-                ),
-                backgroundColor: Colors.blue,
+  /// Show match dialog when users match each other
+  void _showMatchDialog(UserModelInfo matchedUser) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.pink.shade50,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Celebration animation or icon
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Colors.pink,
+                shape: BoxShape.circle,
               ),
-            );
-          }
-        });
-        _showFeedback('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star);
-        break;
-      case CardSwiperDirection.bottom:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppText.comingSoon)),
-        );
-        break;
-      case CardSwiperDirection.none:
-        break;
-    }
-
-    return true;
+              child: const FaIcon(
+                FontAwesomeIcons.heart,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'It\'s a Match!',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.pink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You and ${matchedUser.username} liked each other!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.pink.shade700,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Keep Swiping'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // Navigate to chat or show coming soon
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Chat feature coming soon!')),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Say Hi!'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   //grid view tabs
@@ -388,6 +430,10 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildCardView(List<UserModelInfo> users) {
+    if (users.isEmpty) {
+      return _buildEmptyState();
+    }
+
     return CardSwiper(
       controller: _swiperController,
       cardsCount: users.length,
@@ -396,20 +442,23 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
       backCardOffset: const Offset(0, 40),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       allowedSwipeDirection: const AllowedSwipeDirection.only(
-        left: true,
-        right: true,
-        up: true,
-        down: false,
+        left: true,  // Dislike
+        right: true, // Like
+        up: true,    // Super Like
+        down: false, // Disabled
       ),
       cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
+        if (index >= users.length) return const SizedBox.shrink();
+        
         return Stack(
           children: [
+            // Use InteractiveUserCard instead of UserCard for image navigation
             UserCard(
               user: users[index], 
               currentUserId: _currentUserId,
             ),
 
-            // Swipe direction indicators
+            // Swipe direction indicators (keep existing code)
             if (percentThresholdX > 0.1) // Swiping right (like)
               Positioned(
                 top: 50,
@@ -543,49 +592,6 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
         },
       ),
     );
-  }
-
-  void _onUserLiked(int index) async {
-    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
-    if (index < currentUsers.length) {
-      final user = currentUsers[index];
-      await MatchService.recordInteraction(
-        toUserId: user.id,
-        type: InteractionType.like,
-      );
-      print('Liked: ${user.username}');
-    }
-  }
-
-  void _onUserDisliked(int index) async {
-    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
-    if (index < currentUsers.length) {
-      final user = currentUsers[index];
-      await MatchService.recordInteraction(
-        toUserId: user.id,
-        type: InteractionType.dislike,
-      );
-      print('Disliked: ${user.username}');
-    }
-  }
-
-  void _onUserSuperLiked(int index) async {
-    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
-    if (index < currentUsers.length) {
-      final user = currentUsers[index];
-      await MatchService.recordInteraction(
-        toUserId: user.id,
-        type: InteractionType.superLike,
-      );
-      print('Super Liked: ${user.username}');
-    }
-  }
-
-  void _removeUserFromGrid(UserModelInfo user) {
-    setState(() {
-      _users.remove(user);
-      _filteredUsers.remove(user);
-    });
   }
 
   //grid view details of user
@@ -766,6 +772,258 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     );
   }
 
+  /// Show visual feedback when swiping
+  void _showFeedback(String text, Color color, IconData icon) {
+    // You can implement a toast or overlay feedback here
+    // For now, let's use a simple SnackBar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FaIcon(icon, color: Colors.white, size: 16),
+            const SizedBox(width: 8),
+            Text(text),
+          ],
+        ),
+        backgroundColor: color,
+        duration: const Duration(milliseconds: 800),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 100, left: 50, right: 50),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+    );
+  }
+
+  /// Handle undo action
+  void _handleUndo() {
+    HapticFeedback.lightImpact();
+    
+    // Check if we can undo by checking if we have previous cards
+    if (_currentCardIndex > 0) {
+      try {
+        _swiperController.undo();
+        print('🔄 Undo last swipe');
+        
+        // Update the index
+        setState(() {
+          _currentCardIndex = _currentCardIndex - 1;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.undo, color: Colors.white, size: 16),
+                SizedBox(width: 8),
+                Text('Undid last action'),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(milliseconds: 800),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } catch (e) {
+        print('❌ Undo failed: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nothing to undo'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nothing to undo'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  /// Handle swipe events from CardSwiper
+  bool _onSwipe(int previousIndex, int? currentIndex, CardSwiperDirection direction) {
+    print('🔄 Swipe detected: direction=$direction, previousIndex=$previousIndex, currentIndex=$currentIndex');
+    
+    HapticFeedback.selectionClick();
+
+    // Update our manual index tracking
+    setState(() {
+      _currentCardIndex = currentIndex ?? (_currentCardIndex + 1);
+    });
+
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    
+    // Safety check
+    if (previousIndex < 0 || previousIndex >= currentUsers.length) {
+      print('❌ Invalid previousIndex: $previousIndex (length: ${currentUsers.length})');
+      return true;
+    }
+
+    final user = currentUsers[previousIndex];
+    print('👤 Processing swipe for user: ${user.username} (${user.id})');
+
+    // Handle different swipe directions using LikeService
+    switch (direction) {
+      case CardSwiperDirection.left:
+        print('👈 Left swipe (dislike)');
+        _showFeedback('NOPE', Colors.red, FontAwesomeIcons.heartCrack);
+        break;
+        
+      case CardSwiperDirection.right:
+        print('👉 Right swipe (like)');
+        _showFeedback('LIKE', Colors.green, FontAwesomeIcons.heart);
+        // Send like asynchronously
+        LikeService.sendLike(user.id, LikeType.like).then((success) async {
+          if (success && mounted) {
+            print('✅ Like sent successfully');
+            final isMatch = await LikeService.isMatch(user.id);
+            if (isMatch && mounted) {
+              print('💖 It\'s a match!');
+              _showMatchDialog(user);
+            } else if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Liked ${user.username}!'),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            }
+          } else if (mounted) {
+            print('❌ Failed to send like');
+          }
+        });
+        break;
+        
+      case CardSwiperDirection.top:
+        print('👆 Top swipe (super like)');
+        _showFeedback('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star);
+        // Send super like asynchronously
+        LikeService.sendLike(user.id, LikeType.superLike).then((success) async {
+          if (success && mounted) {
+            print('⭐ Super like sent successfully');
+            final isMatch = await LikeService.isMatch(user.id);
+            if (isMatch && mounted) {
+              print('💖 It\'s a match!');
+              _showMatchDialog(user);
+            } else if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      Text('Super Liked ${user.username}!'),
+                    ],
+                  ),
+                  backgroundColor: Colors.blue,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+          } else if (mounted) {
+            print('❌ Failed to send super like');
+          }
+        });
+        break;
+        
+      case CardSwiperDirection.bottom:
+        print('👇 Bottom swipe (coming soon)');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppText.comingSoon)),
+        );
+        break;
+        
+      case CardSwiperDirection.none:
+        print('🚫 No swipe direction');
+        break;
+    }
+
+    return true; // Allow the swipe
+  }
+
+  /// Handle grid view user interactions
+  void _onUserLiked(int index) async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (index < currentUsers.length) {
+      final user = currentUsers[index];
+      final success = await LikeService.sendLike(user.id, LikeType.like);
+      if (success && mounted) {
+        print('✅ Liked: ${user.username}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Liked ${user.username}!')),
+        );
+        
+        // Check for match
+        final isMatch = await LikeService.isMatch(user.id);
+        if (isMatch) {
+          _showMatchDialog(user);
+        }
+      }
+    }
+  }
+
+  void _onUserSuperLiked(int index) async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (index < currentUsers.length) {
+      final user = currentUsers[index];
+      final success = await LikeService.sendLike(user.id, LikeType.superLike);
+      if (success && mounted) {
+        print('⭐ Super Liked: ${user.username}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Super Liked ${user.username}!'),
+              ],
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
+        
+        // Check for match
+        final isMatch = await LikeService.isMatch(user.id);
+        if (isMatch) {
+          _showMatchDialog(user);
+        }
+      }
+    }
+  }
+
+  void _onUserDisliked(int index) {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (index < currentUsers.length) {
+      final user = currentUsers[index];
+      print('👎 Disliked: ${user.username}');
+      
+      // Remove from grid if in grid view
+      setState(() {
+        currentUsers.removeAt(index);
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Passed on ${user.username}'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
+  /// Remove user from grid view
+  void _removeUserFromGrid(UserModelInfo user) {
+    setState(() {
+      _users.remove(user);
+      _filteredUsers.remove(user);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -865,11 +1123,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                     onDislike: _handleDislike,
                     onSuperLike: _handleSuperLike,
                     onLike: _handleLike,
-                    onBoost: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(AppText.love)),
-                      );
-                    },
+                    onBoost: _handleLove, // This calls your _handleLove method
                   ),
                 ),
               ],

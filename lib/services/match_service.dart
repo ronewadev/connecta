@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart' as FirebaseAuth;
 import '../models/user_model.dart';
 import '../models/match_score_model.dart';
 import '../models/match_preferences.dart';
-import '../functions/match_users.dart';
+import 'match_users.dart';
 
 class MatchService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
