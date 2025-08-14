@@ -26,7 +26,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  User? _userData;
+  UserModelInfo? _userData;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
 
   final List<Widget> _bottomNavScreens = [
@@ -70,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
           .listen((snapshot) {
         if (snapshot.exists && snapshot.data() != null) {
           setState(() {
-            _userData = User.fromMap(snapshot.data()!, user.uid);
+            _userData = UserModelInfo.fromMap(snapshot.data()!, user.uid);
           });
         }
       });
@@ -175,7 +175,7 @@ class _MainScreenState extends State<MainScreen> {
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 5),
                 ShaderMask(
                   shaderCallback: (Rect bounds) {
                     return LinearGradient(

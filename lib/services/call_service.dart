@@ -5,7 +5,7 @@ import '../models/user_model.dart';
 
 class Call {
   final String id;
-  final User caller;
+  final UserModelInfo caller;
   DateTime startTime;
   DateTime? endTime;
   int? duration;
@@ -30,7 +30,7 @@ class CallService with ChangeNotifier {
   Call? get currentCall => _currentCall;
   bool get isInCall => _isInCall;
 
-  Future<void> startCall(User otherUser) async {
+  Future<void> startCall(UserModelInfo otherUser) async {
     _currentCall = Call(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       caller: otherUser,

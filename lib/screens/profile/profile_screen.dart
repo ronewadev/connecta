@@ -25,7 +25,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  UserModel.User? _userData;
+  UserModel.UserModelInfo? _userData;
   StreamSubscription<DocumentSnapshot>? _userSubscription;
 
   // Age range slider values
@@ -97,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .listen((snapshot) {
         if (snapshot.exists && snapshot.data() != null) {
           setState(() {
-            _userData = UserModel.User.fromMap(snapshot.data()!, user.uid);
+            _userData = UserModel.UserModelInfo.fromMap(snapshot.data()!, user.uid);
             _loadSocialMediaStatus();
           });
         }

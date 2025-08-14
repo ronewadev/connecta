@@ -25,7 +25,7 @@ class LikesScreen extends StatefulWidget {
 class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin {
   late AnimationController _shimmerController;
   late Animation<double> _shimmerAnimation;
-  List<User> allUsers = [];
+  List<UserModelInfo> allUsers = [];
   bool isLoading = true;
   String? errorMessage;
 
@@ -81,7 +81,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
 
       final users = usersSnapshot.docs.map((doc) {
         debugPrint('Processing user: ${doc.id}');
-        return User.fromMap(doc.data(), doc.id);
+        return UserModelInfo.fromMap(doc.data(), doc.id);
       }).toList();
 
       setState(() {
@@ -373,7 +373,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildLikeCard(BuildContext context, User user, int index) {
+  Widget _buildLikeCard(BuildContext context, UserModelInfo user, int index) {
     final theme = Theme.of(context);
     final isSuperLike = _isSuperLiked(user.id);
     final isLove = _isLoved(user.id);
@@ -572,7 +572,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
     );
   }
 
-  void _handleCardTap(BuildContext context, User user, bool isBlurred) {
+  void _handleCardTap(BuildContext context, UserModelInfo user, bool isBlurred) {
     if (isBlurred) {
       _showPremiumDialog(context);
     } else {
@@ -682,7 +682,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
     );
   }
 
-  void _showMatchDialog(BuildContext context, User user) {
+  void _showMatchDialog(BuildContext context, UserModelInfo user) {
     final theme = Theme.of(context);
 
     showDialog(
@@ -762,7 +762,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
     );
   }
 
-  void _showMatchSuccess(BuildContext context, User user) {
+  void _showMatchSuccess(BuildContext context, UserModelInfo user) {
     final theme = Theme.of(context);
 
     showDialog(
