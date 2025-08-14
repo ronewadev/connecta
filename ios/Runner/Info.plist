@@ -41,6 +41,23 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
+		
+		<!-- Location Permissions -->
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>This app needs access to your location to find nearby matches and show local dating opportunities.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>This app needs access to your location to find nearby matches and show local dating opportunities.</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>This app needs access to your location to find nearby matches and show local dating opportunities.</string>
+		
+		<!-- Camera Permission (for profile photos) -->
+		<key>NSCameraUsageDescription</key>
+		<string>This app needs access to your camera to take profile photos.</string>
+		
+		<!-- Photo Library Permission -->
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app needs access to your photo library to upload profile photos.</string>
+		
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>

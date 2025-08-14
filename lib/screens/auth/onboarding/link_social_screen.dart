@@ -29,9 +29,9 @@ class LinkSocialScreen extends StatefulWidget {
   final List<int> ageRange;
   final int maxDistance;
   final List<String> interestedIn;
-  final List<String> relationshipType;
+  //final List<String> relationshipType;
   final List<String> education;
-  final List<String> lifestyle;
+  //final List<String> lifestyle;
   final bool showOnline;
   final bool verifiedOnly;
   final bool photoRequired;
@@ -56,9 +56,9 @@ class LinkSocialScreen extends StatefulWidget {
     required this.ageRange,
     required this.maxDistance,
     required this.interestedIn,
-    required this.relationshipType,
+    //required this.relationshipType,
     required this.education,
-    required this.lifestyle,
+    //required this.lifestyle,
     required this.showOnline,
     required this.verifiedOnly,
     required this.photoRequired,
@@ -1309,9 +1309,9 @@ Future<void> _completeProfile() async {
         'ageRange': widget.ageRange,
         'maxDistance': widget.maxDistance,
         'interestedIn': widget.interestedIn,
-        'relationshipType': widget.relationshipType,
+        //'relationshipType': widget.relationshipType,
         'education': widget.education,
-        'lifestyle': widget.lifestyle,
+        //'lifestyle': widget.lifestyle,
         'showOnline': widget.showOnline,
         'verifiedOnly': widget.verifiedOnly,
         'photoRequired': widget.photoRequired,

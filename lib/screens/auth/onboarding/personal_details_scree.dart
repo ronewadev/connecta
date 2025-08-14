@@ -1,15 +1,12 @@
 import 'dart:io';
 import 'dart:ui';
-
-import 'package:connecta/functions/location_picker.dart';
-import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
-import 'package:connecta/services/my_location.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../models/user_model.dart';
-import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:connecta/functions/location_picker.dart';
+import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
+import 'package:connecta/services/my_location.dart';
 import 'package:connecta/models/user_model.dart';
 
 
@@ -981,7 +978,7 @@ Widget _buildContinueButton() {
     }
   } catch (e) {
     String userFriendlyMessage;
-    
+
     if (e.toString().contains('already_active')) {
       userFriendlyMessage = 'Please wait a moment and try again. The image picker is still processing.';
     } else if (e.toString().contains('permission')) {
@@ -993,7 +990,7 @@ Widget _buildContinueButton() {
     } else {
       userFriendlyMessage = 'Unable to select photo. Please try again or restart the app.';
     }
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -1022,28 +1019,54 @@ Future<void> _getCurrentLocation() async {
   setState(() => _isGettingLocation = true);
 
   try {
+    print('📍 Getting current location...');
+
     // Navigate to MyLocation to get coordinates & address
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const MyLocation()),
     );
 
-    if (result != null) {
+    print('📍 Location result: $result');
+
+    if (result != null && result is Map<String, dynamic>) {
+      // Extract data from MyLocation result
+      final dynamic locationData = result['location'];
+      final String address = result['address'] ?? 'Unknown Address';
+      final String city = result['city'] ?? 'Unknown City';
+      final String country = result['country'] ?? 'Unknown Country';
+
+      // Handle LatLng data
+      double latitude = 0.0;
+      double longitude = 0.0;
+
+      if (locationData != null) {
+        if (locationData is LatLng) {
+          latitude = locationData.latitude;
+          longitude = locationData.longitude;
+        } else if (locationData is Map) {
+          latitude = (locationData['latitude'] ?? 0.0).toDouble();
+          longitude = (locationData['longitude'] ?? 0.0).toDouble();
+        }
+      }
+
       // Create LocationData from MyLocation result
-      final locationData = LocationData(
-        latitude: result['location'].latitude,
-        longitude: result['location'].longitude,
-        address: result['address'],
-        city: result['city'],
-        country: result['country'],
-        ipAddress: result['ipAddress'],
+      final location = LocationData(
+        latitude: latitude,
+        longitude: longitude,
+        address: address,
+        city: city,
+        country: country,
+        ipAddress: '', // Not available from GPS
         timestamp: DateTime.now(),
       );
 
       setState(() {
-        _userLocation = _locationDataToUserLocation(locationData) as LocationData?;
+        _userLocation = location;
         _isGettingLocation = false;
       });
+
+      print('✅ Location updated: ${location.city}, ${location.country}');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1057,7 +1080,7 @@ Future<void> _getCurrentLocation() async {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Location updated: ${locationData.city}, ${locationData.country}',
+                  'Location updated: ${location.city}, ${location.country}',
                 ),
               ),
             ],
@@ -1075,6 +1098,7 @@ Future<void> _getCurrentLocation() async {
     }
   } catch (e) {
     setState(() => _isGettingLocation = false);
+    print('💥 Location error: $e');
     _showLocationErrorDialog();
   }
 }
@@ -1083,46 +1107,17 @@ void _showLocationErrorDialog() {
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      title: const Row(
-        children: [
-          FaIcon(
-            FontAwesomeIcons.locationPin,
-            color: Colors.orange,
-            size: 24,
-          ),
-          SizedBox(width: 12),
-          Text('Location Required'),
-        ],
-      ),
-      content: const Text(
-        'We couldn\'t get your location. Please make sure location services are enabled and try again.\n\nLocation is required to find matches nearby.',
-      ),
+      title: const Text('Location Error'),
+      content: const Text('Unable to get your location. Please try again or check your permissions.'),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            _getCurrentLocation();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFEC4899),
-          ),
-          child: const Text(
-            'Try Again',
-            style: TextStyle(color: Colors.white),
-          ),
+          child: const Text('OK'),
         ),
       ],
     ),
   );
 }
-
 UserLocation? _locationDataToUserLocation(LocationData? locationData) {
   if (locationData == null) return null;
   return UserLocation(
@@ -1135,63 +1130,6 @@ UserLocation? _locationDataToUserLocation(LocationData? locationData) {
     lastUpdated: locationData.timestamp,
   );
 }
-
-  void _showLocationErrorDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Row(
-          children: [
-            FaIcon(
-              FontAwesomeIcons.locationPin,
-              color: Colors.orange,
-              size: 24,
-            ),
-            SizedBox(width: 12),
-            Text('Location Required'),
-          ],
-        ),
-        content: const Text(
-          'We couldn\'t get your location. Please make sure location services are enabled and try again.\n\nLocation is required to find matches nearby.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _getCurrentLocation();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEC4899),
-            ),
-            child: const Text(
-              'Try Again',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  UserLocation? _locationDataToUserLocation(LocationData? locationData) {
-    if (locationData == null) return null;
-    return UserLocation(
-      latitude: locationData.latitude,
-      longitude: locationData.longitude,
-      address: locationData.address,
-      city: locationData.city,
-      country: locationData.country,
-      ipAddress: locationData.ipAddress,
-      lastUpdated: locationData.timestamp,
-    );
-  }
 
   void _continueToNext() async {
     if (_isFormValid()) {

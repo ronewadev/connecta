@@ -55,9 +55,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
   RangeValues _ageRange = const RangeValues(18, 35);
   double _maxDistance = 25.0;
   Set<String> _selectedInterestedIn = <String>{};
-  Set<String> _selectedRelationshipType = <String>{};
+  //Set<String> _selectedRelationshipType = <String>{};
   Set<String> _selectedEducation = <String>{};
-  Set<String> _selectedLifestyle = <String>{};
+ // Set<String> _selectedLifestyle = <String>{};
   bool _showOnline = false;
   bool _verifiedOnly = false;
   bool _photoRequired = false;
@@ -129,9 +129,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
   bool get _canContinue {
     // Require at least one selection in each category
     return _selectedInterestedIn.isNotEmpty &&
-           _selectedRelationshipType.isNotEmpty &&
-           _selectedEducation.isNotEmpty &&
-           _selectedLifestyle.isNotEmpty;
+         //  _selectedRelationshipType.isNotEmpty &&
+           _selectedEducation.isNotEmpty;// &&
+          // _selectedLifestyle.isNotEmpty;
   }
 
   @override
@@ -283,17 +283,17 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
                           const SizedBox(height: 20),
                           
                           // Relationship Type
-                          _buildSelectionSection(
-                            title: 'Looking For',
-                            subtitle: 'Select 1-2 preferences',
-                            icon: FontAwesomeIcons.users,
-                            items: _relationshipOptions,
-                            selectedItems: _selectedRelationshipType,
-                            maxSelection: _maxSelectionPerCategory,
-                            color: const Color(0xFF9333EA),
-                          ),
+                          // _buildSelectionSection(
+                          //   title: 'Looking For',
+                          //   subtitle: 'Select 1-2 preferences',
+                          //   icon: FontAwesomeIcons.users,
+                          //   items: _relationshipOptions,
+                          //   selectedItems: _selectedRelationshipType,
+                          //   maxSelection: _maxSelectionPerCategory,
+                          //   color: const Color(0xFF9333EA),
+                          // ),
                           
-                          const SizedBox(height: 20),
+                          //const SizedBox(height: 20),
                           
                           // Education Preferences
                           _buildSelectionSection(
@@ -309,15 +309,15 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
                           const SizedBox(height: 20),
                           
                           // Lifestyle Preferences
-                          _buildSelectionSection(
-                            title: 'Lifestyle',
-                            subtitle: 'Select 1-2 preferences',
-                            icon: FontAwesomeIcons.leaf,
-                            items: _lifestyleOptions,
-                            selectedItems: _selectedLifestyle,
-                            maxSelection: _maxSelectionPerCategory,
-                            color: const Color(0xFF10B981),
-                          ),
+                          // _buildSelectionSection(
+                          //   title: 'Lifestyle',
+                          //   subtitle: 'Select 1-2 preferences',
+                          //   icon: FontAwesomeIcons.leaf,
+                          //   items: _lifestyleOptions,
+                          //   selectedItems: _selectedLifestyle,
+                          //   maxSelection: _maxSelectionPerCategory,
+                          //   color: const Color(0xFF10B981),
+                          // ),
                           
                           const SizedBox(height: 20),
                           
@@ -772,9 +772,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> with TickerProvid
           ageRange: [_ageRange.start.round(), _ageRange.end.round()],
           maxDistance: _maxDistance.round(),
           interestedIn: _selectedInterestedIn.toList(),
-          relationshipType: _selectedRelationshipType.toList(),
+         // relationshipType: _selectedRelationshipType.toList(),
           education: _selectedEducation.toList(),
-          lifestyle: _selectedLifestyle.toList(),
+          //lifestyle: _selectedLifestyle.toList(),
           showOnline: _showOnline,
           verifiedOnly: _verifiedOnly,
           photoRequired: _photoRequired,

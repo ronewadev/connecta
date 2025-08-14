@@ -199,7 +199,6 @@ class _InterestsDealbrakersScreenState extends State<InterestsDealbrakersScreen>
                                   maxSelection: _maxDealBreakers,
                                   color: const Color(0xFFDC2626),
                                 ),
-                                const SizedBox(height: 100), // Space for fixed button
                               ],
                             ),
                           ),
