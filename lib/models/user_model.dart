@@ -304,8 +304,8 @@ class UserModelInfo {
       'hobbies': hobbies,
       'dealBreakers': dealBreakers,
       'bio': bio,
-      'subscription': subscription.toMap(), // Fix: Call toMap() on subscription
-      'userBalance': userBalance.toMap(), // Fix: Call toMap() on userBalance
+      'subscription': subscription.toMap(),
+      'userBalance': userBalance.toMap(),
       'preferences': preferences,
       'isVerified': isVerified,
       'isOnline': isOnline,
