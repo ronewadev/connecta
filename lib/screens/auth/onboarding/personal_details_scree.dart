@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'dart:ui';
+
+import 'package:connecta/models/user_model.dart';
+import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
+import 'package:connecta/services/location_picker.dart';
+import 'package:connecta/services/my_location.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:connecta/services/location_picker.dart';
-import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
-import 'package:connecta/services/my_location.dart';
-import 'package:connecta/models/user_model.dart';
 
 
 class PersonalDetailsScreen extends StatefulWidget {
@@ -1029,35 +1029,20 @@ Future<void> _getCurrentLocation() async {
 
     print('📍 Location result: $result');
 
-    if (result != null && result is Map<String, dynamic>) {
-      // Extract data from MyLocation result
-      final dynamic locationData = result['location'];
+      if (result != null && result is Map<String, dynamic>) {
+      final double latitude = (result['latitude'] ?? 0.0).toDouble();
+      final double longitude = (result['longitude'] ?? 0.0).toDouble();
       final String address = result['address'] ?? 'Unknown Address';
       final String city = result['city'] ?? 'Unknown City';
       final String country = result['country'] ?? 'Unknown Country';
 
-      // Handle LatLng data
-      double latitude = 0.0;
-      double longitude = 0.0;
-
-      if (locationData != null) {
-        if (locationData is LatLng) {
-          latitude = locationData.latitude;
-          longitude = locationData.longitude;
-        } else if (locationData is Map) {
-          latitude = (locationData['latitude'] ?? 0.0).toDouble();
-          longitude = (locationData['longitude'] ?? 0.0).toDouble();
-        }
-      }
-
-      // Create LocationData from MyLocation result
       final location = LocationData(
         latitude: latitude,
         longitude: longitude,
         address: address,
         city: city,
         country: country,
-        ipAddress: '', // Not available from GPS
+        ipAddress: '',
         timestamp: DateTime.now(),
       );
 
@@ -1065,6 +1050,7 @@ Future<void> _getCurrentLocation() async {
         _userLocation = location;
         _isGettingLocation = false;
       });
+
 
       print('✅ Location updated: ${location.city}, ${location.country}');
 
