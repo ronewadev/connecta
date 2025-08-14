@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Linked socials model
 class LinkedSocials {
@@ -535,7 +536,7 @@ class UserData {
           : LinkedSocials(),
       preferences: Map<String, dynamic>.from(data['preferences'] ?? {}),
       rememberMe: _safeParseBool(data['rememberMe'], false),
-      currentCity: data['currentCity'],
+      currentCity: data['city'],
     );
   }
 
@@ -570,7 +571,7 @@ class UserData {
           : LinkedSocials(),
       preferences: Map<String, dynamic>.from(json['preferences'] ?? {}),
       rememberMe: json['rememberMe'] ?? false,
-      currentCity: json['currentCity'],
+      currentCity: json['city'],
     );
   }
 
@@ -650,7 +651,7 @@ class UserData {
           ? Map<String, dynamic>.from(updates['preferences']) 
           : preferences,
       rememberMe: updates['rememberMe'] ?? rememberMe,
-      currentCity: updates['currentCity'] ?? currentCity,
+      currentCity: updates['city'] ?? currentCity,
     );
   }
 }

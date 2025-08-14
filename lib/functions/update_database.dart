@@ -209,7 +209,7 @@ class ProfileUpdateService {
       if (gender != null) data['gender'] = gender;
       if (nationality != null) data['nationality'] = nationality;
       if (location != null) data['location'] = location;
-      if (currentCity != null) data['currentCity'] = currentCity;
+      if (currentCity != null) data['city'] = currentCity;
 
       if (data.isNotEmpty) {
         await _firestore.collection('users').doc(_currentUserId).update(

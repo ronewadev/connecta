@@ -1,11 +1,17 @@
-import 'dart:ui';
 import 'dart:io';
+import 'dart:ui';
+
+import 'package:connecta/functions/location_picker.dart';
+import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
+import 'package:connecta/services/my_location.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../models/user_model.dart';
 import 'package:connecta/screens/auth/onboarding/upload_images_screen.dart';
 import 'package:connecta/functions/location_picker.dart';
 import 'package:connecta/models/user_model.dart';
+
 
 class PersonalDetailsScreen extends StatefulWidget {
   final String email;
@@ -940,128 +946,195 @@ Widget _buildContinueButton() {
         },
       ),
     );
-  }
+  }Future<void> _pickProfileImage() async {
+  try {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 85,
+    );
 
-  Future<void> _pickProfileImage() async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              FaIcon(
+                FontAwesomeIcons.checkCircle,
+                color: Colors.white,
+                size: 16,
+              ),
+              SizedBox(width: 12),
+              Text('Profile picture uploaded successfully!'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  } catch (e) {
+    String userFriendlyMessage;
+    
+    if (e.toString().contains('already_active')) {
+      userFriendlyMessage = 'Please wait a moment and try again. The image picker is still processing.';
+    } else if (e.toString().contains('permission')) {
+      userFriendlyMessage = 'Please allow photo access in your device settings to upload a profile picture.';
+    } else if (e.toString().contains('cancelled')) {
+      userFriendlyMessage = 'Photo selection was cancelled. Please try again.';
+    } else if (e.toString().contains('network') || e.toString().contains('connection')) {
+      userFriendlyMessage = 'Please check your internet connection and try again.';
+    } else {
+      userFriendlyMessage = 'Unable to select photo. Please try again or restart the app.';
+    }
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const FaIcon(
+              FontAwesomeIcons.exclamationTriangle,
+              color: Colors.white,
+              size: 16,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(userFriendlyMessage),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFFEC4899),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+}
+
+Future<void> _getCurrentLocation() async {
+  setState(() => _isGettingLocation = true);
+
+  try {
+    // Navigate to MyLocation to get coordinates & address
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MyLocation()),
+    );
+
+    if (result != null) {
+      // Create LocationData from MyLocation result
+      final locationData = LocationData(
+        latitude: result['location'].latitude,
+        longitude: result['location'].longitude,
+        address: result['address'],
+        city: result['city'],
+        country: result['country'],
+        ipAddress: result['ipAddress'],
+        timestamp: DateTime.now(),
       );
 
-      if (pickedFile != null) {
-        setState(() {
-          _profileImage = File(pickedFile.path);
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                FaIcon(
-                  FontAwesomeIcons.checkCircle,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                SizedBox(width: 12),
-                Text('Profile picture uploaded successfully!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
-    } catch (e) {
-      String userFriendlyMessage;
-
-      if (e.toString().contains('already_active')) {
-        userFriendlyMessage = 'Please wait a moment and try again. The image picker is still processing.';
-      } else if (e.toString().contains('permission')) {
-        userFriendlyMessage = 'Please allow photo access in your device settings to upload a profile picture.';
-      } else if (e.toString().contains('cancelled')) {
-        userFriendlyMessage = 'Photo selection was cancelled. Please try again.';
-      } else if (e.toString().contains('network') || e.toString().contains('connection')) {
-        userFriendlyMessage = 'Please check your internet connection and try again.';
-      } else {
-        userFriendlyMessage = 'Unable to select photo. Please try again or restart the app.';
-      }
+      setState(() {
+        _userLocation = _locationDataToUserLocation(locationData) as LocationData?;
+        _isGettingLocation = false;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
               const FaIcon(
-                FontAwesomeIcons.exclamationTriangle,
+                FontAwesomeIcons.checkCircle,
                 color: Colors.white,
                 size: 16,
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(userFriendlyMessage),
+                child: Text(
+                  'Location updated: ${locationData.city}, ${locationData.country}',
+                ),
               ),
             ],
           ),
-          backgroundColor: const Color(0xFFEC4899),
+          backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          duration: const Duration(seconds: 4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
-    }
-  }
-
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isGettingLocation = true;
-    });
-
-    try {
-      final locationData = await LocationService.getCurrentLocation();
-      if (locationData != null) {
-        setState(() {
-          _userLocation = locationData;
-          _isGettingLocation = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const FaIcon(
-                  FontAwesomeIcons.checkCircle,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('Location updated: ${locationData.city}, ${locationData.country}'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      } else {
-        setState(() {
-          _isGettingLocation = false;
-        });
-
-        _showLocationErrorDialog();
-      }
-    } catch (e) {
-      setState(() {
-        _isGettingLocation = false;
-      });
-
+    } else {
+      setState(() => _isGettingLocation = false);
       _showLocationErrorDialog();
     }
+  } catch (e) {
+    setState(() => _isGettingLocation = false);
+    _showLocationErrorDialog();
   }
+}
+
+void _showLocationErrorDialog() {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      title: const Row(
+        children: [
+          FaIcon(
+            FontAwesomeIcons.locationPin,
+            color: Colors.orange,
+            size: 24,
+          ),
+          SizedBox(width: 12),
+          Text('Location Required'),
+        ],
+      ),
+      content: const Text(
+        'We couldn\'t get your location. Please make sure location services are enabled and try again.\n\nLocation is required to find matches nearby.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            _getCurrentLocation();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFEC4899),
+          ),
+          child: const Text(
+            'Try Again',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+UserLocation? _locationDataToUserLocation(LocationData? locationData) {
+  if (locationData == null) return null;
+  return UserLocation(
+    latitude: locationData.latitude,
+    longitude: locationData.longitude,
+    address: locationData.address,
+    city: locationData.city,
+    country: locationData.country,
+    ipAddress: locationData.ipAddress,
+    lastUpdated: locationData.timestamp,
+  );
+}
 
   void _showLocationErrorDialog() {
     showDialog(

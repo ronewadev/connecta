@@ -1,17 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// ignore_for_file: prefer_final_fields
+
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connecta/functions/update_database.dart';
+import 'package:connecta/models/user_model.dart' as UserModel;
 import 'package:connecta/screens/auth/welcome_screen.dart';
 import 'package:connecta/screens/plans/tokens_screen.dart';
+import 'package:connecta/screens/profile/widgets/bio_section_widget.dart';
+import 'package:connecta/screens/profile/widgets/images_section_widget.dart';
+import 'package:connecta/services/profile_data_service.dart';
 import 'package:connecta/utils/text_strings.dart';
 import 'package:connecta/widgets/custom_button.dart' hide IconButton;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connecta/models/user_model.dart' as UserModel;
-import 'package:connecta/functions/update_database.dart';
-import 'package:connecta/services/profile_data_service.dart';
-import 'package:connecta/screens/profile/widgets/bio_section_widget.dart';
-import 'package:connecta/screens/profile/widgets/images_section_widget.dart';
-import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

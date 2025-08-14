@@ -248,11 +248,12 @@ class UserModelInfo {
       username: map['username'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'],
+      currentCity: map['city'], //not submitting anything
       age: map['age'] ?? 18,
       gender: map['gender'] ?? 'Not specified',
       nationality: map['nationality'] ?? 'Not specified',
       location: map['location'] ?? 'Not specified',
-      currentCity: map['currentCity'],
+      //currentCity: map['currentCity'], //old but submitting
       userLocation: map['userLocation'] != null 
           ? UserLocation.fromMap(Map<String, dynamic>.from(map['userLocation']))
           : null,
@@ -295,7 +296,7 @@ class UserModelInfo {
       'gender': gender,
       'nationality': nationality,
       'location': location,
-      'currentCity': currentCity,
+      'city': currentCity,
       'userLocation': userLocation?.toMap(),
       'profileImageUrl': profileImageUrl,
       'profileImages': profileImages,
