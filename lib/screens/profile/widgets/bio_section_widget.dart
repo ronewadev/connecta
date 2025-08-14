@@ -1,7 +1,6 @@
-import 'package:connecta/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:connecta/functions/update_database.dart';
+import '../../../services/update_database.dart';
 
 class BioSectionWidget extends StatefulWidget {
   final String? bio;

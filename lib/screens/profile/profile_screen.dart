@@ -3,7 +3,6 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connecta/functions/update_database.dart';
 import 'package:connecta/models/user_model.dart' as UserModel;
 import 'package:connecta/screens/auth/welcome_screen.dart';
 import 'package:connecta/screens/plans/tokens_screen.dart';
@@ -15,6 +14,8 @@ import 'package:connecta/widgets/custom_button.dart' hide IconButton;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+import '../../services/update_database.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

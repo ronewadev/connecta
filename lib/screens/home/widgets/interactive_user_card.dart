@@ -29,26 +29,15 @@ class _UserCardState extends State<UserCard> with TickerProviderStateMixin {
   bool _showRightTapIndicator = false;
   
   List<String> get _images {
-    // Use actual profile images if available, otherwise use dummy images
-    if (widget.user.profileImages.isNotEmpty) {
-      return widget.user.profileImages;
+    // Only use actual profile images from the user model
+    final images = <String>[];
+    if (widget.user.profileImageUrl != null && widget.user.profileImageUrl!.isNotEmpty) {
+      images.add(widget.user.profileImageUrl!);
     }
-    
-    // Fallback to dummy images
-    final dummyImages = [
-      'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&h=1000',
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&h=1000',
-    ];
-    
-    // Return a random subset of 3-5 images for each user
-    final userId = widget.user.id.hashCode;
-    final random = userId % 100;
-    final numImages = 3 + (random % 3); // 3-5 images
-    
-    return dummyImages.take(numImages).toList();
+    if (widget.user.profileImages.isNotEmpty) {
+      images.addAll(widget.user.profileImages.where((img) => img.isNotEmpty && img != widget.user.profileImageUrl));
+    }
+    return images;
   }
 
   @override
@@ -347,52 +336,49 @@ class _UserCardState extends State<UserCard> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+    final imageUrl = _images.isNotEmpty ? _images.first : null;
+
     return ScaleTransition(
-      scale: _tapAnimation, // Remove the null assertion
+      scale: _tapAnimation,
       child: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           child: Stack(
+            fit: StackFit.expand,
             children: [
-              // Main image with gesture detection
-              Positioned.fill(
-                child: GestureDetector(
-                  onTapDown: (details) => _onTapDown(details, screenWidth),
-                  onTapUp: (details) => _onTapUp(details, screenWidth),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (Widget child, Animation<double> animation) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                    child: Image.network(
-                      _images[_currentImageIndex],
-                      key: ValueKey(_currentImageIndex),
+              // Always cover the card
+              imageUrl != null
+                  ? Image.network(
+                      imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: FaIcon(FontAwesomeIcons.user, size: 50, color: Colors.grey),
-                          ),
-                        );
-                      },
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: FaIcon(FontAwesomeIcons.user, size: 50, color: Colors.grey),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: FaIcon(FontAwesomeIcons.user, size: 50, color: Colors.grey),
+                      ),
                     ),
-                  ),
-                ),
-              ),
+              
 
               // Navigation zones overlay (only visible when there are multiple images)
               if (_images.length > 1)

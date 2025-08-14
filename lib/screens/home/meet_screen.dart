@@ -1,11 +1,11 @@
 import 'dart:ui';
 import 'package:connecta/models/user_model.dart';
-import 'package:connecta/screens/home/widgets/user_card.dart';
-import 'package:connecta/screens/home/widgets/view_header.dart'; // Add this import
+import 'package:connecta/screens/home/widgets/interactive_user_card.dart';
+import 'package:connecta/screens/home/widgets/view_header.dart';
 import 'package:connecta/services/match_service.dart';
-import 'package:connecta/screens/home/widgets/action_buttons.dart';
+import 'package:connecta/services/like_service.dart';
+import 'package:connecta/screens/home/widgets/action_buttons_row.dart';
 import 'package:connecta/screens/home/widgets/compact_user_card.dart';
-import 'package:connecta/screens/home/widgets/feedback_overlay.dart';
 import 'package:connecta/screens/home/widgets/filter_panel.dart';
 import 'package:connecta/screens/home/widgets/more_options_item.dart';
 import 'package:connecta/screens/home/widgets/profile_image_carousel.dart';
@@ -17,8 +17,6 @@ import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../models/match_score_model.dart';
-
 class MeetScreen extends StatefulWidget {
   const MeetScreen({super.key});
 
@@ -27,18 +25,20 @@ class MeetScreen extends StatefulWidget {
 }
 
 class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
-  final CardSwiperController _swiperController = CardSwiperController();
-  final List<UserModelInfo> _users = [];
-  final List<UserModelInfo> _filteredUsers = [];
-  bool _showLikeFeedback = false;
-  bool _showDislikeFeedback = false;
-  bool _showSuperLikeFeedback = false;
+  late CardSwiperController _swiperController;
+  List<UserModelInfo> _users = [];
+  List<UserModelInfo> _filteredUsers = [];
+  int _currentCardIndex = 0;
   bool _isGridView = false;
-  bool _showFilters = false;
   bool _isLoading = true;
   String? _errorMessage;
   String? _currentUserId;
-  int _currentCardIndex = 0; // Track current card index manually
+  
+  // Add these missing variables:
+  bool _showFilters = false;
+  bool _showLikeFeedback = false;
+  bool _showDislikeFeedback = false;
+  bool _showSuperLikeFeedback = false;
 
   // Animation controllers
   late AnimationController _feedbackController;
@@ -55,6 +55,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    _swiperController = CardSwiperController();
     _feedbackController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -71,17 +72,16 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
       (matches) {
         print('📊 MeetScreen: Received ${matches.length} matches from stream');
         matches.forEach((match) {
-          // Fix: Use correct property names for UserModelInfo
           print('   🎯 Match: ${match.username} (${match.id}) - Age: ${match.age}');
         });
         
         if (mounted) {
           setState(() {
             _users.clear();
-            _users.addAll(matches);  // Remove the incorrect casting
+            _users.addAll(matches);
             _isLoading = false;
             _errorMessage = null;
-            _currentCardIndex = 0; // Reset index when new users load
+            _currentCardIndex = 0;
           });
           print('✅ MeetScreen: State updated with ${_users.length} users');
           _applyFilters();
@@ -178,15 +178,39 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     HapticFeedback.lightImpact();
     
     final user = currentUsers[_currentCardIndex];
-    final success = await MatchService.recordInteraction(
-      toUserId: user.id,
-      type: InteractionType.like,
-    );
+    print('👍 Handling like for user: ${user.username} (${user.id})');
+    
+    // Send like using LikeService
+    final success = await LikeService.sendLike(user.id, LikeType.like);
     
     if (success) {
       _showFeedback('LIKE', Colors.green, FontAwesomeIcons.heart);
+      
+      // Check if it's a match
+      final isMatch = await LikeService.isMatch(user.id);
+      if (isMatch) {
+        _showMatchDialog(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.favorite, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Liked ${user.username}!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Liked ${user.username}!')),
+        const SnackBar(
+          content: Text('Failed to send like. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
     
@@ -194,19 +218,13 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
   }
 
   /// Handle dislike action
-  void _handleDislike() async {
+  void _handleDislike() {
     final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
     if (currentUsers.isEmpty || _currentCardIndex >= currentUsers.length) return;
     
     HapticFeedback.lightImpact();
     
-    final user = currentUsers[_currentCardIndex];
-    await MatchService.recordInteraction(
-      toUserId: user.id,
-      type: InteractionType.dislike,
-    );
     _showFeedback('NOPE', Colors.red, FontAwesomeIcons.heartCrack);
-    
     _swiperController.swipe(CardSwiperDirection.left);
   }
 
@@ -218,24 +236,38 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     HapticFeedback.mediumImpact();
     
     final user = currentUsers[_currentCardIndex];
-    final success = await MatchService.recordInteraction(
-      toUserId: user.id,
-      type: InteractionType.superLike,
-    );
+    print('⭐ Handling super like for user: ${user.username} (${user.id})');
+    
+    // Send super like using LikeService
+    final success = await LikeService.sendLike(user.id, LikeType.superLike);
     
     if (success) {
       _showFeedback('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
-              const SizedBox(width: 8),
-              Text('Super Liked ${user.username}!'),
-            ],
+      
+      // Check if it's a match
+      final isMatch = await LikeService.isMatch(user.id);
+      if (isMatch) {
+        _showMatchDialog(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Super Liked ${user.username}!'),
+              ],
+            ),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 2),
           ),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to send super like. Please try again.'),
+          backgroundColor: Colors.red,
         ),
       );
     }
@@ -243,136 +275,338 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     _swiperController.swipe(CardSwiperDirection.top);
   }
 
-  /// Handle undo action
-  void _handleUndo() {
-    HapticFeedback.lightImpact();
-    try {
-      _swiperController.undo();
-      // Decrease the current index when undoing
-      if (_currentCardIndex > 0) {
-        setState(() {
-          _currentCardIndex--;
-        });
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
+  /// Handle love action
+  void _handleLove() async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (currentUsers.isEmpty || _currentCardIndex >= currentUsers.length) return;
+    
+    HapticFeedback.mediumImpact();
+    
+    final user = currentUsers[_currentCardIndex];
+    print('❤️ Handling love for user: ${user.username} (${user.id})');
+    
+    // Send love using LikeService
+    final success = await LikeService.sendLike(user.id, LikeType.love);
+    
+    if (success) {
+      _showFeedback('LOVE', Colors.pink, FontAwesomeIcons.heart);
+      
+      // Check if it's a match
+      final isMatch = await LikeService.isMatch(user.id);
+      if (isMatch) {
+        _showMatchDialog(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const FaIcon(FontAwesomeIcons.rotateLeft, color: Colors.white, size: 16),
+                const FaIcon(FontAwesomeIcons.heart, color: Colors.white, size: 16),
                 const SizedBox(width: 8),
-                Text(AppText.returnUndo),
+                Text('Loved ${user.username}!'),
               ],
             ),
-            backgroundColor: Colors.amber,
-            duration: const Duration(seconds: 1),
-          ));
+            backgroundColor: Colors.pink,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to send love. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+    
+    _swiperController.swipe(CardSwiperDirection.right);
+  }
 
-      } catch (e) {
+  /// Show match dialog when users match each other
+  void _showMatchDialog(UserModelInfo matchedUser) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.pink.shade50,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Colors.pink,
+                shape: BoxShape.circle,
+              ),
+              child: const FaIcon(
+                FontAwesomeIcons.heart,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'It\'s a Match!',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.pink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You and ${matchedUser.username} liked each other!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.pink.shade700,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Keep Swiping'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // Navigate to chat or show coming soon
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Chat feature coming soon!')),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Say Hi!'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Remove user after interaction (immediate UI feedback)
+  void _removeUserAfterInteraction(String userId) {
+    setState(() {
+      _users.removeWhere((user) => user.id == userId);
+      _filteredUsers.removeWhere((user) => user.id == userId);
+    });
+  }
+
+  /// Remove user from grid view
+  void _removeUserFromGrid(UserModelInfo user) {
+    setState(() {
+      _users.remove(user);
+      _filteredUsers.remove(user);
+    });
+  }
+
+  /// Handle interactions from modal
+  void _handleInteractionFromModal(String userId, LikeType likeType) async {
+    // Remove user immediately for better UX
+    _removeUserAfterInteraction(userId);
+    
+    final success = await LikeService.sendLike(userId, likeType);
+    
+    if (success && mounted) {
+      print('✅ Modal: ${likeType.name} sent to $userId');
+      
+      final user = _users.firstWhere((u) => u.id == userId, orElse: () => UserModelInfo(
+        id: userId,
+        username: 'Unknown',
+        email: '',
+        profileImageUrl: '',
+        age: 0,
+        gender: '',
+        location: '',
+        bio: '',
+        interests: [],
+        hobbies: [],
+        dealBreakers: [],
+        isVerified: false,
+        subscription: UserSubscription(),
+        isOnline: false,
+        socialMediaLinks: [],
+        // Remove lastSeen parameter - it doesn't exist in UserModelInfo
+        //createdAt: DateTime.now(),
+       // matchScore: 0.0,
+      ));
+      
+      // Check for match for positive interactions
+      if ([LikeType.like, LikeType.superLike, LikeType.love].contains(likeType)) {
+        final isMatch = await LikeService.isMatch(userId);
+        if (isMatch) {
+          _showMatchDialog(user);
+          return;
+        }
+      }
+      
+      // Show success message
+      String message;
+      Color color;
+      switch (likeType) {
+        case LikeType.like:
+          message = 'Liked user!';
+          color = Colors.green;
+          break;
+        case LikeType.superLike:
+          message = 'Super Liked user!';
+          color = Colors.blue;
+          break;
+        case LikeType.love:
+          message = 'Loved user!';
+          color = Colors.pink;
+          break;
+        case LikeType.dislike:
+          message = 'Passed on user';
+          color = Colors.orange;
+          break;
+        default:
+          message = 'Action completed';
+          color = Colors.grey;
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+        ),
+      );
+    }
+  }
+
+  /// Grid view interaction handlers
+  void _onUserLiked(int index) async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (index >= currentUsers.length) return;
+
+    final user = currentUsers[index];
+    _removeUserAfterInteraction(user.id);
+    
+    final success = await LikeService.sendLike(user.id, LikeType.like);
+    if (success && mounted) {
+      print('✅ Grid: Liked ${user.username}');
+      final isMatch = await LikeService.isMatch(user.id);
+      if (isMatch) {
+        _showMatchDialog(user);
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No more actions to undo')),
+          SnackBar(content: Text('Liked ${user.username}!')),
         );
       }
     }
-
-  void _showFeedback(String text, Color color, IconData icon) {
-    setState(() {
-      _showLikeFeedback = text == 'LIKE';
-      _showDislikeFeedback = text == 'NOPE';
-      _showSuperLikeFeedback = text == 'SUPER\nLIKE';
-    });
-
-    _feedbackController.forward().then((_) {
-      _feedbackController.reset();
-      setState(() {
-        _showLikeFeedback = false;
-        _showDislikeFeedback = false;
-        _showSuperLikeFeedback = false;
-      });
-    });
   }
 
-  bool _onSwipe(int previousIndex, int? currentIndex, CardSwiperDirection direction) {
-    HapticFeedback.selectionClick();
-
-    // Update our manual index tracking
-    setState(() {
-      _currentCardIndex = currentIndex ?? _currentCardIndex + 1;
-    });
-
+  void _onUserSuperLiked(int index) async {
     final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
-    if (previousIndex >= currentUsers.length) return true;
+    if (index >= currentUsers.length) return;
 
-    final user = currentUsers[previousIndex];
-
-    // Handle different swipe directions
-    switch (direction) {
-      case CardSwiperDirection.left:
-        MatchService.recordInteraction(
-          toUserId: user.id,
-          type: InteractionType.dislike,
-        );
-        _showFeedback('NOPE', Colors.red, FontAwesomeIcons.heartCrack);
-        break;
-      case CardSwiperDirection.right:
-        MatchService.recordInteraction(
-          toUserId: user.id,
-          type: InteractionType.like,
-        ).then((success) {
-          if (success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Liked ${user.username}!')),
-            );
-          }
-        });
-        _showFeedback('LIKE', Colors.green, FontAwesomeIcons.heart);
-        break;
-      case CardSwiperDirection.top:
-        MatchService.recordInteraction(
-          toUserId: user.id,
-          type: InteractionType.superLike,
-        ).then((success) {
-          if (success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    Text('Super Liked ${user.username}!'),
-                  ],
-                ),
-                backgroundColor: Colors.blue,
-              ),
-            );
-          }
-        });
-        _showFeedback('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star);
-        break;
-      case CardSwiperDirection.bottom:
+    final user = currentUsers[index];
+    _removeUserAfterInteraction(user.id);
+    
+    final success = await LikeService.sendLike(user.id, LikeType.superLike);
+    if (success && mounted) {
+      print('⭐ Grid: Super Liked ${user.username}');
+      final isMatch = await LikeService.isMatch(user.id);
+      if (isMatch) {
+        _showMatchDialog(user);
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppText.comingSoon)),
+          SnackBar(
+            content: Row(
+              children: [
+                const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Super Liked ${user.username}!'),
+              ],
+            ),
+            backgroundColor: Colors.blue,
+          ),
         );
-        break;
-      case CardSwiperDirection.none:
-        break;
+      }
     }
-
-    return true;
   }
 
-  //grid view tabs
+  void _onUserLoved(int index) async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (index >= currentUsers.length) return;
+
+    final user = currentUsers[index];
+    _removeUserAfterInteraction(user.id);
+    
+    final success = await LikeService.sendLike(user.id, LikeType.love);
+    if (success && mounted) {
+      print('💖 Grid: Loved ${user.username}');
+      final isMatch = await LikeService.isMatch(user.id);
+      if (isMatch) {
+        _showMatchDialog(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const FaIcon(FontAwesomeIcons.heart, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Loved ${user.username}!'),
+              ],
+            ),
+            backgroundColor: Colors.pink,
+          ),
+        );
+      }
+    }
+  }
+
+  void _onUserDisliked(int index) async {
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    if (index >= currentUsers.length) return;
+
+    final user = currentUsers[index];
+    _removeUserAfterInteraction(user.id);
+    
+    final success = await LikeService.sendLike(user.id, LikeType.dislike);
+    if (success && mounted) {
+      print('👎 Grid: Disliked ${user.username}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Passed on ${user.username}'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
+  void _onUserUndo(int index) async {
+    // Implement undo functionality if needed
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Undo feature coming soon!'),
+        backgroundColor: Colors.amber,
+      ),
+    );
+  }
+
   Widget _buildGridView(List<UserModelInfo> users) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.68, // Slightly taller to accommodate controls
+        childAspectRatio: 0.6,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
       itemCount: users.length,
       itemBuilder: (context, index) {
-        final user = users[index];
         return CompactUserCard(
           user: users[index],
           index: index,
@@ -380,21 +614,26 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
           onDislike: () => _onUserDisliked(index),
           onSuperLike: () => _onUserSuperLiked(index),
           onLike: () => _onUserLiked(index),
+          onLove: () => _onUserLoved(index),
           onMoreOptions: () => _showMoreOptions(users[index], index),
+          onUndo: () => _handleUndo(),
         );
-        ;
       },
     );
   }
 
   Widget _buildCardView(List<UserModelInfo> users) {
+    if (users.isEmpty) {
+      return _buildEmptyState();
+    }
+
     return CardSwiper(
       controller: _swiperController,
       cardsCount: users.length,
       onSwipe: _onSwipe,
       numberOfCardsDisplayed: 3,
       backCardOffset: const Offset(0, 40),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 120),
       allowedSwipeDirection: const AllowedSwipeDirection.only(
         left: true,
         right: true,
@@ -402,6 +641,8 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
         down: false,
       ),
       cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
+        if (index >= users.length) return const SizedBox.shrink();
+        
         return Stack(
           children: [
             UserCard(
@@ -409,7 +650,6 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
               currentUserId: _currentUserId,
             ),
 
-            // Swipe direction indicators
             if (percentThresholdX > 0.1) // Swiping right (like)
               Positioned(
                 top: 50,
@@ -532,63 +772,23 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
         user: user,
         profileImagesCarouselBuilder: (u) => ProfileImagesCarousel(user: u),
         interestChipBuilder: _buildInterestChip,
-        onDislike: _handleDislike,
-        onSuperLike: _handleSuperLike,
-        onLike: _handleLike,
-        onBoost: () {
-          HapticFeedback.mediumImpact();
+        onDislike: () => _handleInteractionFromModal(user.id, LikeType.dislike),
+        onSuperLike: () => _handleInteractionFromModal(user.id, LikeType.superLike),
+        onLike: () => _handleInteractionFromModal(user.id, LikeType.like),
+        onBoost: () => _handleInteractionFromModal(user.id, LikeType.love),
+        onUndo: () {
+          // Implement undo functionality
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Boost sent!')),
+            const SnackBar(
+              content: Text('Undo feature coming soon!'),
+              backgroundColor: Colors.amber,
+            ),
           );
         },
       ),
     );
   }
 
-  void _onUserLiked(int index) async {
-    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
-    if (index < currentUsers.length) {
-      final user = currentUsers[index];
-      await MatchService.recordInteraction(
-        toUserId: user.id,
-        type: InteractionType.like,
-      );
-      print('Liked: ${user.username}');
-    }
-  }
-
-  void _onUserDisliked(int index) async {
-    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
-    if (index < currentUsers.length) {
-      final user = currentUsers[index];
-      await MatchService.recordInteraction(
-        toUserId: user.id,
-        type: InteractionType.dislike,
-      );
-      print('Disliked: ${user.username}');
-    }
-  }
-
-  void _onUserSuperLiked(int index) async {
-    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
-    if (index < currentUsers.length) {
-      final user = currentUsers[index];
-      await MatchService.recordInteraction(
-        toUserId: user.id,
-        type: InteractionType.superLike,
-      );
-      print('Super Liked: ${user.username}');
-    }
-  }
-
-  void _removeUserFromGrid(UserModelInfo user) {
-    setState(() {
-      _users.remove(user);
-      _filteredUsers.remove(user);
-    });
-  }
-
-  //grid view details of user
   void _showMoreOptions(UserModelInfo user, int index) {
     showModalBottomSheet(
       context: context,
@@ -648,7 +848,6 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
                   color: const Color(0xFF6B7280),
                   onTap: () {
                     Navigator.pop(context);
-                    // Fixed: removed the incorrect casting
                     _removeUserFromGrid(user);
                   },
                 ),
@@ -687,7 +886,6 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     );
   }
 
-  //grid view interest chips
   Widget _buildInterestChip(String interest, ThemeData theme) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -766,116 +964,346 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bool filtersActive = _ageRange.start != 18 || _ageRange.end != 35 ||
-        _selectedGender != 'Everyone' ||
-        _selectedLocation != 'All Locations' ||
-        _onlineOnly ||
-        _selectedInterests.isNotEmpty;
+  /// Show visual feedback when swiping
+  void _showFeedback(String text, Color color, IconData icon) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FaIcon(icon, color: Colors.white, size: 16),
+            const SizedBox(width: 8),
+            Text(text),
+          ],
+        ),
+        backgroundColor: color,
+        duration: const Duration(milliseconds: 800),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 100, left: 50, right: 50),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+    );
+  }
 
-    final List<UserModelInfo> currentUsers = filtersActive ? _filteredUsers : _users;
-
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(_errorMessage!),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _setupRealtimeMatches,
-                child: const Text('Retry'),
-              ),
-            ],
+  /// Handle undo action
+  void _handleUndo() {
+    HapticFeedback.lightImpact();
+    
+    if (_currentCardIndex > 0) {
+      try {
+        _swiperController.undo();
+        print('🔄 Undo last swipe');
+        
+        setState(() {
+          _currentCardIndex = _currentCardIndex - 1;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.undo, color: Colors.white, size: 16),
+                SizedBox(width: 8),
+                Text('Undid last action'),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(milliseconds: 800),
+            behavior: SnackBarBehavior.floating,
           ),
+        );
+      } catch (e) {
+        print('❌ Undo failed: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nothing to undo'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nothing to undo'),
+          duration: Duration(seconds: 1),
         ),
       );
     }
+  }
+
+  /// Handle swipe events from CardSwiper
+  bool _onSwipe(int previousIndex, int? currentIndex, CardSwiperDirection direction) {
+    print('🔄 Swipe detected: direction=$direction, previousIndex=$previousIndex, currentIndex=$currentIndex');
+    
+    HapticFeedback.selectionClick();
+
+    setState(() {
+      _currentCardIndex = currentIndex ?? (_currentCardIndex + 1);
+    });
+
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
+    
+    if (previousIndex < 0 || previousIndex >= currentUsers.length) {
+      print('❌ Invalid previousIndex: $previousIndex (length: ${currentUsers.length})');
+      return true;
+    }
+
+    final user = currentUsers[previousIndex];
+    print('👤 Processing swipe for user: ${user.username} (${user.id})');
+
+    switch (direction) {
+      case CardSwiperDirection.left:
+        print('👈 Left swipe (dislike)');
+        _showFeedback('NOPE', Colors.red, FontAwesomeIcons.heartCrack);
+        LikeService.sendLike(user.id, LikeType.dislike);
+        break;
+        
+      case CardSwiperDirection.right:
+        print('👉 Right swipe (like)');
+        _showFeedback('LIKE', Colors.green, FontAwesomeIcons.heart);
+        LikeService.sendLike(user.id, LikeType.like).then((success) async {
+          if (success && mounted) {
+            print('✅ Like sent successfully');
+            final isMatch = await LikeService.isMatch(user.id);
+            if (isMatch && mounted) {
+              print('💖 It\'s a match!');
+              _showMatchDialog(user);
+            } else if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Liked ${user.username}!'),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            }
+          } else if (mounted) {
+            print('❌ Failed to send like');
+          }
+        });
+        break;
+        
+      case CardSwiperDirection.top:
+        print('👆 Top swipe (super like)');
+        _showFeedback('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star);
+        LikeService.sendLike(user.id, LikeType.superLike).then((success) async {
+          if (success && mounted) {
+            print('⭐ Super like sent successfully');
+            final isMatch = await LikeService.isMatch(user.id);
+            if (isMatch && mounted) {
+              print('💖 It\'s a match!');
+              _showMatchDialog(user);
+            } else if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const FaIcon(FontAwesomeIcons.star, color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      Text('Super Liked ${user.username}!'),
+                    ],
+                  ),
+                  backgroundColor: Colors.blue,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+          } else if (mounted) {
+            print('❌ Failed to send super like');
+          }
+        });
+        break;
+        
+      case CardSwiperDirection.bottom:
+        print('👇 Bottom swipe (coming soon)');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppText.comingSoon)),
+        );
+        break;
+        
+      case CardSwiperDirection.none:
+        print('🚫 No swipe direction');
+        break;
+    }
+
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final currentUsers = _filteredUsers.isNotEmpty ? _filteredUsers : _users;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Column(
-        children: [
-          // Header with view toggle and filters
-          ViewHeader(
-            isGridView: _isGridView,
-            showFilters: _showFilters,
-            onToggleFilters: () => setState(() => _showFilters = !_showFilters),
-            onSwitchToGrid: () => setState(() => _isGridView = true),
-            onSwitchToCard: () => setState(() => _isGridView = false),
-          ),
-
-          // Filter options (shown when _showFilters is true)
-          if (_showFilters)FiltersPanel(
-            onFiltersChanged: ({
-              required ageRange,
-              required distance,
-              required gender,
-              required location,
-              required onlineOnly,
-              required interests,
-            }) {
-              setState(() {
-                _ageRange = ageRange;
-                _distance = distance;
-                _selectedGender = gender;
-                _selectedLocation = location;
-                _onlineOnly = onlineOnly;
-                _selectedInterests = interests;
-              });
-              _applyFilters();
-            },
-          ),
-
-
-          // Main content area
-          Expanded(
-            child: Stack(
+      body: SafeArea(
+        child: Stack( // Changed from Column to Stack for better z-index control
+          children: [
+            Column(
               children: [
-                // Main view area
-                Positioned.fill(
-                  child: currentUsers.isEmpty
-                      ? _buildEmptyState()
-                      : _isGridView
-                      ? _buildGridView(currentUsers)
-                      : _buildCardView(currentUsers),
+                // Header with view toggle
+                ViewHeader(
+                  isGridView: _isGridView,
+                  showFilters: _showFilters,
+                  onToggleFilters: () {
+                    setState(() {
+                      _showFilters = !_showFilters;
+                    });
+                  },
+                  onSwitchToGrid: () {
+                    setState(() {
+                      _isGridView = true;
+                    });
+                  },
+                  onSwitchToCard: () {
+                    setState(() {
+                      _isGridView = false;
+                    });
+                  },
                 ),
 
-                // Feedback overlays with animations (only for card view)
-                if (!_isGridView && _showLikeFeedback) FeedbackOverlay('LIKE', Colors.green, FontAwesomeIcons.heart),
-                if (!_isGridView && _showDislikeFeedback) FeedbackOverlay('NOPE', Colors.red, FontAwesomeIcons.heartCrack),
-                if (!_isGridView && _showSuperLikeFeedback) FeedbackOverlay('SUPER\nLIKE', Colors.blue, FontAwesomeIcons.star),
-
-                // Action buttons (only for card view)
-                if (!_isGridView) Positioned(
-                  bottom: 50,
-                  left: 0,
-                  right: 0,
-                  child: ActionButtonsRow(
-                    onUndo: _handleUndo,
-                    onDislike: _handleDislike,
-                    onSuperLike: _handleSuperLike,
-                    onLike: _handleLike,
-                    onBoost: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(AppText.love)),
-                      );
-                    },
+                // Filter panel (if visible)
+                if (_showFilters)
+                  SingleChildScrollView(
+                    child: FilterPanel(
+                      ageRange: _ageRange,
+                      distance: _distance,
+                      selectedGender: _selectedGender,
+                      selectedLocation: _selectedLocation,
+                      selectedInterests: _selectedInterests,
+                      onlineOnly: _onlineOnly,
+                      onAgeRangeChanged: (range) {
+                        setState(() {
+                          _ageRange = range;
+                        });
+                        _applyFilters();
+                      },
+                      onDistanceChanged: (distance) {
+                        setState(() {
+                          _distance = distance;
+                        });
+                        _applyFilters();
+                      },
+                      onGenderChanged: (gender) {
+                        setState(() {
+                          _selectedGender = gender;
+                        });
+                        _applyFilters();
+                      },
+                      onLocationChanged: (location) {
+                        setState(() {
+                          _selectedLocation = location;
+                        });
+                        _applyFilters();
+                      },
+                      onInterestsChanged: (interests) {
+                        setState(() {
+                          _selectedInterests = interests;
+                        });
+                        _applyFilters();
+                      },
+                      onOnlineOnlyChanged: (onlineOnly) {
+                        setState(() {
+                          _onlineOnly = onlineOnly;
+                        });
+                        _applyFilters();
+                      },
+                      onReset: () {
+                        setState(() {
+                          _ageRange = const RangeValues(18, 35);
+                          _distance = 50.0;
+                          _selectedGender = 'Everyone';
+                          _selectedLocation = 'All Locations';
+                          _selectedInterests.clear();
+                          _onlineOnly = false;
+                        });
+                        _applyFilters();
+                      },
+                    ),
                   ),
+
+                // Main content area
+                Expanded(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _errorMessage != null
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 64,
+                                    color: theme.colorScheme.error,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Oops! Something went wrong',
+                                    style: theme.textTheme.headlineMedium,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _errorMessage!,
+                                    style: theme.textTheme.bodyMedium,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _isLoading = true;
+                                        _errorMessage = null;
+                                      });
+                                      _setupRealtimeMatches();
+                                    },
+                                    child: const Text('Try Again'),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : _isGridView
+                              ? _buildGridView(currentUsers)
+                              : _buildCardView(currentUsers),
                 ),
               ],
             ),
-          ),
-        ],
+
+            // Action buttons (only show in card view) - positioned above everything with highest z-index
+            if (!_isGridView && currentUsers.isNotEmpty)
+              Positioned(
+                bottom: 2, // Add more space from the bottom
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(30),
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 18,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ActionButtonsRow(
+                      onUndo: _handleUndo,
+                      onDislike: _handleDislike,
+                      onSuperLike: _handleSuperLike,
+                      onLike: _handleLike,
+                      onBoost: _handleLove,
+                      iconSize: 32, // Pass a smaller icon size
+                      buttonSize: 54, // Pass a smaller button size
+                      spacing: 18, // Add spacing between buttons
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

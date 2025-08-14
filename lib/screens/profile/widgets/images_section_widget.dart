@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:connecta/functions/update_database.dart';
+import 'package:connecta/services/update_database.dart';
 
 class ImagesSectionWidget extends StatefulWidget {
   final List<String> profileImages;

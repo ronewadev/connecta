@@ -248,7 +248,7 @@ class UserModelInfo {
       username: map['username'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'],
-      currentCity: map['city'], //not submitting anything
+      currentCity: map['city'],
       age: map['age'] ?? 18,
       gender: map['gender'] ?? 'Not specified',
       nationality: map['nationality'] ?? 'Not specified',

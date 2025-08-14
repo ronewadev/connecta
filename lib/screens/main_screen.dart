@@ -33,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),         // 0: Home (Meet/Call)
     const LiveScreen(),         // 1: Live
     const ChatScreen(),         // 2: Chat
-    const LikesScreen(likedByUserIds: [], superLikedByUserIds: [], lovedByUserIds: [],),      // 3: Likes
+    const LikesScreen(),      // 3: Likes
     const SubscriptionScreen(),        // 4: Plans
   ];
 

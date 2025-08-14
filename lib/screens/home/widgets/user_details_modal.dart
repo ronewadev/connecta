@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter/services.dart';
 import '../../../models/user_model.dart';
-import 'action_button.dart';
 
 class UserDetailModal extends StatelessWidget {
   final UserModelInfo user;
-
   final Widget Function(UserModelInfo) profileImagesCarouselBuilder;
   final Widget Function(String, ThemeData) interestChipBuilder;
-
   final VoidCallback onDislike;
   final VoidCallback onSuperLike;
   final VoidCallback onLike;
-  final VoidCallback onBoost;
+  final VoidCallback onBoost; // This will be the love action
+  final VoidCallback? onUndo; // Add undo action
 
   const UserDetailModal({
     Key? key,
@@ -23,6 +22,7 @@ class UserDetailModal extends StatelessWidget {
     required this.onSuperLike,
     required this.onLike,
     required this.onBoost,
+    this.onUndo,
   }) : super(key: key);
 
   @override
@@ -49,8 +49,17 @@ class UserDetailModal extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: Container(width: 120,height: 5, decoration: BoxDecoration(borderRadius: BorderRadius.circular(30),color: Colors.grey.withAlpha(70)),),),
-                    SizedBox(height: 10,),
+                    Center(
+                      child: Container(
+                        width: 120,
+                        height: 5, 
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          color: Colors.grey.withAlpha(70),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     profileImagesCarouselBuilder(user),
                     Padding(
                       padding: const EdgeInsets.all(20),
@@ -86,8 +95,8 @@ class UserDetailModal extends StatelessWidget {
                             spacing: 12,
                             runSpacing: 12,
                             children: user.hobbies
-                                ?.map((interest) =>
-                                interestChipBuilder(interest, theme))
+                                ?.map((hobby) =>
+                                interestChipBuilder(hobby, theme))
                                 .toList() ??
                                 [],
                           ),
@@ -98,23 +107,11 @@ class UserDetailModal extends StatelessWidget {
                             spacing: 12,
                             runSpacing: 12,
                             children: user.dealBreakers
-                                ?.map((interest) =>
-                                interestChipBuilder(interest, theme))
+                                ?.map((dealBreaker) =>
+                                interestChipBuilder(dealBreaker, theme))
                                 .toList() ??
                                 [],
                           ),
-                          const SizedBox(height: 20),
-                          _buildSectionTitle('Interests', theme),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: user.interests
-                                ?.map((interest) =>
-                                interestChipBuilder(interest, theme))
-                                .toList() ??
-                                [],
-                          )
                         ],
                       ),
                     ),
@@ -123,8 +120,8 @@ class UserDetailModal extends StatelessWidget {
               ),
             ),
 
-            _buildActionButtons(theme, context),
-            SizedBox(height: 30,)
+            _buildEnhancedActionButtons(theme, context),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -189,9 +186,9 @@ class UserDetailModal extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(ThemeData theme, BuildContext context) {
+  Widget _buildEnhancedActionButtons(ThemeData theme, BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       decoration: BoxDecoration(
         color: theme.cardColor,
         boxShadow: [
@@ -202,43 +199,100 @@ class UserDetailModal extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      child: Column(
         children: [
-          ActionButton(
-            icon: FontAwesomeIcons.xmark,
-            color: Colors.red,
-            onPressed: () {
-              Navigator.pop(context);
-              onDislike();
-            },
+          // Main action buttons row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Dislike Button
+              _buildActionButton(
+                icon: FontAwesomeIcons.xmark,
+                color: Colors.red,
+                size: 50,
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.pop(context);
+                  onDislike();
+                },
+              ),
+              
+              // Super Like Button (bigger)
+              _buildActionButton(
+                icon: FontAwesomeIcons.star,
+                color: Colors.blue,
+                size: 65,
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  Navigator.pop(context);
+                  onSuperLike();
+                },
+              ),
+              
+              // Like Button
+              _buildActionButton(
+                icon: FontAwesomeIcons.heart,
+                color: Colors.green,
+                size: 50,
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.pop(context);
+                  onLike();
+                },
+              ),
+              
+              // Love Button (boost)
+              _buildActionButton(
+                icon: FontAwesomeIcons.bolt,
+                color: Colors.purple,
+                size: 50,
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  Navigator.pop(context);
+                  onBoost();
+                },
+              ),
+            ],
           ),
-          ActionButton(
-            icon: FontAwesomeIcons.star,
-            color: Colors.blue,
-            size: 65, // big like the main view
-            onPressed: () {
-              Navigator.pop(context);
-              onSuperLike();
-            },
-          ),
-          ActionButton(
-            icon: FontAwesomeIcons.heart,
-            color: Colors.green,
-            onPressed: () {
-              Navigator.pop(context);
-              onLike();
-            },
-          ),
-          ActionButton(
-            icon: FontAwesomeIcons.bolt,
-            color: Colors.purple,
-            onPressed: () {
-              Navigator.pop(context);
-              onBoost();
-            },
+
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required double size,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(size / 2),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(size / 2),
+          onTap: onPressed,
+          child: Center(
+            child: FaIcon(
+              icon,
+              color: color,
+              size: size * 0.4,
+            ),
+          ),
+        ),
       ),
     );
   }

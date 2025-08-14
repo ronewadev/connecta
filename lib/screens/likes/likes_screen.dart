@@ -5,18 +5,10 @@ import 'package:connecta/models/user_model.dart';
 import 'package:connecta/utils/text_strings.dart';
 import 'package:connecta/widgets/custom_button.dart';
 import 'package:connecta/screens/plans/subscription_screen.dart';
+import 'package:connecta/services/like_service.dart'; // Add this import
 
 class LikesScreen extends StatefulWidget {
-  final List<String> likedByUserIds;
-  final List<String> superLikedByUserIds;
-  final List<String> lovedByUserIds;
-
-  const LikesScreen({
-    Key? key,
-    required this.likedByUserIds,
-    required this.superLikedByUserIds,
-    required this.lovedByUserIds,
-  }) : super(key: key);
+  const LikesScreen({Key? key}) : super(key: key);
 
   @override
   State<LikesScreen> createState() => _LikesScreenState();
@@ -28,16 +20,17 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
   List<UserModelInfo> allUsers = [];
   bool isLoading = true;
   String? errorMessage;
+  
+  // Real-time like data
+  List<String> likedByUserIds = [];
+  List<String> superLikedByUserIds = [];
+  List<String> lovedByUserIds = [];
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
-    _fetchUsers();
-    debugPrint('Initializing LikesScreen with data:');
-    debugPrint('Likes: ${widget.likedByUserIds}');
-    debugPrint('SuperLikes: ${widget.superLikedByUserIds}');
-    debugPrint('Loves: ${widget.lovedByUserIds}');
+    _setupLikesStream(); // Use stream instead of static data
   }
 
   void _setupAnimations() {
@@ -53,13 +46,45 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
     );
   }
 
+  /// Set up real-time likes stream
+  void _setupLikesStream() {
+    print('📊 Setting up likes stream...');
+    
+    LikeService.getMyLikesStream().listen(
+      (likesData) {
+        print('📊 Received likes data:');
+        print('   👍 Likes: ${likesData['likesMe']?.length ?? 0}');
+        print('   ⭐ Super Likes: ${likesData['superLikesMe']?.length ?? 0}');
+        print('   ❤️ Loves: ${likesData['lovesMe']?.length ?? 0}');
+        
+        if (mounted) {
+          setState(() {
+            likedByUserIds = likesData['likesMe'] ?? [];
+            superLikedByUserIds = likesData['superLikesMe'] ?? [];
+            lovedByUserIds = likesData['lovesMe'] ?? [];
+          });
+          _fetchUsers();
+        }
+      },
+      onError: (error) {
+        print('💥 Likes stream error: $error');
+        if (mounted) {
+          setState(() {
+            errorMessage = 'Failed to load likes. Please try again.';
+            isLoading = false;
+          });
+        }
+      },
+    );
+  }
+
   Future<void> _fetchUsers() async {
     try {
       debugPrint('Fetching users...');
       final allUserIds = [
-        ...widget.likedByUserIds,
-        ...widget.superLikedByUserIds,
-        ...widget.lovedByUserIds,
+        ...likedByUserIds,
+        ...superLikedByUserIds,
+        ...lovedByUserIds,
       ].toSet().toList();
 
       debugPrint('Combined unique user IDs: $allUserIds');
@@ -67,6 +92,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
       if (allUserIds.isEmpty) {
         debugPrint('No user IDs found in any like arrays');
         setState(() {
+          allUsers.clear();
           isLoading = false;
         });
         return;
@@ -87,6 +113,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
       setState(() {
         allUsers = users;
         isLoading = false;
+        errorMessage = null; // Clear any previous errors
       });
     } catch (e) {
       debugPrint('Error fetching users: $e');
@@ -98,15 +125,15 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
   }
 
   bool _isSuperLiked(String userId) {
-    return widget.superLikedByUserIds.contains(userId);
+    return superLikedByUserIds.contains(userId);
   }
 
   bool _isLoved(String userId) {
-    return widget.lovedByUserIds.contains(userId);
+    return lovedByUserIds.contains(userId);
   }
 
   bool _isLiked(String userId) {
-    return widget.likedByUserIds.contains(userId) &&
+    return likedByUserIds.contains(userId) &&
         !_isSuperLiked(userId) &&
         !_isLoved(userId);
   }
@@ -133,7 +160,13 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
             Text(errorMessage!),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _fetchUsers,
+              onPressed: () {
+                setState(() {
+                  isLoading = true;
+                  errorMessage = null;
+                });
+                _setupLikesStream();
+              },
               child: const Text('Retry'),
             ),
           ],
@@ -141,9 +174,9 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
       );
     }
 
-    final likedCount = widget.likedByUserIds.length;
-    final superLikedCount = widget.superLikedByUserIds.length;
-    final lovedCount = widget.lovedByUserIds.length;
+    final likedCount = likedByUserIds.length;
+    final superLikedCount = superLikedByUserIds.length;
+    final lovedCount = lovedByUserIds.length;
 
     return Scaffold(
       body: CustomScrollView(
@@ -225,6 +258,7 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   Container(
@@ -392,10 +426,10 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
         : FontAwesomeIcons.star;
 
     final userIndex = isSuperLike
-        ? widget.superLikedByUserIds.indexOf(user.id)
+        ? superLikedByUserIds.indexOf(user.id)
         : isLove
-        ? widget.lovedByUserIds.indexOf(user.id)
-        : widget.likedByUserIds.indexOf(user.id);
+        ? lovedByUserIds.indexOf(user.id)
+        : likedByUserIds.indexOf(user.id);
     final isBlurred = userIndex >= 2;
 
     return GestureDetector(
@@ -748,9 +782,13 @@ class _LikesScreenState extends State<LikesScreen> with TickerProviderStateMixin
                     backgroundColor: Colors.pink,
                     textColor: Colors.white,
                     icon: FontAwesomeIcons.heart,
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.pop(context);
-                      _showMatchSuccess(context, user);
+                      // Send like back using LikeService
+                      final success = await LikeService.sendLike(user.id, LikeType.like);
+                      if (success && mounted) {
+                        _showMatchSuccess(context, user);
+                      }
                     },
                   ),
                 ),

@@ -4,14 +4,14 @@ import 'package:flutter/services.dart';
 
 import 'action_button.dart';
 
-class ActionButtonsRow extends StatelessWidget {
+class ActionButtonsRow2 extends StatelessWidget {
   final VoidCallback onUndo;
   final VoidCallback onDislike;
   final VoidCallback onSuperLike;
   final VoidCallback onLike;
   final VoidCallback onBoost;
 
-  const ActionButtonsRow({
+  const ActionButtonsRow2({
     Key? key,
     required this.onUndo,
     required this.onDislike,
@@ -38,18 +38,15 @@ class ActionButtonsRow extends StatelessWidget {
             onPressed: onDislike,
           ),
           ActionButton(
-            icon: FontAwesomeIcons.heart,
-            color: Colors.green,
-            size: 65,
-            onPressed: onLike,
-          ),
-          ActionButton(
             icon: FontAwesomeIcons.star,
             color: Colors.blue,
-
             onPressed: onSuperLike,
           ),
-
+          ActionButton(
+            icon: FontAwesomeIcons.heart,
+            color: Colors.green,
+            onPressed: onLike,
+          ),
           ActionButton(
             icon: FontAwesomeIcons.bolt,
             color: Colors.purple,
