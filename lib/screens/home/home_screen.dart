@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildToggleButton(
+      _buildToggleButton(
             theme: theme,
             text: AppText.meet,
             icon: FontAwesomeIcons.fire,
