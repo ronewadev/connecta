@@ -105,7 +105,7 @@ class CompactUserCard extends StatelessWidget {
 
               // User details
               Positioned(
-                bottom: 75, // Increased to accommodate new buttons
+                bottom: 85,
                 left: 0,
                 right: 0,
                 child: _buildUserInfo(theme),

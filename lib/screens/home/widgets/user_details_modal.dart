@@ -132,7 +132,7 @@ class UserDetailModal extends StatelessWidget {
               ),
             ),
 
-            _buildEnhancedActionButtons(theme, context),
+            _buildEnhancedBottomActions(theme),
             const SizedBox(height: 30),
           ],
         ),
@@ -198,80 +198,6 @@ class UserDetailModal extends StatelessWidget {
     );
   }
 
-  Widget _buildEnhancedActionButtons(ThemeData theme, BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Main action buttons row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Dislike Button
-              _buildActionButton(
-                icon: FontAwesomeIcons.xmark,
-                color: Colors.red,
-                size: 50,
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.pop(context);
-                  onDislike();
-                },
-              ),
-              
-              // Super Like Button (bigger)
-              _buildActionButton(
-                icon: FontAwesomeIcons.star,
-                color: Colors.blue,
-                size: 65,
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  Navigator.pop(context);
-                  onSuperLike();
-                },
-              ),
-              
-              // Like Button
-              _buildActionButton(
-                icon: FontAwesomeIcons.heart,
-                color: Colors.green,
-                size: 50,
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.pop(context);
-                  onLike();
-                },
-              ),
-              
-              // Love Button (boost)
-              _buildActionButton(
-                icon: FontAwesomeIcons.bolt,
-                color: Colors.purple,
-                size: 50,
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  Navigator.pop(context);
-                  onBoost();
-                },
-              ),
-            ],
-          ),
-
-        ],
-      ),
-    );
-  }
-
   Widget _buildActionButton({
     required IconData icon,
     required Color color,
@@ -309,6 +235,132 @@ class UserDetailModal extends StatelessWidget {
     );
   }
 
+  Widget _buildEnhancedBottomActions(ThemeData theme) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(16),
+        bottomRight: Radius.circular(16),
+      ),
+      child: Container(
+        height: 75,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface.withOpacity(0.95),
+              theme.colorScheme.surface.withOpacity(0.9),
+            ],
+          ),
+          border: Border(
+            top: BorderSide(
+              color: theme.colorScheme.primary.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Top row - main actions
+            Expanded(
+              child: Row(
+                children: [
+                  // Dislike Button
+                  _buildEnhancedActionButton(
+                    icon: FontAwesomeIcons.xmark,
+                    color: Colors.red,
+                    size: 28,
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      onDislike();
+                    },
+                  ),
+                  _divider(theme),
+
+                  // Super Like Button
+                  _buildEnhancedActionButton(
+                    icon: FontAwesomeIcons.star,
+                    color: Colors.blue,
+                    size: 28,
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      onLike();
+                    },
+                  ),
+                  _divider(theme),
+
+                  // Like Button
+                  _buildEnhancedActionButton(
+                    icon: FontAwesomeIcons.heart,
+                    color: Colors.green,
+                    size: 28,
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      onBoost();
+                    },
+                  ),
+                  _divider(theme),
+
+                  // Love Button
+                  _buildEnhancedActionButton(
+                    icon: FontAwesomeIcons.bolt,
+                    color: Colors.purple,
+                    size: 28,
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      onSuperLike();
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedActionButton({
+    required IconData icon,
+    required Color color,
+    required double size,
+    required VoidCallback onPressed,
+  }) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: FaIcon(
+                    icon,
+                    color: color,
+                    size: size,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _divider(ThemeData theme) => Container(
+    width: 1,
+    height: 30,
+    color: theme.colorScheme.outline.withOpacity(0.2),
+  );
+
   Widget _getSocialMediaIcon(String link) {
     final platform = link.split(':')[0].toLowerCase();
     IconData icon;
@@ -331,33 +383,9 @@ class UserDetailModal extends StatelessWidget {
         icon = FontAwesomeIcons.tiktok;
         color = Colors.black;
         break;
-      case 'spotify':
-        icon = FontAwesomeIcons.spotify;
-        color = const Color(0xFF1DB954);
-        break;
-      case 'youtube':
-        icon = FontAwesomeIcons.youtube;
-        color = const Color(0xFFFF0000);
-        break;
-      case 'linkedin':
-        icon = FontAwesomeIcons.linkedin;
-        color = const Color(0xFF0077B5);
-        break;
       case 'twitter':
         icon = FontAwesomeIcons.twitter;
         color = const Color(0xFF1DA1F2);
-        break;
-      case 'behance':
-        icon = FontAwesomeIcons.behance;
-        color = const Color(0xFF1769FF);
-        break;
-      case 'pinterest':
-        icon = FontAwesomeIcons.pinterest;
-        color = const Color(0xFFBD081C);
-        break;
-      case 'strava':
-        icon = FontAwesomeIcons.strava;
-        color = const Color(0xFFFC4C02);
         break;
       default:
         icon = FontAwesomeIcons.link;
@@ -376,7 +404,7 @@ class UserDetailModal extends StatelessWidget {
         child: Center(
           child: FaIcon(
             icon,
-            size: 9,
+            size: 28,
             color: Colors.white,
           ),
         ),
