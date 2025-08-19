@@ -446,7 +446,96 @@ class CompactUserCard extends StatelessWidget {
     );
   }
 
+  Widget _buildSocialIconButton(IconData icon, Color color) {
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.9),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: FaIcon(icon, color: Colors.white, size: 18),
+      ),
+    );
+  }
+
   Widget _getSocialMediaIcon(String link) {
-    return const Icon(Icons.link, size: 14);
+    final platform = link.split(':')[0].toLowerCase();
+    IconData icon;
+    Color color;
+
+    switch (platform) {
+      case 'instagram':
+        icon = FontAwesomeIcons.instagram;
+        color = const Color(0xFFE4405F);
+        break;
+      case 'facebook':
+        icon = FontAwesomeIcons.facebook;
+        color = const Color(0xFF1877F2);
+        break;
+      case 'whatsapp':
+        icon = FontAwesomeIcons.whatsapp;
+        color = const Color(0xFF25D366);
+        break;
+      case 'tiktok':
+        icon = FontAwesomeIcons.tiktok;
+        color = Colors.black;
+        break;
+      case 'spotify':
+        icon = FontAwesomeIcons.spotify;
+        color = const Color(0xFF1DB954);
+        break;
+      case 'youtube':
+        icon = FontAwesomeIcons.youtube;
+        color = const Color(0xFFFF0000);
+        break;
+      case 'linkedin':
+        icon = FontAwesomeIcons.linkedin;
+        color = const Color(0xFF0077B5);
+        break;
+      case 'twitter':
+        icon = FontAwesomeIcons.twitter;
+        color = const Color(0xFF1DA1F2);
+        break;
+      case 'behance':
+        icon = FontAwesomeIcons.behance;
+        color = const Color(0xFF1769FF);
+        break;
+      case 'pinterest':
+        icon = FontAwesomeIcons.pinterest;
+        color = const Color(0xFFBD081C);
+        break;
+      case 'strava':
+        icon = FontAwesomeIcons.strava;
+        color = const Color(0xFFFC4C02);
+        break;
+      default:
+        icon = FontAwesomeIcons.link;
+        color = Colors.grey;
+    }
+
+    return Container(
+      width: 16,
+      height: 16,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: FaIcon(
+          icon,
+          size: 9,
+          color: Colors.white,
+        ),
+      ),
+    );
   }
 }

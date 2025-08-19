@@ -77,6 +77,18 @@ class UserDetailModal extends StatelessWidget {
                             style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
                           ),
                           const SizedBox(height: 20),
+                          _buildSectionTitle('Socials Linked', theme),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: user.socialMediaLinks.take(3).map((link) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 2),
+                                child: _getSocialMediaIcon(link),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 20),
                           _buildSectionTitle('Interests', theme),
                           const SizedBox(height: 12),
                           Wrap(
@@ -291,6 +303,81 @@ class UserDetailModal extends StatelessWidget {
               color: color,
               size: size * 0.4,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _getSocialMediaIcon(String link) {
+    final platform = link.split(':')[0].toLowerCase();
+    IconData icon;
+    Color color;
+
+    switch (platform) {
+      case 'instagram':
+        icon = FontAwesomeIcons.instagram;
+        color = const Color(0xFFE4405F);
+        break;
+      case 'facebook':
+        icon = FontAwesomeIcons.facebook;
+        color = const Color(0xFF1877F2);
+        break;
+      case 'whatsapp':
+        icon = FontAwesomeIcons.whatsapp;
+        color = const Color(0xFF25D366);
+        break;
+      case 'tiktok':
+        icon = FontAwesomeIcons.tiktok;
+        color = Colors.black;
+        break;
+      case 'spotify':
+        icon = FontAwesomeIcons.spotify;
+        color = const Color(0xFF1DB954);
+        break;
+      case 'youtube':
+        icon = FontAwesomeIcons.youtube;
+        color = const Color(0xFFFF0000);
+        break;
+      case 'linkedin':
+        icon = FontAwesomeIcons.linkedin;
+        color = const Color(0xFF0077B5);
+        break;
+      case 'twitter':
+        icon = FontAwesomeIcons.twitter;
+        color = const Color(0xFF1DA1F2);
+        break;
+      case 'behance':
+        icon = FontAwesomeIcons.behance;
+        color = const Color(0xFF1769FF);
+        break;
+      case 'pinterest':
+        icon = FontAwesomeIcons.pinterest;
+        color = const Color(0xFFBD081C);
+        break;
+      case 'strava':
+        icon = FontAwesomeIcons.strava;
+        color = const Color(0xFFFC4C02);
+        break;
+      default:
+        icon = FontAwesomeIcons.link;
+        color = Colors.grey;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2.0),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: FaIcon(
+            icon,
+            size: 9,
+            color: Colors.white,
           ),
         ),
       ),
