@@ -1907,6 +1907,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 (route) => false,
               );
             },
+
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1914,7 +1915,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
+            child: const Text('Logout', style: TextStyle(color: Colors.white),),
           ),
         ],
       ),

@@ -42,7 +42,6 @@ class UserDetailModal extends StatelessWidget {
         child: Column(
           children: [
             _buildHandleBar(theme),
-
             Expanded(
               child: SingleChildScrollView(
                 controller: scrollController,
@@ -81,12 +80,14 @@ class UserDetailModal extends StatelessWidget {
                           const SizedBox(height: 8),
                           Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: user.socialMediaLinks.take(3).map((link) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 2),
-                                child: _getSocialMediaIcon(link),
-                              );
-                            }).toList(),
+                            children: user.socialMedia.entries
+                                .where((e) => e.value is Map && e.value['isLinked'] == true)
+                                .take(3)
+                                .map((entry) => Padding(
+                                  padding: const EdgeInsets.only(right: 2),
+                                  child: _getSocialMediaIcon(entry.key),
+                                ))
+                                .toList(),
                           ),
                           const SizedBox(height: 20),
                           _buildSectionTitle('Interests', theme),
@@ -131,7 +132,6 @@ class UserDetailModal extends StatelessWidget {
                 ),
               ),
             ),
-
             _buildEnhancedBottomActions(theme),
             const SizedBox(height: 30),
           ],
@@ -361,12 +361,10 @@ class UserDetailModal extends StatelessWidget {
     color: theme.colorScheme.outline.withOpacity(0.2),
   );
 
-  Widget _getSocialMediaIcon(String link) {
-    final platform = link.split(':')[0].toLowerCase();
+  Widget _getSocialMediaIcon(String platform) {
     IconData icon;
     Color color;
-
-    switch (platform) {
+    switch (platform.toLowerCase()) {
       case 'instagram':
         icon = FontAwesomeIcons.instagram;
         color = const Color(0xFFE4405F);
@@ -383,15 +381,19 @@ class UserDetailModal extends StatelessWidget {
         icon = FontAwesomeIcons.tiktok;
         color = Colors.black;
         break;
+      case 'x':
       case 'twitter':
-        icon = FontAwesomeIcons.twitter;
-        color = const Color(0xFF1DA1F2);
+        icon = FontAwesomeIcons.xTwitter;
+        color = Colors.black;
+        break;
+      case 'snapchat':
+        icon = FontAwesomeIcons.snapchat;
+        color = const Color(0xFFFFFC00);
         break;
       default:
         icon = FontAwesomeIcons.link;
         color = Colors.grey;
     }
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2.0),
       child: Container(

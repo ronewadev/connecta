@@ -5,105 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Linked socials model
-class LinkedSocials {
-  final bool whatsapp;
-  final bool facebook;
-  final bool x; // formerly Twitter
-  final bool tiktok;
-  final bool instagram;
-  final bool snapchat;
-  final String? whatsappLink;
-  final String? facebookLink;
-  final String? xLink;
-  final String? tiktokLink;
-  final String? instagramLink;
-  final String? snapchatLink;
-
-  LinkedSocials({
-    this.whatsapp = false,
-    this.facebook = false,
-    this.x = false,
-    this.tiktok = false,
-    this.instagram = false,
-    this.snapchat = false,
-    this.whatsappLink,
-    this.facebookLink,
-    this.xLink,
-    this.tiktokLink,
-    this.instagramLink,
-    this.snapchatLink,
-  });
-
-  factory LinkedSocials.fromMap(Map<String, dynamic> map) {
-    return LinkedSocials(
-      whatsapp: map['whatsapp'] ?? false,
-      facebook: map['facebook'] ?? false,
-      x: map['x'] ?? false,
-      tiktok: map['tiktok'] ?? false,
-      instagram: map['instagram'] ?? false,
-      snapchat: map['snapchat'] ?? false,
-      whatsappLink: map['whatsappLink'],
-      facebookLink: map['facebookLink'],
-      xLink: map['xLink'],
-      tiktokLink: map['tiktokLink'],
-      instagramLink: map['instagramLink'],
-      snapchatLink: map['snapchatLink'],
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'whatsapp': whatsapp,
-      'facebook': facebook,
-      'x': x,
-      'tiktok': tiktok,
-      'instagram': instagram,
-      'snapchat': snapchat,
-      'whatsappLink': whatsappLink,
-      'facebookLink': facebookLink,
-      'xLink': xLink,
-      'tiktokLink': tiktokLink,
-      'instagramLink': instagramLink,
-      'snapchatLink': snapchatLink,
-    };
-  }
-
-  Map<String, dynamic> toJson() {
-    return toMap();
-  }
-
-  LinkedSocials copyWith({
-    bool? whatsapp,
-    bool? facebook,
-    bool? x,
-    bool? tiktok,
-    bool? instagram,
-    bool? snapchat,
-    String? whatsappLink,
-    String? facebookLink,
-    String? xLink,
-    String? tiktokLink,
-    String? instagramLink,
-    String? snapchatLink,
-  }) {
-    return LinkedSocials(
-      whatsapp: whatsapp ?? this.whatsapp,
-      facebook: facebook ?? this.facebook,
-      x: x ?? this.x,
-      tiktok: tiktok ?? this.tiktok,
-      instagram: instagram ?? this.instagram,
-      snapchat: snapchat ?? this.snapchat,
-      whatsappLink: whatsappLink ?? this.whatsappLink,
-      facebookLink: facebookLink ?? this.facebookLink,
-      xLink: xLink ?? this.xLink,
-      tiktokLink: tiktokLink ?? this.tiktokLink,
-      instagramLink: instagramLink ?? this.instagramLink,
-      snapchatLink: snapchatLink ?? this.snapchatLink,
-    );
-  }
-}
-
 class UserDatabase {
   static final UserDatabase _instance = UserDatabase._internal();
   factory UserDatabase() => _instance;
@@ -126,20 +27,16 @@ class UserDatabase {
       print('UserDatabase: No current user found');
       return null;
     }
-    
     try {
       print('UserDatabase: Fetching current user data for: ${user.uid}');
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
-        // Add the user ID to the data since it's not stored in the document
         data['id'] = user.uid;
-        
         print('UserDatabase: Document found with keys: ${data.keys.toList()}');
         final userData = UserData.fromFirestore(data);
         _cachedUserData = userData;
         _userDataController.add(userData);
-        
         print('UserDatabase: Successfully fetched data for: ${userData.username}');
         return userData;
       } else {
@@ -260,7 +157,6 @@ class UserDatabase {
       if (doc.exists && doc.data() != null) {
         print('UserDatabase: Document found, parsing data...');
         final data = doc.data()!;
-        // Add the user ID to the data since it's not stored in the document
         data['id'] = userId;
         
         print('UserDatabase: Raw data keys: ${data.keys.toList()}');
@@ -355,19 +251,22 @@ class UserDatabase {
     }
   }
 
-  // Update linked socials
-  Future<void> updateLinkedSocials(LinkedSocials linkedSocials) async {
-    final updates = <String, dynamic>{
-      'linkedSocials': linkedSocials.toMap(),
-    };
-    
-    await updateUserData(updates);
-    
-    // Force a local update immediately for responsive UI
-    if (_cachedUserData != null) {
-      _cachedUserData = _cachedUserData!.copyWith(updates);
-      _userDataController.add(_cachedUserData);
-      await _saveToLocalStorage(_cachedUserData!);
+  // Update social media
+  Future<void> updateSocialMedia(Map<String, dynamic> socialMedia) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'socialMedia': socialMedia});
+      if (_cachedUserData != null) {
+        _cachedUserData = _cachedUserData!.copyWith({'socialMedia': socialMedia});
+        await _saveToLocalStorage(_cachedUserData!);
+        _userDataController.add(_cachedUserData);
+      }
+    } catch (e) {
+      print('Error updating social media: $e');
     }
   }
 
@@ -439,8 +338,7 @@ class UserData {
   final DateTime? premiumExpiry;
   final DateTime? eliteExpiryDate;
   final DateTime? infinityExpiryDate;
-  final List<String> socialMediaLinks;
-  final LinkedSocials linkedSocials;
+  final Map<String, dynamic> socialMedia;
   final Map<String, dynamic> preferences;
   final bool rememberMe;
   final String? currentCity;
@@ -469,12 +367,11 @@ class UserData {
     this.premiumExpiry,
     this.eliteExpiryDate,
     this.infinityExpiryDate,
-    required this.socialMediaLinks,
-    LinkedSocials? linkedSocials,
+    required this.socialMedia,
     required this.preferences,
     this.rememberMe = false,
     this.currentCity,
-  }) : linkedSocials = linkedSocials ?? LinkedSocials();
+  });
 
   factory UserData.fromFirestore(Map<String, dynamic> data) {
     print('UserData.fromFirestore: Processing data with keys: ${data.keys.toList()}');
@@ -530,10 +427,7 @@ class UserData {
       premiumExpiry: data['premiumExpiry']?.toDate(),
       eliteExpiryDate: data['eliteExpiryDate']?.toDate(),
       infinityExpiryDate: data['infinityExpiryDate']?.toDate(),
-      socialMediaLinks: _safeParseStringList(data['socialMediaLinks']),
-      linkedSocials: data['linkedSocials'] != null 
-          ? LinkedSocials.fromMap(Map<String, dynamic>.from(data['linkedSocials']))
-          : LinkedSocials(),
+      socialMedia: Map<String, dynamic>.from(data['socialMedia'] ?? {}),
       preferences: Map<String, dynamic>.from(data['preferences'] ?? {}),
       rememberMe: _safeParseBool(data['rememberMe'], false),
       currentCity: data['city'],
@@ -565,10 +459,7 @@ class UserData {
       premiumExpiry: json['premiumExpiry'] != null ? DateTime.parse(json['premiumExpiry']) : null,
       eliteExpiryDate: json['eliteExpiryDate'] != null ? DateTime.parse(json['eliteExpiryDate']) : null,
       infinityExpiryDate: json['infinityExpiryDate'] != null ? DateTime.parse(json['infinityExpiryDate']) : null,
-      socialMediaLinks: List<String>.from(json['socialMediaLinks'] ?? []),
-      linkedSocials: json['linkedSocials'] != null 
-          ? LinkedSocials.fromMap(Map<String, dynamic>.from(json['linkedSocials']))
-          : LinkedSocials(),
+      socialMedia: Map<String, dynamic>.from(json['socialMedia'] ?? {}),
       preferences: Map<String, dynamic>.from(json['preferences'] ?? {}),
       rememberMe: json['rememberMe'] ?? false,
       currentCity: json['city'],
@@ -594,7 +485,7 @@ class UserData {
       'profileImageUrl': profileImageUrl,
       'goldTokens': goldTokens,
       'silverTokens': silverTokens,
-      'linkedSocials': linkedSocials.toJson(),
+      'socialMedia': socialMedia,
       'rememberMe': rememberMe,
       'currentCity': currentCity,
     };
@@ -610,21 +501,11 @@ class UserData {
       gender: updates['gender'] ?? gender,
       nationality: updates['nationality'] ?? nationality,
       bio: updates['bio'] ?? bio,
-      profileImages: updates['profileImages'] != null 
-          ? List<String>.from(updates['profileImages']) 
-          : profileImages,
-      interests: updates['interests'] != null 
-          ? List<String>.from(updates['interests']) 
-          : interests,
-      hobbies: updates['hobbies'] != null 
-          ? List<String>.from(updates['hobbies']) 
-          : hobbies,
-      dealBreakers: updates['dealBreakers'] != null 
-          ? List<String>.from(updates['dealBreakers']) 
-          : dealBreakers,
-      lookingFor: updates['lookingFor'] != null 
-          ? List<String>.from(updates['lookingFor']) 
-          : lookingFor,
+      profileImages: updates['profileImages'] != null ? List<String>.from(updates['profileImages']) : profileImages,
+      interests: updates['interests'] != null ? List<String>.from(updates['interests']) : interests,
+      hobbies: updates['hobbies'] != null ? List<String>.from(updates['hobbies']) : hobbies,
+      dealBreakers: updates['dealBreakers'] != null ? List<String>.from(updates['dealBreakers']) : dealBreakers,
+      lookingFor: updates['lookingFor'] != null ? List<String>.from(updates['lookingFor']) : lookingFor,
       subscriptionType: updates['subscriptionType'] ?? subscriptionType,
       profileImageUrl: updates['profileImageUrl'] ?? profileImageUrl,
       goldTokens: updates['goldTokens'] ?? goldTokens,
@@ -632,24 +513,11 @@ class UserData {
       isPremium: updates['isPremium'] ?? isPremium,
       isElite: updates['isElite'] ?? isElite,
       isInfinity: updates['isInfinity'] ?? isInfinity,
-      premiumExpiry: updates['premiumExpiry'] != null 
-          ? (updates['premiumExpiry'] as Timestamp).toDate() 
-          : premiumExpiry,
-      eliteExpiryDate: updates['eliteExpiryDate'] != null 
-          ? (updates['eliteExpiryDate'] as Timestamp).toDate() 
-          : eliteExpiryDate,
-      infinityExpiryDate: updates['infinityExpiryDate'] != null 
-          ? (updates['infinityExpiryDate'] as Timestamp).toDate() 
-          : infinityExpiryDate,
-      socialMediaLinks: updates['socialMediaLinks'] != null 
-          ? List<String>.from(updates['socialMediaLinks']) 
-          : socialMediaLinks,
-      linkedSocials: updates['linkedSocials'] != null 
-          ? LinkedSocials.fromMap(Map<String, dynamic>.from(updates['linkedSocials']))
-          : linkedSocials,
-      preferences: updates['preferences'] != null 
-          ? Map<String, dynamic>.from(updates['preferences']) 
-          : preferences,
+      premiumExpiry: updates['premiumExpiry'] != null ? (updates['premiumExpiry'] as Timestamp).toDate() : premiumExpiry,
+      eliteExpiryDate: updates['eliteExpiryDate'] != null ? (updates['eliteExpiryDate'] as Timestamp).toDate() : eliteExpiryDate,
+      infinityExpiryDate: updates['infinityExpiryDate'] != null ? (updates['infinityExpiryDate'] as Timestamp).toDate() : infinityExpiryDate,
+      socialMedia: updates['socialMedia'] != null ? Map<String, dynamic>.from(updates['socialMedia']) : socialMedia,
+      preferences: updates['preferences'] != null ? Map<String, dynamic>.from(updates['preferences']) : preferences,
       rememberMe: updates['rememberMe'] ?? rememberMe,
       currentCity: updates['city'] ?? currentCity,
     );

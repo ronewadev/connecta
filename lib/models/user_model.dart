@@ -172,9 +172,9 @@ class UserModelInfo {
   final int age;
   final String gender;
   final String nationality;
-  final String location; // Deprecated - use userLocation instead
-  final String? currentCity; // Deprecated - use userLocation instead
-  final UserLocation? userLocation; // New location field
+  final String location;
+  final String? currentCity;
+  final UserLocation? userLocation;
   final String profileImageUrl;
   final List<String> profileImages;
   final List<String> interests;
@@ -187,15 +187,13 @@ class UserModelInfo {
   final bool isVerified;
   final bool isOnline;
   final DateTime lastActive;
-  final List<String> socialMediaLinks;
+  final Map<String, dynamic> socialMedia;
   final bool rememberMe;
   final bool allowDirectContact;
   final bool allowDirectInAppContact;
-
-  // Interaction arrays
-  final List<String> likesMe; // Users who liked this user
-  final List<String> superLikesMe; // Users who super-liked this user
-  final List<String> lovesMe; // Users who loved this user
+  final List<String> likesMe;
+  final List<String> superLikesMe;
+  final List<String> lovesMe;
 
   UserModelInfo({
     required this.id,
@@ -220,7 +218,7 @@ class UserModelInfo {
     this.isVerified = false,
     this.isOnline = false,
     DateTime? lastActive,
-    this.socialMediaLinks = const [],
+    this.socialMedia = const {},
     this.rememberMe = false,
     this.allowDirectContact = false,
     this.allowDirectInAppContact = true,
@@ -253,8 +251,7 @@ class UserModelInfo {
       gender: map['gender'] ?? 'Not specified',
       nationality: map['nationality'] ?? 'Not specified',
       location: map['location'] ?? 'Not specified',
-      //currentCity: map['currentCity'], //old but submitting
-      userLocation: map['userLocation'] != null 
+      userLocation: map['userLocation'] != null
           ? UserLocation.fromMap(Map<String, dynamic>.from(map['userLocation']))
           : null,
       profileImageUrl: map['profileImageUrl'] ?? '',
@@ -263,11 +260,9 @@ class UserModelInfo {
       hobbies: List<String>.from(map['hobbies'] ?? []),
       dealBreakers: List<String>.from(map['dealBreakers'] ?? []),
       bio: map['bio'],
-      // Fix: Properly handle subscription object vs string
       subscription: map['subscription'] is Map<String, dynamic>
           ? UserSubscription.fromMap(Map<String, dynamic>.from(map['subscription']))
-          : UserSubscription(type: map['subscription'] ?? 'basic'), // Handle legacy string format
-      // Fix: Properly handle userBalance
+          : UserSubscription(type: map['subscription'] ?? 'basic'),
       userBalance: map['userBalance'] != null
           ? UserBalance.fromMap(Map<String, dynamic>.from(map['userBalance']))
           : UserBalance(),
@@ -277,7 +272,7 @@ class UserModelInfo {
       lastActive: map['lastActive'] != null
           ? (map['lastActive']).toDate()
           : DateTime.now(),
-      socialMediaLinks: List<String>.from(map['socialMediaLinks'] ?? []),
+      socialMedia: Map<String, dynamic>.from(map['socialMedia'] ?? {}),
       rememberMe: map['rememberMe'] ?? false,
       allowDirectContact: map['allowDirectContact'] ?? false,
       allowDirectInAppContact: map['allowDirectInAppContact'] ?? true,
@@ -310,7 +305,7 @@ class UserModelInfo {
       'isVerified': isVerified,
       'isOnline': isOnline,
       'lastActive': lastActive,
-      'socialMediaLinks': socialMediaLinks,
+      'socialMedia': socialMedia,
       'rememberMe': rememberMe,
       'allowDirectContact': allowDirectContact,
       'allowDirectInAppContact': allowDirectInAppContact,

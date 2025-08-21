@@ -88,8 +88,8 @@ class CompactUserCard extends StatelessWidget {
                 right: 12,
                 child: Row(
                   children: [
-                    if (user.socialMediaLinks.isNotEmpty)
-                      _buildSocialMediaIcons(theme),
+                    if (user.socialMedia.isNotEmpty)
+                      _buildSocialMediaIcons(theme, user.socialMedia),
                     const Spacer(),
                     if (user.isOnline) _buildOnlineIndicator(theme),
                   ],
@@ -125,7 +125,11 @@ class CompactUserCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSocialMediaIcons(ThemeData theme) {
+  Widget _buildSocialMediaIcons(ThemeData theme, Map<String, dynamic> socialMedia) {
+    final platforms = socialMedia.entries
+        .where((e) => e.value is Map && e.value['isLinked'] == true)
+        .take(3)
+        .toList();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -138,10 +142,10 @@ class CompactUserCard extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: user.socialMediaLinks.take(3).map((link) {
+        children: platforms.map((entry) {
           return Padding(
             padding: const EdgeInsets.only(right: 2),
-            child: _getSocialMediaIcon(link),
+            child: _getSocialMediaIcon(entry.key),
           );
         }).toList(),
       ),
@@ -467,12 +471,10 @@ class CompactUserCard extends StatelessWidget {
     );
   }
 
-  Widget _getSocialMediaIcon(String link) {
-    final platform = link.split(':')[0].toLowerCase();
+  Widget _getSocialMediaIcon(String platform) {
     IconData icon;
     Color color;
-
-    switch (platform) {
+    switch (platform.toLowerCase()) {
       case 'instagram':
         icon = FontAwesomeIcons.instagram;
         color = const Color(0xFFE4405F);
@@ -489,39 +491,19 @@ class CompactUserCard extends StatelessWidget {
         icon = FontAwesomeIcons.tiktok;
         color = Colors.black;
         break;
-      case 'spotify':
-        icon = FontAwesomeIcons.spotify;
-        color = const Color(0xFF1DB954);
-        break;
-      case 'youtube':
-        icon = FontAwesomeIcons.youtube;
-        color = const Color(0xFFFF0000);
-        break;
-      case 'linkedin':
-        icon = FontAwesomeIcons.linkedin;
-        color = const Color(0xFF0077B5);
-        break;
+      case 'x':
       case 'twitter':
-        icon = FontAwesomeIcons.twitter;
-        color = const Color(0xFF1DA1F2);
+        icon = FontAwesomeIcons.xTwitter;
+        color = Colors.black;
         break;
-      case 'behance':
-        icon = FontAwesomeIcons.behance;
-        color = const Color(0xFF1769FF);
-        break;
-      case 'pinterest':
-        icon = FontAwesomeIcons.pinterest;
-        color = const Color(0xFFBD081C);
-        break;
-      case 'strava':
-        icon = FontAwesomeIcons.strava;
-        color = const Color(0xFFFC4C02);
+      case 'snapchat':
+        icon = FontAwesomeIcons.snapchat;
+        color = const Color(0xFFFFFC00);
         break;
       default:
         icon = FontAwesomeIcons.link;
         color = Colors.grey;
     }
-
     return Container(
       width: 16,
       height: 16,

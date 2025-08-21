@@ -436,7 +436,7 @@ class _MeetScreenState extends State<MeetScreen> with TickerProviderStateMixin {
         isVerified: false,
         subscription: UserSubscription(),
         isOnline: false,
-        socialMediaLinks: [],
+        socialMedia: {},
         // Remove lastSeen parameter - it doesn't exist in UserModelInfo
         //createdAt: DateTime.now(),
        // matchScore: 0.0,

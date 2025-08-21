@@ -559,58 +559,51 @@ class _UserCardState extends State<UserCard> with TickerProviderStateMixin {
                 ),
               ),
 
-              // Social media icons
+              // Social media icons (top right, below distance)
+              if (widget.user.socialMedia.isNotEmpty)
+                Positioned(
+                  top: 70,
+                  right: 16,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: widget.user.socialMedia.entries
+                          .where((e) => e.value is Map && e.value['isLinked'] == true)
+                          .take(5)
+                          .map((entry) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildSocialIconButton(_getSocialIcon(entry.key), _getSocialColor(entry.key)),
+                          ))
+                          .toList(),
+                    ),
+                  ),
+                ),
+              
+              // Message button
               Positioned(
-                top: 70,
+                top: 16,
                 right: 16,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Column(
-                        children: [
-                          const SizedBox(height: 12),
-                          _buildSocialIconButton(FontAwesomeIcons.facebook,
-                              const Color(0xFF1877F2)), // Facebook blue
-                          const SizedBox(height: 12),
-                          _buildSocialIconButton(FontAwesomeIcons.instagram,
-                              const Color(0xFFE4405F)), // Instagram pink
-                          const SizedBox(height: 12),
-                          _buildSocialIconButton(FontAwesomeIcons.xTwitter,
-                              const Color(0xFF000000)), // Twitter blue
-                          const SizedBox(height: 12),
-                          _buildSocialIconButton(FontAwesomeIcons.tiktok,
-                              const Color(0xFF000000)), // TikTok black
-                          const SizedBox(height: 12),
-                          _buildSocialIconButton(FontAwesomeIcons.whatsapp,
-                              const Color(0xFF029C42)), // WhatsApp green
-                        ],
-                      ),
-                      SizedBox(height: 30,),
-                      GestureDetector(
-                        onTap: widget.onMessageTap,
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: FaIcon(FontAwesomeIcons.commentDots,
-                                color: Colors.black,
-                                size: 18
-                            ),
-                          ),
+                child: GestureDetector(
+                  onTap: widget.onMessageTap,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: FaIcon(FontAwesomeIcons.commentDots,
+                          color: Colors.black,
+                          size: 18
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -619,6 +612,46 @@ class _UserCardState extends State<UserCard> with TickerProviderStateMixin {
         ),
       ),
     );
+  }
+
+  IconData _getSocialIcon(String platform) {
+    switch (platform.toLowerCase()) {
+      case 'instagram':
+        return FontAwesomeIcons.instagram;
+      case 'facebook':
+        return FontAwesomeIcons.facebook;
+      case 'whatsapp':
+        return FontAwesomeIcons.whatsapp;
+      case 'tiktok':
+        return FontAwesomeIcons.tiktok;
+      case 'x':
+      case 'twitter':
+        return FontAwesomeIcons.xTwitter;
+      case 'snapchat':
+        return FontAwesomeIcons.snapchat;
+      default:
+        return FontAwesomeIcons.link;
+    }
+  }
+
+  Color _getSocialColor(String platform) {
+    switch (platform.toLowerCase()) {
+      case 'instagram':
+        return const Color(0xFFE4405F);
+      case 'facebook':
+        return const Color(0xFF1877F2);
+      case 'whatsapp':
+        return const Color(0xFF25D366);
+      case 'tiktok':
+        return Colors.black;
+      case 'x':
+      case 'twitter':
+        return Colors.black;
+      case 'snapchat':
+        return const Color(0xFFFFFC00);
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildSocialIconButton(IconData icon, Color color) {

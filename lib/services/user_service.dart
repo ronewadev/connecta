@@ -18,37 +18,7 @@ class UserService {
       bio: 'Adventure seeker and coffee enthusiast. Looking to meet new people!',
       isVerified: true,
       isOnline: true, // Add this
-      socialMediaLinks: ['facebook.com/sarah', 'instagram.com/sarah_adventures'],
-    ),
-    UserModelInfo(
-      id: 'demo_user_2',
-      username: 'Alex',
-      email: 'alex@connecta.com',
-      age: 29,
-      gender: 'Male',
-      nationality: 'Canada',
-      location: 'Toronto',
-      profileImageUrl: 'https://i.pravatar.cc/500?img=12',
-      interests: ['Music', 'Travel', 'Fitness', 'Movies'],
-      bio: 'Music lover and fitness enthusiast. Always up for an adventure!',
-      isVerified: false,
-      isOnline: false, // Add this
-      socialMediaLinks: ['instagram.com/alex_music'],
-    ),
-    UserModelInfo(
-      id: 'demo_user_3',
-      username: 'Emma',
-      email: 'emma@connecta.com',
-      age: 25,
-      gender: 'Female',
-      nationality: 'UK',
-      location: 'London',
-      profileImageUrl: 'https://i.pravatar.cc/500?img=32',
-      interests: ['Reading', 'Yoga', 'Cooking', 'Art'],
-      bio: 'Bookworm by day, yoga instructor by evening. Love exploring new cuisines!',
-      isVerified: true,
-      isOnline: true, // Add this
-      socialMediaLinks: ['instagram.com/emma_yoga', 'twitter.com/emma_reads'],
+      socialMedia: const {},
     ),
   ];
 
@@ -71,7 +41,7 @@ class UserService {
       bio: 'Tech enthusiast and world traveler',
       isVerified: true,
       subscription: UserSubscription(),
-      socialMediaLinks: ['linkedin.com/demo'],
+      socialMedia: const {}
     );
     print('✅ Current user: ${user.username} (${user.id})');
     return user;
@@ -159,7 +129,7 @@ class UserService {
       bio: user.bio,
       isVerified: user.isVerified,
       subscription: user.subscription,
-      socialMediaLinks: user.socialMediaLinks,
+      socialMedia: user.socialMedia ?? {},
     );
   }
 

@@ -118,6 +118,11 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
     'WhatsApp': const Color(0xFF25D366),
   };
 
+  // Remove all LinkedSocials and socialMediaLinks logic.
+  // Instead, build a socialMedia map for Firestore.
+
+  Map<String, Map<String, dynamic>> _socialMedia = {};
+
   @override
   void initState() {
     super.initState();
@@ -577,13 +582,12 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
 
   void _togglePlatform(String platform) {
     if (_linkedPlatforms[platform]!) {
-      // If already linked, disconnect
       setState(() {
         _linkedPlatforms[platform] = false;
         _platformLinks[platform] = '';
         _linkControllers[platform]!.clear();
+        _socialMedia.remove(platform.toLowerCase());
       });
-      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$platform disconnected'),
@@ -593,7 +597,6 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
         ),
       );
     } else {
-      // Show input dialog for linking
       _showLinkDialog(platform);
     }
   }
@@ -871,38 +874,13 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
                           if (input.isNotEmpty) {
                             setState(() {
                               _linkedPlatforms[platform] = true;
-                              
-                              // Format the link based on platform
-                              if (platform == 'WhatsApp') {
-                                // Remove any non-numeric characters and ensure it starts with country code
-                                String cleanNumber = input.replaceAll(RegExp(r'[^0-9]'), '');
-                                if (!cleanNumber.startsWith('27') && cleanNumber.length == 10) {
-                                  cleanNumber = '27${cleanNumber.substring(1)}'; // Replace leading 0 with 27
-                                }
-                                _platformLinks[platform] = 'https://wa.me/$cleanNumber';
-                              } else if (platform == 'Instagram') {
-                                String username = input.replaceAll('@', '');
-                                _platformLinks[platform] = 'https://instagram.com/$username';
-                              } else if (platform == 'TikTok') {
-                                String username = input.replaceAll('@', '');
-                                _platformLinks[platform] = 'https://tiktok.com/@$username';
-                              } else if (platform == 'Snapchat') {
-                                _platformLinks[platform] = 'https://snapchat.com/add/$input';
-                              } else if (platform == 'X') {
-                                String username = input.replaceAll('@', '');
-                                _platformLinks[platform] = 'https://twitter.com/$username';
-                              } else if (platform == 'Facebook') {
-                                if (!input.startsWith('http')) {
-                                  input = input.replaceAll('facebook.com/', '');
-                                  _platformLinks[platform] = 'https://facebook.com/$input';
-                                } else {
-                                  _platformLinks[platform] = input;
-                                }
-                              }
+                              // Save to _socialMedia map
+                              _socialMedia[platform.toLowerCase()] = {
+                                'isLinked': true,
+                                'link': input,
+                              };
                             });
-                            
                             Navigator.pop(context);
-                            
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Row(
@@ -959,7 +937,7 @@ class _LinkSocialScreenState extends State<LinkSocialScreen> with TickerProvider
             ],
           ),
         ),
-      ),
+      )
     );
   }
 
@@ -1234,7 +1212,7 @@ Future<void> _completeProfile() async {
     );
     print('✅ Gallery images uploaded: ${galleryImageUrls.length} images');
 
-    // Update progress message
+  
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1258,35 +1236,13 @@ Future<void> _completeProfile() async {
         duration: const Duration(seconds: 10),
       ),
     );
-
-    // Step 5: Create LinkedSocials object
-    final linkedSocials = LinkedSocials(
-      whatsapp: _linkedPlatforms['WhatsApp']!,
-      facebook: _linkedPlatforms['Facebook']!,
-      x: _linkedPlatforms['X']!,
-      tiktok: _linkedPlatforms['TikTok']!,
-      instagram: _linkedPlatforms['Instagram']!,
-      snapchat: _linkedPlatforms['Snapchat']!,
-      whatsappLink: _platformLinks['WhatsApp']?.isNotEmpty == true ? _platformLinks['WhatsApp'] : null,
-      facebookLink: _platformLinks['Facebook']?.isNotEmpty == true ? _platformLinks['Facebook'] : null,
-      xLink: _platformLinks['X']?.isNotEmpty == true ? _platformLinks['X'] : null,
-      tiktokLink: _platformLinks['TikTok']?.isNotEmpty == true ? _platformLinks['TikTok'] : null,
-      instagramLink: _platformLinks['Instagram']?.isNotEmpty == true ? _platformLinks['Instagram'] : null,
-      snapchatLink: _platformLinks['Snapchat']?.isNotEmpty == true ? _platformLinks['Snapchat'] : null,
-    );
-
-    // Get linked social platforms (for backward compatibility)
     List<String> linkedSocialsList = _linkedPlatforms.entries
         .where((entry) => entry.value)
         .map((entry) => entry.key)
         .toList();
 
-    // Step 6: Create complete user profile
-    print('📤 Step 6: Creating complete user profile...');
-
-    // Create complete user model with all collected data
     final completeUser = UserModelInfo(
-      id: '', // Will be set by Firebase
+      id: '', 
       username: widget.username,
       email: widget.email,
       phone: widget.mobile.isNotEmpty ? widget.mobile : null,
@@ -1295,23 +1251,23 @@ Future<void> _completeProfile() async {
       nationality: widget.nationality,
       location: widget.userLocation?.city ?? widget.nationality,
       userLocation: widget.userLocation,
-      profileImageUrl: profileImageUrl, // Use uploaded URL
-      profileImages: galleryImageUrls, // Use uploaded URLs
+      profileImageUrl: profileImageUrl, 
+      profileImages: galleryImageUrls, 
       interests: widget.interests,
       hobbies: widget.hobbies,
       dealBreakers: widget.dealBreakers,
       bio: widget.bio,
-      socialMediaLinks: linkedSocialsList,
+      socialMedia: _socialMedia,
       allowDirectContact: _allowDirectContact,
       subscription: UserSubscription(type: 'basic', status: 'active'), // Create proper UserSubscription
-      userBalance: UserBalance(), // Create proper UserBalance
+      userBalance: UserBalance(), 
       preferences: {
         'ageRange': widget.ageRange,
         'maxDistance': widget.maxDistance,
         'interestedIn': widget.interestedIn,
-        //'relationshipType': widget.relationshipType,
+//        'relationshipType': widget.relationshipType,
         'education': widget.education,
-        //'lifestyle': widget.lifestyle,
+       // 'lifestyle': widget.lifestyle,
         'showOnline': widget.showOnline,
         'verifiedOnly': widget.verifiedOnly,
         'photoRequired': widget.photoRequired,
@@ -1322,7 +1278,7 @@ Future<void> _completeProfile() async {
 
     // Create the map and add linkedSocials
     Map<String, dynamic> userMap = completeUser.toMap();
-    userMap['linkedSocials'] = linkedSocials.toMap();
+    userMap['socialMedia'] = _socialMedia;
     
     print('📊 User data prepared. Map keys: ${userMap.keys.toList()}');
     
